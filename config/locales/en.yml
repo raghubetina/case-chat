@@ -38,6 +38,101 @@ en:
       lede: Confirm this email address to finish creating your account.
     verify_account_resend:
       lede: Request another verification message for an unverified account.
+  author:
+    cases:
+      author_label: Author
+      cast: Cast
+      cast_note: These people are in the case. Anyone not in the starting directory has to be introduced by someone.
+      checklist: Checklist
+      checklist_documents:
+        one: 1 document
+        other: "%{count} documents"
+      checklist_starting:
+        one: 1 starting contact
+        other: "%{count} starting contacts"
+      checklist_unreachable:
+        one: 1 contact unreachable
+        other: "%{count} contacts unreachable"
+      create: Create case
+      created: Case created. Now build the cast.
+      draft_badge: Draft
+      empty_body: A case is a question, a cast of people who each know part of the answer, and the rules for who introduces whom.
+      empty_heading: You have not written a case yet
+      fields:
+        assignment: Assignment
+        background: Background
+        background_note: Keep this thin. Anything written here is information the student does not have to earn.
+        course: Course
+        due_at: Prepare by
+        join_code: Join code
+        join_code_note: Students enter this to join. Post it with the assignment.
+        students_see_this: Students see this
+        title: Title
+      fix_referrals: "Fix how %{name} is reached"
+      in_starting: In starting directory
+      index_title: Cases you author
+      introduced_by:
+        one: Introduced by 1
+        other: "Introduced by %{count}"
+      new: New case
+      no_cast: Nobody in the cast yet.
+      preview: Preview as student
+      publish: Publish
+      publish_blocked: "Not published. Nobody can reach %{names}, so whatever they know can never enter a student's analysis."
+      publish_blocked_empty: Not published. A case with no cast has nobody to interview.
+      published: Published. Students with the code can start.
+      published_badge: Published
+      reachability: Reachability
+      reachability_broken: "%{names} cannot be reached from the starting directory. No contact refers to them."
+      reachability_ok:
+        one: Every contact is reachable from the starting directory.
+        other: All %{count} contacts are reachable from the starting directory.
+      save: Save case
+      saved: Saved.
+      setup: Case setup
+      unreachable: Unreachable
+    contacts:
+      add: Add contact
+      back: Back to case setup
+      create: Create contact
+      created: Contact created.
+      fields:
+        description: Description
+        full_name: Name
+        in_starting_directory: In the starting directory (students see this person immediately)
+        role_title: Role
+        system_prompt: System prompt
+      identity: Identity
+      introduced_by_names: "Introduced by %{names}"
+      never_shown: Never shown to students
+      orphan_warning: "No contact refers to %{name}, and they are not in the starting directory. As it stands, no student will ever meet them."
+      removed: Contact removed.
+      save: Save contact
+      saved: Saved.
+      shown_in_directory: Shown to students in the directory
+      system_prompt_note: Write the persona, what this person knows, and what they withhold. Do not write referral instructions here — those are generated from the rules below, and writing them twice is how the two drift apart.
+    referrals:
+      add: Add referral
+      added: Referral added.
+      empty: This contact introduces nobody.
+      heading: Can introduce
+      note: A referred contact arrives in the student's thread as a contact card.
+      remove: Remove
+      removed: Referral removed.
+      when: When to introduce
+      when_placeholder: When the student asks what is happening on the shop floor.
+      who: Who
+    share_rules:
+      add: Add rule
+      added: Share rule added.
+      empty: This contact hands over nothing.
+      heading: Can share
+      note: A shared document arrives in the student's thread as a file card.
+      remove: Remove
+      removed: Share rule removed.
+      what: Which document
+      when: When to share
+      when_placeholder: Once the student has asked to see the numbers.
   cases:
     assignment: Assignment
     back_to_current: Back to your current run
@@ -140,6 +235,8 @@ en:
         body: Follow this secure link to verify your email address and activate your account.
         heading: Verify your email address
   nav:
+    authoring: Authoring
+    my_cases: My cases
     sign_in: Sign in
     sign_out: Sign out
     skip_to_content: Skip to main content
