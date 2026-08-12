@@ -7,5 +7,7 @@
 # identity fields from the OWASP Logging Cheat Sheet's "Data to exclude" list:
 # https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html#data-to-exclude
 Rails.application.config.filter_parameters += [
-  :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc, :card_number
+  :passw, :email, :secret, :token, :_key, :crypt, :salt, :certificate, :otp, :ssn, :cvv, :cvc, :card_number,
+  # A contact's system prompt is the case's answer key; keep it out of logs.
+  :system_prompt
 ]

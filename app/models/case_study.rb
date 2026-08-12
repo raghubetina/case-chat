@@ -7,4 +7,8 @@ class CaseStudy < ApplicationRecord
   validates :title, presence: true
   validates :title, length: {maximum: 200, allow_nil: true}
   validates :join_code, length: {maximum: 32, allow_nil: true}
+  validates :join_code, uniqueness: {allow_nil: true}
+  validates :published, inclusion: {in: [true, false]}
+
+  normalizes :join_code, with: ->(code) { code.strip.upcase.presence }
 end

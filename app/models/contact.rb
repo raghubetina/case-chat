@@ -11,4 +11,6 @@ class Contact < ApplicationRecord
 
   validates :full_name, presence: true
   validates :role_title, presence: true
+  validates :system_prompt, presence: true
+  validates :in_starting_directory, inclusion: {in: [true, false]}
 end

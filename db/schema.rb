@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_10_000011) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -21,11 +21,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_000011) do
     t.string "course"
     t.datetime "created_at", null: false
     t.datetime "due_at"
-    t.string "join_code"
-    t.boolean "published"
-    t.string "title", null: false
+    t.string "join_code", limit: 32
+    t.boolean "published", default: false, null: false
+    t.string "title", limit: 200, null: false
     t.datetime "updated_at", null: false
     t.index ["author_id"], name: "index_case_studies_on_author_id"
+    t.index ["join_code"], name: "index_case_studies_on_join_code", unique: true
   end
 
   create_table "contacts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -33,9 +34,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_000011) do
     t.datetime "created_at", null: false
     t.text "description"
     t.string "full_name", null: false
-    t.boolean "in_starting_directory"
+    t.boolean "in_starting_directory", default: false, null: false
     t.string "role_title", null: false
-    t.text "system_prompt"
+    t.text "system_prompt", null: false
     t.datetime "updated_at", null: false
     t.index ["case_study_id"], name: "index_contacts_on_case_study_id"
   end
@@ -55,7 +56,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_000011) do
     t.uuid "message_id", null: false
     t.datetime "updated_at", null: false
     t.index ["document_id"], name: "index_document_shares_on_document_id"
-    t.index ["message_id"], name: "index_document_shares_on_message_id"
+    t.index ["message_id", "document_id"], name: "index_document_shares_on_message_id_and_document_id", unique: true
   end
 
   create_table "documents", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -65,7 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_000011) do
     t.string "description"
     t.string "file_name", null: false
     t.string "file_url"
-    t.boolean "given_at_start"
+    t.boolean "given_at_start", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["case_study_id"], name: "index_documents_on_case_study_id"
   end
@@ -87,26 +88,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_000011) do
     t.uuid "introducing_contact_id"
     t.datetime "updated_at", null: false
     t.index ["contact_id"], name: "index_introductions_on_contact_id"
-    t.index ["enrollment_id"], name: "index_introductions_on_enrollment_id"
+    t.index ["enrollment_id", "contact_id"], name: "index_introductions_on_enrollment_id_and_contact_id", unique: true
     t.index ["introducing_contact_id"], name: "index_introductions_on_introducing_contact_id"
   end
 
   create_table "messages", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
-    t.text "body"
+    t.text "body", null: false
     t.uuid "conversation_id", null: false
     t.datetime "created_at", null: false
-    t.boolean "from_contact"
+    t.boolean "from_contact", null: false
     t.uuid "introduced_contact_id"
-    t.datetime "sent_at"
+    t.datetime "sent_at", null: false
     t.datetime "updated_at", null: false
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["introduced_contact_id"], name: "index_messages_on_introduced_contact_id"
   end
 
   create_table "referrals", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
-    t.text "condition"
+    t.text "condition", null: false
     t.datetime "created_at", null: false
-    t.boolean "enabled"
+    t.boolean "enabled", default: true, null: false
     t.uuid "referred_contact_id", null: false
     t.uuid "referring_contact_id", null: false
     t.datetime "updated_at", null: false
@@ -115,12 +116,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_10_000011) do
   end
 
   create_table "share_rules", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
-    t.text "condition"
+    t.text "condition", null: false
     t.uuid "contact_id", null: false
     t.datetime "created_at", null: false
     t.uuid "document_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["contact_id"], name: "index_share_rules_on_contact_id"
+    t.index ["contact_id", "document_id"], name: "index_share_rules_on_contact_id_and_document_id", unique: true
     t.index ["document_id"], name: "index_share_rules_on_document_id"
   end
 

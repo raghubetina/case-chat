@@ -6,4 +6,5 @@ class Document < ApplicationRecord
 
   validates :file_name, presence: true
   validates :byte_size, comparison: {greater_than: 0}, allow_nil: true
+  validates :given_at_start, inclusion: {in: [true, false]}
 end
