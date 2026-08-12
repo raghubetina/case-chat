@@ -37,11 +37,15 @@ class ErrorPagesTest < ActionDispatch::IntegrationTest
 
   test "a real application exception renders the branded 500" do
     with_routing do |routes|
+      routes.draw_paths << Rails.root.join("config/routes")
       routes.draw do
         get "/boom", to: ->(_env) { raise "deliberate test exception" }
         match "/500", to: "errors#internal_error", via: :all
         get "/manifest", to: "rails/pwa#manifest", as: :pwa_manifest
         root "home#index"
+        # The layout's navbar links every domain resource; a route set that
+        # cannot render the layout turns the branded 500 into the failsafe.
+        draw(:foundation_domain)
       end
 
       with_rendered_exceptions { get "/boom" }
