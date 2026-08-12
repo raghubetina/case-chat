@@ -20,7 +20,7 @@ class UsersController < ApplicationController
     if @user.save
       redirect_to user_path(@user), status: :see_other
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -31,7 +31,7 @@ class UsersController < ApplicationController
     if @user.update(update_user_params)
       redirect_to user_path(@user), status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -45,7 +45,7 @@ class UsersController < ApplicationController
   def set_user
     @user = User.find(params[:id])
   end
-  
+
   def set_return_to
     expected = case action_name
     when "new", "create"
@@ -58,7 +58,7 @@ class UsersController < ApplicationController
     candidate = params.fetch(:return_to, expected)
     @return_to = candidate if valid_return_to?(candidate, expected)
     raise ActionController::BadRequest, "invalid return destination" unless @return_to
-  
+
     @cancel_to = case action_name
     when "new", "create"
       users_path
@@ -66,7 +66,7 @@ class UsersController < ApplicationController
       @return_to
     end
   end
-  
+
   def valid_return_to?(candidate, expected)
     if expected == "foundation:mutation-record:show"
       candidate == expected
@@ -74,11 +74,11 @@ class UsersController < ApplicationController
       url_from(candidate) == expected
     end
   end
-  
+
   def create_user_params
     params.expect(user: %i[full_name email program])
   end
-  
+
   def update_user_params
     params.expect(user: %i[full_name email program])
   end
