@@ -1,23 +1,27 @@
 class DocumentSharesController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_document_share, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @document_shares = pagy(:offset, DocumentShare.order(:id), limit: PAGE_LIMIT)
+    authorize! DocumentShare, to: :index?
+    @pagy, @document_shares = pagy(:offset, authorized_scope(DocumentShare.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! DocumentShare, to: :new?
     @document_share = DocumentShare.new
   end
 
   def create
     @document_share = DocumentShare.new(create_document_share_params)
+    authorize! @document_share
     if @document_share.save
       redirect_to document_share_path(@document_share), status: :see_other
     else
@@ -46,7 +50,8 @@ class DocumentSharesController < ApplicationController
   private
 
   def set_document_share
-    @document_share = DocumentShare.find(params[:id])
+    @document_share = DocumentShare.includes(message: {conversation: [:enrollment, {contact: :case_study}]}).find(params[:id])
+    authorize! @document_share
   end
 
   def set_return_to
@@ -87,11 +92,9 @@ class DocumentSharesController < ApplicationController
   end
 
   def load_reference_options
-    @message_id_options = Message
-      .order(:created_at, :id)
+    @message_id_options = authorized_scope(Message.order(:created_at, :id))
       .pluck(:created_at, :id)
-    @document_id_options = Document
-      .order(:file_name, :id)
+    @document_id_options = authorized_scope(Document.order(:file_name, :id))
       .pluck(:file_name, :id)
   end
 end

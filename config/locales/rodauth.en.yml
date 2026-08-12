@@ -1,0 +1,15 @@
+en:
+  rodauth:
+    create_account_button: Create account
+    create_account_link_text: Create an account
+    create_account_page_title: Sign up
+    login_button: Sign in
+    login_error_flash: We could not sign you in
+    login_notice_flash: You are signed in
+    login_page_title: Sign in
+    logout_button: Sign out
+    logout_notice_flash: You are signed out
+    logout_page_title: Sign out
+    require_login_error_flash: Sign in to continue
+    reset_password_request_link_text: Forgot your password?
+    verify_account_resend_link_text: Resend verification email

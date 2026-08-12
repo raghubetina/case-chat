@@ -1,23 +1,27 @@
 class MessagesController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_message, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @messages = pagy(:offset, Message.order(:id), limit: PAGE_LIMIT)
+    authorize! Message, to: :index?
+    @pagy, @messages = pagy(:offset, authorized_scope(Message.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! Message, to: :new?
     @message = Message.new
   end
 
   def create
     @message = Message.new(create_message_params)
+    authorize! @message
     if @message.save
       redirect_to message_path(@message), status: :see_other
     else
@@ -46,7 +50,8 @@ class MessagesController < ApplicationController
   private
 
   def set_message
-    @message = Message.find(params[:id])
+    @message = Message.includes(conversation: [:enrollment, {contact: :case_study}]).find(params[:id])
+    authorize! @message
   end
 
   def set_return_to
@@ -87,8 +92,7 @@ class MessagesController < ApplicationController
   end
 
   def load_reference_options
-    @conversation_id_options = Conversation
-      .order(:created_at, :id)
+    @conversation_id_options = authorized_scope(Conversation.order(:created_at, :id))
       .pluck(:created_at, :id)
   end
 end

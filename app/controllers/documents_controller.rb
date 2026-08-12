@@ -1,23 +1,27 @@
 class DocumentsController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_document, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @documents = pagy(:offset, Document.order(:id), limit: PAGE_LIMIT)
+    authorize! Document, to: :index?
+    @pagy, @documents = pagy(:offset, authorized_scope(Document.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! Document, to: :new?
     @document = Document.new
   end
 
   def create
     @document = Document.new(create_document_params)
+    authorize! @document
     if @document.save
       redirect_to document_path(@document), status: :see_other
     else
@@ -46,7 +50,8 @@ class DocumentsController < ApplicationController
   private
 
   def set_document
-    @document = Document.find(params[:id])
+    @document = Document.includes(:case_study).find(params[:id])
+    authorize! @document
   end
 
   def set_return_to
@@ -87,8 +92,7 @@ class DocumentsController < ApplicationController
   end
 
   def load_reference_options
-    @case_study_id_options = CaseStudy
-      .order(:title, :id)
+    @case_study_id_options = authorized_scope(CaseStudy.order(:title, :id), as: :authored)
       .pluck(:title, :id)
   end
 end

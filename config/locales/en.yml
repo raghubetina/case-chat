@@ -1,8 +1,49 @@
 ---
 en:
   app_name: "Case Chat"
+  activerecord:
+    attributes:
+      user:
+        email: Email
+        full_name: Full name
+    errors:
+      models:
+        user:
+          attributes:
+            full_name:
+              blank: Enter your full name.
+  auth:
+    actions:
+      back_to_sign_in: Back to sign in
+      sign_in: Sign in
+      sign_out: Sign out
+    create_account:
+      have_account: Already have an account?
+      lede: Create your profile, then verify your email address.
+    login:
+      lede: Welcome back. Sign in to work your cases.
+    logout:
+      lede: End your current Case Chat session.
+    other_options: Other options
+    password_hint: Use a memorable passphrase of at least six characters.
+    reset_password:
+      lede: Choose a new passphrase for your account.
+    reset_password_request:
+      lede: We will email a secure reset link to your verified address.
+    unlock_account:
+      lede: Use the secure link from your email to unlock this account.
+    unlock_account_request:
+      lede: Too many unsuccessful sign-in attempts locked this account. Request a secure unlock link.
+    verify_account:
+      lede: Confirm this email address to finish creating your account.
+    verify_account_resend:
+      lede: Request another verification message for an unverified account.
   errors:
     back_home: Back to the home page
+    forbidden:
+      body: You are signed in, but this case is not yours to open.
+      code: '403'
+      heading: Not your case
     internal_error:
       body: Something went wrong on our end. It has been recorded; please try again shortly.
       code: '500'
@@ -20,7 +61,25 @@ en:
   home:
     heading: It works.
     lede: This app was generated on the Foundation baseline — hardened, observable, accessible, and ready for its real features.
+  mailers:
+    rodauth:
+      greeting: Hello %{name},
+      not_requested: If you did not request this, you can safely ignore this message.
+      reset_password:
+        action: Reset password
+        body: Follow this secure link to choose a new password. The link expires after 24 hours.
+        heading: Reset your password
+      unlock_account:
+        action: Unlock account
+        body: Follow this secure link to unlock your account after too many unsuccessful sign-in attempts.
+        heading: Unlock your account
+      verify_account:
+        action: Verify email address
+        body: Follow this secure link to verify your email address and activate your account.
+        heading: Verify your email address
   nav:
+    sign_in: Sign in
+    sign_out: Sign out
     skip_to_content: Skip to main content
     theme:
       label: Choose theme
@@ -40,4 +99,5 @@ en:
   pwa:
     description: A Rails application on the Foundation baseline.
   rate_limit:
+    authentication_exceeded: Too many authentication attempts. Try again in a few minutes.
     exceeded: Rate limit exceeded. Try again in %{seconds} seconds.

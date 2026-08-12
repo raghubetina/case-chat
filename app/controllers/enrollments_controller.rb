@@ -1,23 +1,27 @@
 class EnrollmentsController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_enrollment, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @enrollments = pagy(:offset, Enrollment.order(:id), limit: PAGE_LIMIT)
+    authorize! Enrollment, to: :index?
+    @pagy, @enrollments = pagy(:offset, authorized_scope(Enrollment.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! Enrollment, to: :new?
     @enrollment = Enrollment.new
   end
 
   def create
     @enrollment = Enrollment.new(create_enrollment_params)
+    authorize! @enrollment
     if @enrollment.save
       redirect_to enrollment_path(@enrollment), status: :see_other
     else
@@ -46,7 +50,8 @@ class EnrollmentsController < ApplicationController
   private
 
   def set_enrollment
-    @enrollment = Enrollment.find(params[:id])
+    @enrollment = Enrollment.includes(:case_study).find(params[:id])
+    authorize! @enrollment
   end
 
   def set_return_to
@@ -87,11 +92,9 @@ class EnrollmentsController < ApplicationController
   end
 
   def load_reference_options
-    @user_id_options = User
-      .order(:full_name, :id)
+    @user_id_options = authorized_scope(User.order(:full_name, :id))
       .pluck(:full_name, :id)
-    @case_study_id_options = CaseStudy
-      .order(:title, :id)
+    @case_study_id_options = authorized_scope(CaseStudy.order(:title, :id))
       .pluck(:title, :id)
   end
 end

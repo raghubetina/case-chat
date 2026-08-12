@@ -19,8 +19,18 @@ gem "cssbundling-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 
-# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+# Full account lifecycle on the existing User table. Password hashes stay in
+# Rodauth's separate table so ordinary User queries can never expose them.
+gem "bcrypt", "~> 3.1"
+gem "rodauth-i18n", "~> 0.11"
+gem "rodauth-rails", "~> 2.1"
+gem "sequel-activerecord_connection", "~> 2.0", require: false
+
+# Transactional mail in production; dormant until RESEND_API_KEY exists.
+gem "resend", "~> 1.6"
+
+# premailer turns the shared mailer stylesheet into email-safe inline styles.
+gem "premailer-rails"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[windows jruby]
@@ -42,6 +52,10 @@ gem "strong_migrations"
 
 # Paginate every collection (ceiling guardrail: Relations, never Arrays).
 gem "pagy"
+
+# Relationship-based authorization. Roles here are relational, not a column:
+# you author a case or you are enrolled in one.
+gem "action_policy", "~> 0.7"
 
 # Perimeter per-IP rate limiting; counters ride Rails.cache.
 gem "rack-attack"
@@ -97,6 +111,9 @@ group :development do
 
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Render messages locally; no development email can reach the internet.
+  gem "letter_opener"
 end
 
 group :test do

@@ -1,22 +1,26 @@
 class UsersController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_user, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
 
   def index
-    @pagy, @users = pagy(:offset, User.order(:id), limit: PAGE_LIMIT)
+    authorize! User, to: :index?
+    @pagy, @users = pagy(:offset, authorized_scope(User.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! User, to: :new?
     @user = User.new
   end
 
   def create
     @user = User.new(create_user_params)
+    authorize! @user
     if @user.save
       redirect_to user_path(@user), status: :see_other
     else
@@ -44,6 +48,7 @@ class UsersController < ApplicationController
 
   def set_user
     @user = User.find(params[:id])
+    authorize! @user
   end
 
   def set_return_to

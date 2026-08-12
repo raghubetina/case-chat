@@ -1,0 +1,41 @@
+<%= render "panel" do %>
+  <%= render "header", lede: t("auth.login.lede") %>
+
+  <%= form_with url: rodauth.login_path, method: :post, data: {turbo: false}, class: "space-y-5" do |form| %>
+    <div class="space-y-1.5">
+      <%= form.label rodauth.login_param, rodauth.login_label, class: "label font-medium" %>
+      <%= form.email_field rodauth.login_param,
+        value: params[rodauth.login_param],
+        id: "email",
+        autocomplete: "username",
+        required: true,
+        class: rodauth_input_class(rodauth, rodauth.login_param),
+        **rodauth_field_attributes(rodauth, rodauth.login_param) %>
+      <%= render "field_error", rodauth:, param_name: rodauth.login_param %>
+    </div>
+
+    <div class="space-y-1.5">
+      <%= form.label rodauth.password_param, rodauth.password_label, class: "label font-medium" %>
+      <%= form.password_field rodauth.password_param,
+        value: "",
+        id: "password",
+        autocomplete: rodauth.password_field_autocomplete_value,
+        required: true,
+        class: rodauth_input_class(rodauth, rodauth.password_param),
+        **rodauth_field_attributes(rodauth, rodauth.password_param) %>
+      <%= render "field_error", rodauth:, param_name: rodauth.password_param %>
+    </div>
+
+    <%= form.submit rodauth.login_button, class: "btn btn-primary w-full" %>
+  <% end %>
+
+  <div class="my-6 flex items-center gap-3 text-xs text-base-content/60">
+    <span class="h-px flex-1 bg-base-300"></span>
+    <span><%= t("auth.other_options") %></span>
+    <span class="h-px flex-1 bg-base-300"></span>
+  </div>
+  <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+    <%= link_to rodauth.reset_password_request_link_text, rodauth.reset_password_request_path, class: "link link-hover" %>
+    <%= link_to rodauth.create_account_link_text, rodauth.create_account_path, class: "link link-hover" %>
+  </div>
+<% end %>

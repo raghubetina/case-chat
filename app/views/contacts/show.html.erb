@@ -20,10 +20,14 @@
         <dt class="text-sm font-medium text-base-content/70"><%= I18n.t("foundation_domain.entities.contacts.fields.description") %></dt>
         <dd class="mt-1 whitespace-pre-wrap break-words"><%= @contact.description %></dd>
       </div>
-      <div>
-        <dt class="text-sm font-medium text-base-content/70"><%= I18n.t("foundation_domain.entities.contacts.fields.system_prompt") %></dt>
-        <dd class="mt-1 whitespace-pre-wrap break-words"><%= @contact.system_prompt %></dd>
-      </div>
+      <%# The system prompt is the case's answer key: it names what this contact
+          withholds and who they hand the student off to. Authors only. %>
+      <% if allowed_to?(:read_system_prompt?, @contact) %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/70"><%= I18n.t("foundation_domain.entities.contacts.fields.system_prompt") %></dt>
+          <dd class="mt-1 whitespace-pre-wrap break-words"><%= @contact.system_prompt %></dd>
+        </div>
+      <% end %>
       <div>
         <dt class="text-sm font-medium text-base-content/70"><%= I18n.t("foundation_domain.entities.contacts.fields.in_starting_directory") %></dt>
         <dd class="mt-1 whitespace-pre-wrap break-words"><%= @contact.in_starting_directory %></dd>

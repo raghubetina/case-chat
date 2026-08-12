@@ -1,23 +1,27 @@
 class ReferralsController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_referral, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @referrals = pagy(:offset, Referral.order(:id), limit: PAGE_LIMIT)
+    authorize! Referral, to: :index?
+    @pagy, @referrals = pagy(:offset, authorized_scope(Referral.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! Referral, to: :new?
     @referral = Referral.new
   end
 
   def create
     @referral = Referral.new(create_referral_params)
+    authorize! @referral
     if @referral.save
       redirect_to referral_path(@referral), status: :see_other
     else
@@ -46,7 +50,8 @@ class ReferralsController < ApplicationController
   private
 
   def set_referral
-    @referral = Referral.find(params[:id])
+    @referral = Referral.includes(referring_contact: :case_study).find(params[:id])
+    authorize! @referral
   end
 
   def set_return_to
@@ -87,11 +92,9 @@ class ReferralsController < ApplicationController
   end
 
   def load_reference_options
-    @referring_contact_id_options = Contact
-      .order(:full_name, :id)
+    @referring_contact_id_options = authorized_scope(Contact.order(:full_name, :id), as: :authored)
       .pluck(:full_name, :id)
-    @referred_contact_id_options = Contact
-      .order(:full_name, :id)
+    @referred_contact_id_options = authorized_scope(Contact.order(:full_name, :id), as: :authored)
       .pluck(:full_name, :id)
   end
 end

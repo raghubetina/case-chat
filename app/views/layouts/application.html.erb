@@ -41,6 +41,11 @@
         <%= render "shared/main_navigation" %>
       </div>
       <div class="navbar-end hotwire-native-toolbar">
+        <% if current_user %>
+          <%= button_to t("nav.sign_out"), rodauth.logout_path, method: :post, class: "btn btn-ghost btn-sm", form: {data: {turbo: false}} %>
+        <% else %>
+          <%= link_to t("nav.sign_in"), rodauth.login_path, class: "btn btn-ghost btn-sm" %>
+        <% end %>
         <%# The single sanctioned theme knob: pick one of the four Design themes,
             or "auto" to follow the OS preference (chicago by day, dusk by night). %>
         <div class="dropdown dropdown-end" data-controller="theme">

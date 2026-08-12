@@ -1,23 +1,27 @@
 class ConversationsController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_conversation, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @conversations = pagy(:offset, Conversation.order(:id), limit: PAGE_LIMIT)
+    authorize! Conversation, to: :index?
+    @pagy, @conversations = pagy(:offset, authorized_scope(Conversation.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! Conversation, to: :new?
     @conversation = Conversation.new
   end
 
   def create
     @conversation = Conversation.new(create_conversation_params)
+    authorize! @conversation
     if @conversation.save
       redirect_to conversation_path(@conversation), status: :see_other
     else
@@ -46,7 +50,8 @@ class ConversationsController < ApplicationController
   private
 
   def set_conversation
-    @conversation = Conversation.find(params[:id])
+    @conversation = Conversation.includes(:enrollment, {contact: :case_study}).find(params[:id])
+    authorize! @conversation
   end
 
   def set_return_to
@@ -87,11 +92,9 @@ class ConversationsController < ApplicationController
   end
 
   def load_reference_options
-    @enrollment_id_options = Enrollment
-      .order(:created_at, :id)
+    @enrollment_id_options = authorized_scope(Enrollment.order(:created_at, :id))
       .pluck(:created_at, :id)
-    @contact_id_options = Contact
-      .order(:full_name, :id)
+    @contact_id_options = authorized_scope(Contact.order(:full_name, :id))
       .pluck(:full_name, :id)
   end
 end

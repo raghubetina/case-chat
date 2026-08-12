@@ -1,0 +1,6 @@
+<%= render "panel" do %>
+  <%= render "header", lede: t("auth.verify_account.lede") %>
+  <%= form_with url: rodauth.verify_account_path, method: :post, data: {turbo: false} do |form| %>
+    <%= form.submit rodauth.verify_account_button, class: "btn btn-primary w-full" %>
+  <% end %>
+<% end %>
