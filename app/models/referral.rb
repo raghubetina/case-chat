@@ -12,8 +12,8 @@
 #
 # Indexes
 #
-#  index_referrals_on_referred_contact_id   (referred_contact_id)
-#  index_referrals_on_referring_contact_id  (referring_contact_id)
+#  idx_on_referring_contact_id_referred_contact_id_0890d13c31  (referring_contact_id,referred_contact_id) UNIQUE
+#  index_referrals_on_referred_contact_id                      (referred_contact_id)
 #
 # Foreign Keys
 #
@@ -25,5 +25,6 @@ class Referral < ApplicationRecord
   belongs_to :referred_contact, class_name: "Contact", optional: false
 
   validates :condition, presence: true
+  validates :referred_contact_id, uniqueness: {scope: :referring_contact_id}
   validates :enabled, inclusion: {in: [true, false]}
 end

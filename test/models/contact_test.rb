@@ -17,7 +17,7 @@ require_relative "domain_test_helper"
 #
 # Indexes
 #
-#  index_contacts_on_case_study_id  (case_study_id)
+#  index_contacts_on_case_study_id_and_lower_full_name  (case_study_id, lower((full_name)::text)) UNIQUE
 #
 # Foreign Keys
 #

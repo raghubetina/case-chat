@@ -12,7 +12,7 @@ class CaseDraftJob < ApplicationJob
     return if case_draft.nil? || !case_draft.drafting?
 
     case_study = case_draft.case_study
-    documents = Document.where(case_study_id: case_study.id).order(:file_name).to_a
+    documents = Document.where(case_study_id: case_study.id).with_attached_file.order(:file_name).to_a
 
     case_draft.store!(CaseDrafter.current.draft(documents: documents, hint: case_draft.hint))
     broadcast(case_draft, case_study)

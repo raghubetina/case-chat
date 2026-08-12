@@ -51,4 +51,10 @@ ActiveRecordDoctor.configure do
   detector :missing_presence_validation, ignore_attributes: rodauth_models.flat_map { |model|
     %w[key password_hash requested_at email_last_sent deadline number].map { |attr| "#{model}.#{attr}" }
   }
+
+  # contacts.case_study_id is indexed, by
+  # index_contacts_on_case_study_id_and_lower_full_name, which leads with it.
+  # The detector reads column lists and cannot see the leading column of an
+  # expression index, so it reports a foreign key that is in fact covered.
+  detector :unindexed_foreign_keys, ignore_columns: ["contacts.case_study_id"]
 end

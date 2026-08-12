@@ -6,6 +6,26 @@
 # The row exists from the moment drafting starts, because drafting takes about
 # two minutes against real material and the author needs something to come back
 # to. Only `ready` carries a payload.
+# == Schema Information
+#
+# Table name: case_drafts
+#
+#  id            :uuid             not null, primary key
+#  hint          :text
+#  payload       :jsonb
+#  status        :integer          default("drafting"), not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  case_study_id :uuid             not null
+#
+# Indexes
+#
+#  index_case_drafts_on_case_study_id  (case_study_id) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (case_study_id => case_studies.id)
+#
 class CaseDraft < ApplicationRecord
   enum :status, {drafting: 0, ready: 1, failed: 2}
 

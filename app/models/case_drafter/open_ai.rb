@@ -15,7 +15,7 @@ module CaseDrafter
         text: {format: {type: "json_schema", name: "case_draft", schema: Prompt::SCHEMA, strict: true}},
         store: false
       )
-      Parser.call(JSON.parse(response.output_text))
+      Parser.call(JSON.parse(response.output_text), file_names: documents.map(&:file_name).to_set)
     rescue ::OpenAI::Errors::APIError => e
       raise Error, "OpenAI draft failed: #{e.class} #{e.message}"
     rescue JSON::ParserError => e
@@ -34,15 +34,22 @@ module CaseDrafter
       blocks
     end
 
+    # input_file carries PDFs. Everything else readable is text, and inlining it
+    # under its own filename is how the model knows which table it is looking
+    # at — silently skipping it would let a draft be proposed from material the
+    # model never saw.
     def file_block(document)
-      return nil unless document.file.attached?
-      return nil unless document.file.content_type == "application/pdf"
+      return nil unless CaseDrafter.readable?(document)
 
-      {
-        type: "input_file",
-        filename: document.file_name,
-        file_data: "data:application/pdf;base64,#{Base64.strict_encode64(document.file.download)}"
-      }
+      if document.file.content_type == CaseDrafter::PDF_TYPE
+        {
+          type: "input_file",
+          filename: document.file_name,
+          file_data: "data:#{CaseDrafter::PDF_TYPE};base64,#{Base64.strict_encode64(document.file.download)}"
+        }
+      else
+        {type: "input_text", text: "### #{document.file_name}\n\n#{document.file.download}"}
+      end
     end
   end
 end

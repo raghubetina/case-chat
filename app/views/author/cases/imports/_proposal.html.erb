@@ -1,3 +1,4 @@
+<% existing_names = Contact.where(case_study_id: case_study.id).pluck(:full_name).to_set %>
 <div id="<%= dom_id(case_draft, :proposal) %>" class="flex flex-col gap-6">
   <% if case_draft.drafting? %>
     <div class="flex items-center gap-4 rounded-lg border border-line bg-surface p-6">
@@ -33,6 +34,12 @@
           <span class="kick w-[110px] shrink-0 pt-1 text-xs text-mute"><%= t("author.cases.fields.title") %></span>
           <span class="min-w-[220px] flex-1 text-base"><%= draft.title %></span>
         </div>
+        <% if draft.course.present? %>
+          <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
+            <span class="kick w-[110px] shrink-0 pt-1 text-xs text-mute"><%= t("author.cases.fields.course") %></span>
+            <span class="min-w-[220px] flex-1 text-base"><%= draft.course %></span>
+          </div>
+        <% end %>
         <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
           <span class="kick w-[110px] shrink-0 pt-1 text-xs text-mute"><%= t("author.cases.fields.background") %></span>
           <span class="min-w-[220px] flex-1 whitespace-pre-wrap text-base text-mute"><%= draft.background %></span>
@@ -47,15 +54,28 @@
         <h3 class="kick text-xs text-accent"><%= t("author.cases.cast") %></h3>
         <div class="flex flex-col">
           <% draft.contacts.each do |contact| %>
-            <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
-              <span class="flex w-[170px] shrink-0 flex-col">
-                <span class="text-base font-medium"><%= contact.full_name %></span>
-                <span class="text-base text-mute"><%= contact.role_title %></span>
-              </span>
-              <span class="min-w-[200px] flex-1 text-sm text-mute"><%= contact.description %></span>
-              <% if contact.in_starting_directory %>
-                <span class="kick shrink-0 rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.in_starting") %></span>
-              <% end %>
+            <div class="flex flex-col gap-3 border-t border-line py-4">
+              <div class="flex flex-wrap items-start gap-4">
+                <span class="flex w-[170px] shrink-0 flex-col">
+                  <span class="text-base font-medium"><%= contact.full_name %></span>
+                  <span class="text-base text-mute"><%= contact.role_title %></span>
+                </span>
+                <span class="min-w-[200px] flex-1 text-sm text-mute"><%= contact.description %></span>
+                <span class="flex shrink-0 flex-wrap gap-2">
+                  <% if contact.in_starting_directory %>
+                    <span class="kick rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.in_starting") %></span>
+                  <% end %>
+                  <% if existing_names.include?(contact.full_name) %>
+                    <span class="kick rounded-md bg-wash px-2 py-1 text-xs text-error"><%= t("author.imports.will_overwrite") %></span>
+                  <% end %>
+                </span>
+              </div>
+              <details class="rounded-lg border border-line bg-wash">
+                <summary class="cursor-pointer px-4 py-2 text-sm font-medium">
+                  <%= t("author.imports.read_prompt", name: contact.full_name) %>
+                </summary>
+                <p class="whitespace-pre-wrap px-4 pb-4 pt-1 text-sm text-mute"><%= contact.system_prompt %></p>
+              </details>
             </div>
           <% end %>
         </div>
@@ -90,6 +110,12 @@
             <% end %>
           </div>
         </div>
+      <% end %>
+
+      <% if existing_names.intersect?(draft.contacts.map(&:full_name).to_set) %>
+        <p class="rounded-lg border border-error bg-wash p-4 text-sm text-mute">
+          <%= t("author.imports.overwrite_warning") %>
+        </p>
       <% end %>
 
       <div class="flex flex-wrap items-center gap-3 border-t border-line pt-6">

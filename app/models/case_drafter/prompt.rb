@@ -59,13 +59,19 @@ module CaseDrafter
 
     # A schema both providers can enforce, so the draft arrives structured
     # rather than as prose we would have to parse back apart.
+    #
+    # Every property is listed in `required`, and anything genuinely optional is
+    # nullable instead of absent. That is not a stylistic choice: OpenAI's
+    # strict structured outputs rejects the whole request with a 400 unless
+    # `required` names every key in `properties`. Optional-by-omission is
+    # exactly what it refuses.
     SCHEMA = {
       type: "object",
       additionalProperties: false,
-      required: %w[title background assignment contacts referrals share_rules],
+      required: %w[title course background assignment notes contacts referrals share_rules],
       properties: {
         title: {type: "string"},
-        course: {type: "string"},
+        course: {type: %w[string null]},
         background: {type: "string"},
         assignment: {type: "string"},
         notes: {
@@ -82,7 +88,7 @@ module CaseDrafter
             properties: {
               full_name: {type: "string"},
               role_title: {type: "string"},
-              description: {type: "string", description: "One or two sentences, shown to students in the directory."},
+              description: {type: %w[string null], description: "One or two sentences, shown to students in the directory."},
               system_prompt: {type: "string", description: "Second person. What they know, what they withhold, how they speak."},
               in_starting_directory: {type: "boolean"}
             }

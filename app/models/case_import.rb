@@ -6,13 +6,18 @@
 class CaseImport
   Result = Data.define(:case_study, :contacts, :referrals, :share_rules, :reachability)
 
-  def initialize(case_study, draft)
+  def initialize(case_study, draft, case_draft: nil)
     @case_study = case_study
     @draft = draft
+    @case_draft = case_draft
   end
 
   def apply!
     ApplicationRecord.transaction do
+      # Consuming the proposal inside the same transaction that applies it is
+      # what makes a double-submitted accept harmless: the second one finds
+      # nothing to accept instead of applying the same draft again.
+      @case_draft&.destroy!
       update_case
       contacts = build_contacts
       referrals = build_referrals(contacts)

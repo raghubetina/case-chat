@@ -3,11 +3,6 @@ module CaseDrafter
     MODEL = "claude-opus-5".freeze
     MAX_TOKENS = 32_000
 
-    # PDFs go to the model as document blocks rather than being text-extracted
-    # first: layout carries meaning in a case (exhibits, tables, footnotes), and
-    # extraction throws that away before the model ever sees it.
-    READABLE = %w[application/pdf text/csv text/plain text/markdown].freeze
-
     def initialize(client: nil, model: MODEL)
       @client = client
       @model = model
@@ -23,7 +18,7 @@ module CaseDrafter
         },
         messages: [{role: "user", content: content_for(documents, hint)}]
       )
-      Parser.call(JSON.parse(stream.accumulated_text))
+      Parser.call(JSON.parse(stream.accumulated_text), file_names: documents.map(&:file_name).to_set)
     rescue ::Anthropic::Errors::APIError => e
       raise Error, "Anthropic draft failed: #{e.class} #{e.message}"
     rescue JSON::ParserError => e
@@ -42,19 +37,26 @@ module CaseDrafter
       blocks
     end
 
+    # A document block takes one of two source shapes, and sending the wrong
+    # one is a 400, not a degraded read: the base64 source accepts
+    # application/pdf and nothing else, while text arrives unencoded as
+    # text/plain regardless of whether it started as CSV or Markdown.
     def document_block(document)
-      return nil unless document.file.attached?
-      return nil unless READABLE.include?(document.file.content_type)
+      return nil unless CaseDrafter.readable?(document)
 
-      {
-        type: "document",
-        source: {
+      {type: "document", source: source_for(document), title: document.file_name}
+    end
+
+    def source_for(document)
+      if document.file.content_type == CaseDrafter::PDF_TYPE
+        {
           type: "base64",
-          media_type: document.file.content_type,
+          media_type: CaseDrafter::PDF_TYPE,
           data: Base64.strict_encode64(document.file.download)
-        },
-        title: document.file_name
-      }
+        }
+      else
+        {type: "text", media_type: "text/plain", data: document.file.download}
+      end
     end
   end
 end

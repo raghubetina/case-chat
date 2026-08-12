@@ -22,6 +22,19 @@ module CaseDrafter
 
   class Error < StandardError; end
 
+  # What a drafter can actually read. PDFs keep their layout, which carries
+  # meaning in a case (exhibits, tables, footnotes); everything else here is
+  # text a provider will accept inline. A file outside this list is listed to
+  # the model by name but its contents are never sent, and the review screen
+  # says so rather than implying it was read.
+  PDF_TYPE = "application/pdf".freeze
+  TEXT_TYPES = %w[text/csv text/plain text/markdown].freeze
+  READABLE_TYPES = ([PDF_TYPE] + TEXT_TYPES).freeze
+
+  def self.readable?(document)
+    document.file.attached? && READABLE_TYPES.include?(document.file.content_type)
+  end
+
   # A draft is proposed, reviewed, and only then applied, so it has to survive
   # between two requests. It goes to the cache rather than the session cookie:
   # a real draft is several KB and would silently overflow the 4KB cookie.
@@ -59,8 +72,18 @@ module CaseDrafter
   class << self
     attr_writer :current
 
+    # Deliberately no fallback. A typo in RESPONDER used to select the fake
+    # drafter, which proposes a canned cast without reading anything — and an
+    # author would then accept that invented cast as if a model had read their
+    # case.
     def current
-      @current ||= ADAPTERS.fetch(Responder.configured_name) { ADAPTERS.fetch("fake") }.call
+      @current ||= adapter_for(Responder.configured_name)
+    end
+
+    def adapter_for(name)
+      ADAPTERS.fetch(name) {
+        raise Error, "Unknown drafter #{name.inspect}; expected one of #{ADAPTERS.keys.join(", ")}"
+      }.call
     end
 
     def reset! = @current = nil

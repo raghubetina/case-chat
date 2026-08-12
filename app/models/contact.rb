@@ -14,7 +14,7 @@
 #
 # Indexes
 #
-#  index_contacts_on_case_study_id  (case_study_id)
+#  index_contacts_on_case_study_id_and_lower_full_name  (case_study_id, lower((full_name)::text)) UNIQUE
 #
 # Foreign Keys
 #
@@ -32,6 +32,8 @@ class Contact < ApplicationRecord
   has_many :documents, -> { distinct }, through: :share_rules, source: :document
 
   validates :full_name, presence: true
+  # A cast is addressed by name; two Danas make every referral to "Dana" ambiguous.
+  validates :full_name, uniqueness: {scope: :case_study_id, case_sensitive: false}
   validates :role_title, presence: true
   validates :system_prompt, presence: true
   validates :in_starting_directory, inclusion: {in: [true, false]}

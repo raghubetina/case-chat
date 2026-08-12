@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_234500) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,7 +80,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_234500) do
     t.string "role_title", null: false
     t.text "system_prompt", null: false
     t.datetime "updated_at", null: false
-    t.index ["case_study_id"], name: "index_contacts_on_case_study_id"
+    t.index "case_study_id, lower((full_name)::text)", name: "index_contacts_on_case_study_id_and_lower_full_name", unique: true
   end
 
   create_table "conversations", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -155,7 +155,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_234500) do
     t.uuid "referring_contact_id", null: false
     t.datetime "updated_at", null: false
     t.index ["referred_contact_id"], name: "index_referrals_on_referred_contact_id"
-    t.index ["referring_contact_id"], name: "index_referrals_on_referring_contact_id"
+    t.index ["referring_contact_id", "referred_contact_id"], name: "idx_on_referring_contact_id_referred_contact_id_0890d13c31", unique: true
   end
 
   create_table "share_rules", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|

@@ -167,12 +167,14 @@ en:
       no_documents: Upload at least one file before drafting a case from it.
       nothing_to_accept: There is no draft to accept. Draft one first.
       no_referrals: The draft proposes no referrals, so anyone outside the starting directory would be unreachable.
-      not_read: No file, will be skipped
+      not_read: Not a readable file — listed by name only
       notes: Check these
       proposed: Proposed draft
       proposed_note: Nothing is created until you accept it.
       proposed_referrals: Proposed referrals
+      overwrite_warning: Some of these people already exist in this case. Accepting replaces their role, description, and system prompt with the drafted version. Their conversations stay attached to the rewritten person.
       proposed_shares: Proposed documents to share
+      read_prompt: "Read %{name}'s system prompt — this is what they know and withhold"
       redraft: Draft again
       share_summary: "%{contact} — %{condition}"
       started: Reading your documents. The draft will appear here when it is ready.
@@ -180,6 +182,7 @@ en:
       what_was_read: What will be read
       working: Reading your documents
       working_note: This takes a couple of minutes on a full case. You can leave this page and come back.
+      will_overwrite: Replaces an existing contact
       will_read: Will be read
     referrals:
       add: Add referral

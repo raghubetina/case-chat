@@ -86,6 +86,82 @@ class CaseImportTest < ActionDispatch::IntegrationTest
       "an imported cast whose referrals were applied should leave nobody stranded"
   end
 
+  test "the review screen shows what accepting will actually write" do
+    draft_now
+    get new_author_case_import_path(@case_study)
+
+    # Accepting overwrites every contact's system prompt, and the prompt is the
+    # thing an author is here to check. A review that hides it is not a review.
+    @drafted.contacts.each do |contact|
+      assert_match(/#{Regexp.escape(contact.system_prompt)}/, response.body,
+        "#{contact.full_name}'s system prompt must be readable before accepting")
+    end
+  end
+
+  test "warns when accepting would overwrite someone the author wrote by hand" do
+    hand_written = Contact.create!(
+      case_study: @case_study, full_name: @drafted.contacts.first.full_name,
+      role_title: "Written by hand", system_prompt: "You are the author's own work."
+    )
+    draft_now
+
+    get new_author_case_import_path(@case_study)
+
+    assert_match(/#{Regexp.escape(I18n.t("author.imports.will_overwrite"))}/, response.body)
+    assert_match(/#{Regexp.escape(I18n.t("author.imports.overwrite_warning"))}/, response.body)
+    assert_equal "Written by hand", hand_written.reload.role_title,
+      "reviewing must not have changed anything yet"
+  end
+
+  test "a rolled-back accept leaves the proposal acceptable rather than losing it" do
+    draft_now
+    # A same-name-different-case contact: the import looks for an exact name,
+    # does not find it, and builds a second person the case-insensitive
+    # uniqueness rule then rejects — mid-transaction.
+    Contact.create!(
+      case_study: @case_study, full_name: @drafted.contacts.first.full_name.downcase,
+      role_title: "Already here", system_prompt: "You were here first."
+    )
+
+    assert_raises(ActiveRecord::RecordInvalid) do
+      post author_case_import_path(@case_study, accept: 1)
+    end
+
+    assert CaseDraft.exists?(case_study_id: @case_study.id),
+      "a proposal consumed by a rolled-back accept would be lost for nothing"
+  end
+
+  # What actually stops two simultaneous accepts from each building the cast:
+  # the database refuses the second one. The transaction ordering in CaseImport
+  # is defence in depth on top of this.
+  test "the database refuses a second person with the same name in one case" do
+    draft_now
+    post author_case_import_path(@case_study, accept: 1)
+    existing = Contact.find_by!(case_study_id: @case_study.id, full_name: @drafted.contacts.first.full_name)
+
+    duplicate = Contact.new(
+      case_study_id: @case_study.id, full_name: existing.full_name,
+      role_title: "Impostor", system_prompt: "You are also them."
+    )
+
+    assert_not duplicate.valid?
+    assert_raises(ActiveRecord::RecordNotUnique) { duplicate.save!(validate: false) }
+  end
+
+  test "the database refuses the same referral twice" do
+    draft_now
+    post author_case_import_path(@case_study, accept: 1)
+    referral = Referral.where(referring_contact_id: Contact.where(case_study_id: @case_study.id).select(:id)).first
+
+    duplicate = Referral.new(
+      referring_contact_id: referral.referring_contact_id,
+      referred_contact_id: referral.referred_contact_id, condition: "again"
+    )
+
+    assert_not duplicate.valid?
+    assert_raises(ActiveRecord::RecordNotUnique) { duplicate.save!(validate: false) }
+  end
+
   test "accepting consumes the proposal" do
     draft_now
     assert CaseDraft.exists?(case_study_id: @case_study.id)
