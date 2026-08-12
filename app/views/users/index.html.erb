@@ -1,0 +1,56 @@
+<% content_for :title, t("foundation_domain.entities.users.index.title") %>
+
+<section class="py-10 sm:py-14">
+  <header class="mb-8 flex items-end justify-between gap-4">
+    <div>
+      <p class="text-sm font-medium text-primary"><%= t("app_name") %></p>
+      <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"><%= t("foundation_domain.entities.users.index.heading") %></h1>
+      <p class="mt-2 text-sm/6 text-base-content/70"><%= t("foundation_domain.entities.users.index.lede") %></p>
+    </div>
+    <%= link_to t("foundation_domain.entities.users.new.action"), new_user_path(return_to: "foundation:mutation-record:show"),
+      class: "btn btn-primary" %>
+  </header>
+
+  <% if @users.load.any? %>
+    <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+      <table class="table">
+        <caption class="sr-only"><%= t("foundation_domain.entities.users.index.caption") %></caption>
+        <thead>
+          <tr>
+            <th scope="col"><%= t("foundation_domain.entities.users.index.descriptor_label") %></th>
+            <th scope="col"><%= t("foundation_domain.entities.users.index.actions") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @users.each do |user| %>
+            <tr>
+              <td>
+                <%= link_to user_path(user), class: "link link-hover font-medium" do %>
+                  <%= user.full_name.presence || t("foundation_domain.entities.users.show.unnamed", id: user.id) %>
+                <% end %>
+              </td>
+          <td class="text-right">
+            <%= link_to t("foundation_domain.entities.users.edit.action"), edit_user_path(user, return_to: user_path(user)),
+              class: "btn btn-ghost btn-sm" %>
+          </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= render "shared/foundation_pagination", pagy: @pagy %>
+  <% elsif @pagy.count.positive? %>
+    <section class="rounded-box border border-dashed border-base-300 bg-base-100 px-6 py-12 text-center">
+      <h2 class="text-lg font-semibold"><%= t("foundation_domain.pagination.empty.heading") %></h2>
+      <p class="mt-2 text-sm/6 text-base-content/70"><%= t("foundation_domain.pagination.empty.body") %></p>
+      <%= link_to t("foundation_domain.pagination.empty.action"), users_path,
+        class: "btn btn-primary mt-5" %>
+    </section>
+    <%= render "shared/foundation_pagination", pagy: @pagy %>
+  <% else %>
+    <section class="rounded-box border border-dashed border-base-300 bg-base-100 px-6 py-12 text-center">
+      <h2 class="text-lg font-semibold"><%= t("foundation_domain.entities.users.empty.heading") %></h2>
+      <p class="mt-2 text-sm/6 text-base-content/70"><%= t("foundation_domain.entities.users.empty.body") %></p>
+    </section>
+  <% end %>
+</section>

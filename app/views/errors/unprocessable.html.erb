@@ -1,0 +1,12 @@
+<% content_for :title, t("errors.unprocessable.heading") %>
+
+<section class="hero mt-16">
+  <div class="hero-content text-center py-16">
+    <div class="max-w-md">
+      <p class="text-6xl font-bold text-base-content/60"><%= t("errors.unprocessable.code") %></p>
+      <h1 class="text-2xl font-bold mt-4"><%= t("errors.unprocessable.heading") %></h1>
+      <p class="py-4 text-base-content/70"><%= t("errors.unprocessable.body") %></p>
+      <%= link_to t("errors.back_home"), root_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+</section>

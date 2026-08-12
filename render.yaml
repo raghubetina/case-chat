@@ -1,0 +1,45 @@
+# One-Blueprint deploy: a single web service (the shipped Dockerfile, Thruster in
+# front of Puma; the entrypoint runs db:prepare on boot). The database is external
+# (Neon) - provide DATABASE_URL at Blueprint creation. SECRET_KEY_BASE and the
+# runtime profile are configured automatically (see DEPLOY.md).
+services:
+  - type: web
+    name: case_chat
+    runtime: docker
+    # Foundation deliberately omits `plan`: Render defaults a new service to
+    # paid Starter and preserves an existing service's current instance type.
+    # The Compiler may add `plan: free` only for an explicit disposable demo.
+    region: ohio # US East (AWS us-east-2); create the Neon database in the same region
+    autoDeployTrigger: checksPass
+    healthCheckPath: /ready
+    envVars:
+      - key: PORT
+        value: "80"
+      - key: RAILS_ENV
+        value: "production"
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      # Render otherwise injects WEB_CONCURRENCY=1, which starts Puma cluster
+      # mode and wastes memory on a single 512MB instance.
+      - key: WEB_CONCURRENCY
+        value: "0"
+      - key: RAILS_MAX_THREADS
+        value: "3"
+      # Three Puma threads + in-process Solid Queue need shared pool headroom.
+      - key: DB_POOL
+        value: "8"
+      - key: SOLID_QUEUE_IN_PUMA
+        value: "true"
+      - key: RACK_TIMEOUT_SERVICE_TIMEOUT
+        value: "15"
+      - key: RAILS_LOG_LEVEL
+        value: "info"
+      - key: BUNDLE_WITHOUT
+        value: "development:test"
+      # External Postgres (Neon), created in AWS us-east-2 to match this region.
+      # Paste the DIRECT connection string (pooling toggle off, no -pooler in the
+      # host) at Blueprint creation: db:prepare on boot + our SET-based statement/
+      # lock timeouts need session state the pooler drops. It carries Solid Cache/
+      # Queue/Cable too.
+      - key: DATABASE_URL
+        sync: false

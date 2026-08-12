@@ -1,0 +1,25 @@
+<% descriptor = @enrollment.created_at.presence || t("foundation_domain.entities.enrollments.show.unnamed", id: @enrollment.id) %>
+<% content_for :title, t("foundation_domain.entities.enrollments.show.title", descriptor: descriptor) %>
+
+<section class="mx-auto max-w-2xl py-10 sm:py-14">
+  <header class="mb-8">
+    <p class="text-sm font-medium text-primary"><%= t("app_name") %></p>
+    <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"><%= descriptor %></h1>
+  </header>
+
+    <dl class="mb-8 grid gap-6 sm:grid-cols-2">
+      <div>
+        <dt class="text-sm font-medium text-base-content/70"><%= I18n.t("foundation_domain.entities.enrollments.fields.last_active_at") %></dt>
+        <dd class="mt-1 whitespace-pre-wrap break-words"><%= @enrollment.last_active_at %></dd>
+      </div>
+    </dl>
+
+  <div class="flex items-center gap-3">
+    <%= link_to t("foundation_domain.entities.enrollments.show.back"), enrollments_path, class: "btn btn-ghost" %>
+    <%= link_to t("foundation_domain.entities.enrollments.edit.action"), edit_enrollment_path(@enrollment, return_to: enrollment_path(@enrollment)),
+      class: "btn btn-primary" %>
+    <%= button_to t("foundation_domain.entities.enrollments.destroy.action"), enrollment_path(@enrollment),
+      method: :delete, params: {return_to: enrollments_path}, class: "btn btn-error btn-outline",
+      form: {data: {turbo_confirm: t("foundation_domain.entities.enrollments.destroy.confirm")}} %>
+  </div>
+</section>

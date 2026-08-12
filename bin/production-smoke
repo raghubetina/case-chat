@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+suffix="${GITHUB_RUN_ID:-$$}-${GITHUB_RUN_ATTEMPT:-0}"
+image="rails-app-production-smoke:${suffix}"
+network="rails-app-smoke-${suffix}"
+database="rails-app-smoke-db-${suffix}"
+app="rails-app-smoke-web-${suffix}"
+postgres_image="${POSTGRES_IMAGE:-postgres:18}"
+token="${suffix}"
+
+cleanup() {
+  status=$?
+  trap - EXIT INT TERM
+  if (( status != 0 )) && docker inspect "${app}" >/dev/null 2>&1; then
+    echo "Production container logs:" >&2
+    docker logs "${app}" >&2 || true
+  fi
+  docker rm --force "${app}" "${database}" >/dev/null 2>&1 || true
+  docker network rm "${network}" >/dev/null 2>&1 || true
+  docker image rm "${image}" >/dev/null 2>&1 || true
+  exit "${status}"
+}
+trap cleanup EXIT INT TERM
+
+wait_for_health() {
+  container=$1
+  attempts=$2
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${container}")"
+    [[ "${health}" == "healthy" ]] && return 0
+    [[ "${health}" == "exited" || "${health}" == "dead" || "${health}" == "unhealthy" ]] && return 1
+    sleep 1
+  done
+  return 1
+}
+
+assert_http_status() {
+  expected=$1
+  url=$2
+  shift 2
+  actual="$(curl --silent --output /dev/null --write-out '%{http_code}' "$@" "${url}")"
+  [[ "${actual}" == "${expected}" ]] || {
+    echo "Expected HTTP ${expected} from ${url}, got ${actual}" >&2
+    return 1
+  }
+}
+
+assert_enforced_csp() {
+  url=$1
+  shift
+  headers="$(curl --silent --show-error --dump-header - --output /dev/null "$@" "${url}")"
+
+  grep --ignore-case --quiet '^content-security-policy:' <<<"${headers}" || {
+    echo "Expected an enforced Content-Security-Policy header from ${url}" >&2
+    return 1
+  }
+  if grep --ignore-case --quiet '^content-security-policy-report-only:' <<<"${headers}"; then
+    echo "Expected no report-only Content-Security-Policy header from ${url}" >&2
+    return 1
+  fi
+}
+
+cd "${root}"
+bin/package-manager-check
+docker build --tag "${image}" .
+
+runtime_user="$(docker run --rm --entrypoint id "${image}" -u)"
+[[ "${runtime_user}" == "1000" ]] || { echo "Expected runtime UID 1000, got ${runtime_user}" >&2; exit 1; }
+for excluded_gem in brakeman foreman image_processing ruby-vips selenium-webdriver standard; do
+  if docker run --rm --entrypoint bundle "${image}" show "${excluded_gem}" >/dev/null 2>&1; then
+    echo "Production image unexpectedly contains ${excluded_gem}" >&2
+    exit 1
+  fi
+done
+if docker run --rm --entrypoint dpkg-query "${image}" --show "libvips*" >/dev/null 2>&1; then
+  echo "Production image unexpectedly contains libvips" >&2
+  exit 1
+fi
+if docker run --rm --entrypoint sh "${image}" -c 'find /rails/public/assets -type f -name "application-*.js.map" -print -quit | grep -q .' ; then
+  echo "Production image unexpectedly publishes its application source map" >&2
+  exit 1
+fi
+
+docker network create "${network}" >/dev/null
+docker run --detach --name "${database}" --network "${network}" \
+  --env POSTGRES_USER=postgres \
+  --env POSTGRES_PASSWORD=postgres \
+  --env POSTGRES_DB=app_production \
+  --health-cmd='pg_isready -U postgres -d app_production' \
+  --health-interval=1s --health-timeout=3s --health-retries=30 \
+  "${postgres_image}" >/dev/null
+wait_for_health "${database}" 45 || { docker logs "${database}" >&2; exit 1; }
+
+database_url="postgres://postgres:postgres@${database}:5432/app_production"
+docker run --detach --name "${app}" --network "${network}" --publish 127.0.0.1::80 \
+  --env DATABASE_URL="${database_url}" \
+  --env SECRET_KEY_BASE="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
+  --env WEB_CONCURRENCY=0 \
+  --env RAILS_MAX_THREADS=3 \
+  --env DB_POOL=8 \
+  --env SOLID_QUEUE_IN_PUMA=true \
+  --env RENDER_EXTERNAL_HOSTNAME=render.test \
+  --env SMOKE_TOKEN="${token}" \
+  --env 'RUBYOPT=-rbundler/setup -r/rails/script/production_smoke_job' \
+  "${image}" >/dev/null
+wait_for_health "${app}" 120 || exit 1
+
+host_port="$(docker port "${app}" 80/tcp | head -1 | awk -F: '{print $NF}')"
+base_url="http://127.0.0.1:${host_port}"
+assert_http_status 200 "${base_url}/" --header 'Host: render.test'
+assert_http_status 200 "${base_url}/" --header 'Host: attacker.test'
+assert_http_status 200 "${base_url}/up" --header 'Host: internal-probe'
+assert_http_status 200 "${base_url}/ready" --header 'Host: internal-probe'
+assert_http_status 404 "${base_url}/production-smoke-missing" --header 'Host: render.test'
+assert_enforced_csp "${base_url}/production-smoke-missing" --header 'Host: render.test'
+
+docker exec "${app}" bin/rails runner \
+  'key = "production-smoke:cache"; Rails.cache.write(key, ENV.fetch("SMOKE_TOKEN")); abort "Solid Cache failed" unless Rails.cache.read(key) == ENV.fetch("SMOKE_TOKEN")'
+
+cable_before="$(docker exec "${app}" bin/rails runner 'puts ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM solid_cable_messages")')"
+docker exec "${app}" bin/rails runner 'ActionCable.server.broadcast("production-smoke", {ok: true})'
+for _ in {1..20}; do
+  cable_after="$(docker exec "${app}" bin/rails runner 'puts ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM solid_cable_messages")')"
+  (( cable_after > cable_before )) && break
+  sleep 1
+done
+(( cable_after > cable_before )) || { echo "Solid Cable did not persist a broadcast" >&2; exit 1; }
+
+docker exec "${app}" bin/rails runner \
+  '6.times { |index| ProductionSmokeJob.perform_later("#{ENV.fetch("SMOKE_TOKEN")}-#{index}") }'
+
+# Exercise the shared connection budget while Solid Queue performs jobs. This
+# is deliberately small: enough to catch pool starvation without becoming a
+# load test whose timing depends on the CI runner.
+request_pids=()
+for _ in {1..6}; do
+  curl --fail --silent --show-error --header 'Host: internal-probe' "${base_url}/ready" >/dev/null &
+  request_pids+=("$!")
+done
+for request_pid in "${request_pids[@]}"; do
+  wait "${request_pid}"
+done
+
+for _ in {1..45}; do
+  if docker exec "${app}" bin/rails runner \
+    'exit(6.times.all? { |index| Rails.cache.read("production-smoke:job:#{ENV.fetch("SMOKE_TOKEN")}-#{index}") == "performed" } ? 0 : 1)'; then
+    job_performed=true
+    break
+  fi
+  sleep 1
+done
+[[ "${job_performed:-false}" == "true" ]] || { echo "Solid Queue did not perform the smoke job" >&2; exit 1; }
+
+echo "Production image booted as non-root; attachment processors absent; db:prepare, readiness, Solid Cache, Cable, and Queue passed"

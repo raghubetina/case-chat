@@ -1,0 +1,356 @@
+---
+en:
+  foundation_domain:
+    navigation:
+      label: "Primary navigation"
+    pagination:
+      label: "Pagination"
+      empty:
+        heading: "That page is empty"
+        body: "Choose another page to keep browsing this collection."
+        action: "Back to the first page"
+    form:
+      errors:
+        heading: "Please correct the highlighted fields"
+      cancel: "Cancel"
+    entities:
+      "users":
+        index:
+          title: "Users"
+          heading: "Users"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Users primary descriptors"
+          descriptor_label: "Full name"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "full_name": "Full name"
+          "email": "Email"
+          "program": "Program"
+        show:
+          title: "%{descriptor}"
+          unnamed: "User #%{id}"
+          back: "Back to Users"
+        new:
+          title: "New User"
+          heading: "New User"
+          action: "Add User"
+        edit:
+          title: "Edit User"
+          heading: "Edit User"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this User?"
+      "case_studies":
+        index:
+          title: "Cases"
+          heading: "Cases"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Cases primary descriptors"
+          descriptor_label: "Title"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "title": "Title"
+          "course": "Course"
+          "join_code": "Join code"
+          "author_id": "Author"
+          "background": "Background"
+          "assignment": "Assignment"
+          "due_at": "Prepare by"
+          "published": "Published"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Case #%{id}"
+          back: "Back to Cases"
+        new:
+          title: "New Case"
+          heading: "New Case"
+          action: "Add Case"
+        edit:
+          title: "Edit Case"
+          heading: "Edit Case"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Case?"
+      "enrollments":
+        index:
+          title: "Enrollments"
+          heading: "Enrollments"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Enrollments primary descriptors"
+          descriptor_label: "Created at"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "user_id": "Student"
+          "case_study_id": "Case"
+          "last_active_at": "Last active at"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Enrollment #%{id}"
+          back: "Back to Enrollments"
+        new:
+          title: "New Enrollment"
+          heading: "New Enrollment"
+          action: "Add Enrollment"
+        edit:
+          title: "Edit Enrollment"
+          heading: "Edit Enrollment"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Enrollment?"
+      "contacts":
+        index:
+          title: "Contacts"
+          heading: "Contacts"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Contacts primary descriptors"
+          descriptor_label: "Full name"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "full_name": "Full name"
+          "role_title": "Role"
+          "case_study_id": "Case"
+          "description": "Description"
+          "system_prompt": "System prompt"
+          "in_starting_directory": "In starting directory"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Contact #%{id}"
+          back: "Back to Contacts"
+        new:
+          title: "New Contact"
+          heading: "New Contact"
+          action: "Add Contact"
+        edit:
+          title: "Edit Contact"
+          heading: "Edit Contact"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Contact?"
+      "referrals":
+        index:
+          title: "Referrals"
+          heading: "Referrals"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Referrals primary descriptors"
+          descriptor_label: "Created at"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "referring_contact_id": "Referred by"
+          "referred_contact_id": "Refers to"
+          "condition": "When to refer"
+          "enabled": "Enabled"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Referral #%{id}"
+          back: "Back to Referrals"
+        new:
+          title: "New Referral"
+          heading: "New Referral"
+          action: "Add Referral"
+        edit:
+          title: "Edit Referral"
+          heading: "Edit Referral"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Referral?"
+      "share_rules":
+        index:
+          title: "Share rules"
+          heading: "Share rules"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Share rules primary descriptors"
+          descriptor_label: "Created at"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "contact_id": "Held by"
+          "document_id": "Document"
+          "condition": "When to share"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Share rule #%{id}"
+          back: "Back to Share rules"
+        new:
+          title: "New Share rule"
+          heading: "New Share rule"
+          action: "Add Share rule"
+        edit:
+          title: "Edit Share rule"
+          heading: "Edit Share rule"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Share rule?"
+      "documents":
+        index:
+          title: "Documents"
+          heading: "Documents"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Documents primary descriptors"
+          descriptor_label: "File name"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "file_name": "File name"
+          "description": "Description"
+          "case_study_id": "Case"
+          "given_at_start": "Given at start"
+          "file_url": "File URL"
+          "byte_size": "Size in bytes"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Document #%{id}"
+          back: "Back to Documents"
+        new:
+          title: "New Document"
+          heading: "New Document"
+          action: "Add Document"
+        edit:
+          title: "Edit Document"
+          heading: "Edit Document"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Document?"
+      "introductions":
+        index:
+          title: "Introductions"
+          heading: "Introductions"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Introductions primary descriptors"
+          descriptor_label: "Created at"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "enrollment_id": "Enrollment"
+          "contact_id": "Contact"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Introduction #%{id}"
+          back: "Back to Introductions"
+        new:
+          title: "New Introduction"
+          heading: "New Introduction"
+          action: "Add Introduction"
+        edit:
+          title: "Edit Introduction"
+          heading: "Edit Introduction"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Introduction?"
+      "conversations":
+        index:
+          title: "Threads"
+          heading: "Threads"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Threads primary descriptors"
+          descriptor_label: "Created at"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "enrollment_id": "Enrollment"
+          "contact_id": "Contact"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Thread #%{id}"
+          back: "Back to Threads"
+        new:
+          title: "New Thread"
+          heading: "New Thread"
+          action: "Add Thread"
+        edit:
+          title: "Edit Thread"
+          heading: "Edit Thread"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Thread?"
+      "messages":
+        index:
+          title: "Messages"
+          heading: "Messages"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Messages primary descriptors"
+          descriptor_label: "Created at"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "conversation_id": "Thread"
+          "body": "Body"
+          "sent_at": "Sent at"
+          "from_contact": "From the contact"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Message #%{id}"
+          back: "Back to Messages"
+        new:
+          title: "New Message"
+          heading: "New Message"
+          action: "Add Message"
+        edit:
+          title: "Edit Message"
+          heading: "Edit Message"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Message?"
+      "document_shares":
+        index:
+          title: "Document shares"
+          heading: "Document shares"
+          lede: "Browse, open, add, edit, and delete this collection by its primary descriptor."
+          caption: "Document shares primary descriptors"
+          descriptor_label: "Created at"
+          actions: "Actions"
+        empty:
+          heading: "No records yet"
+          body: "This collection does not have any records to show yet."
+        fields:
+          "message_id": "Message"
+          "document_id": "Document"
+        show:
+          title: "%{descriptor}"
+          unnamed: "Document share #%{id}"
+          back: "Back to Document shares"
+        new:
+          title: "New Document share"
+          heading: "New Document share"
+          action: "Add Document share"
+        edit:
+          title: "Edit Document share"
+          heading: "Edit Document share"
+          action: "Edit"
+        destroy:
+          action: "Delete"
+          confirm: "Delete this Document share?"

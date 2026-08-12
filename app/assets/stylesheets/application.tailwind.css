@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes:
+    light --default,
+    dark --prefersdark;
+}
+
+[data-hotwire-native-app="true"] .hotwire-native-hidden {
+  display: none;
+}
+
+[data-hotwire-native-app="true"] .hotwire-native-toolbar {
+  width: 100%;
+}

@@ -1,0 +1,4 @@
+# Parameterized URLs (filters, sorts, pagination combinations) form a near-infinite
+# crawl space; disallow them so polite crawlers stick to clean canonical pages.
+User-agent: *
+Disallow: /*?

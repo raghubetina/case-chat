@@ -1,0 +1,10 @@
+<% content_for :title, t("foundation_domain.entities.referrals.new.title") %>
+
+<section class="mx-auto max-w-2xl py-10 sm:py-14">
+  <header class="mb-8">
+    <p class="text-sm font-medium text-primary"><%= t("app_name") %></p>
+    <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"><%= t("foundation_domain.entities.referrals.new.heading") %></h1>
+  </header>
+
+  <%= render "form", record: @referral, return_to: @return_to, cancel_to: @cancel_to %>
+</section>

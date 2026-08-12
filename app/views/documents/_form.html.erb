@@ -1,0 +1,71 @@
+<%= form_with model: record,
+  scope: :document,
+  url: (record.persisted? ? document_path(record) : documents_path),
+  method: (record.persisted? ? :patch : :post),
+  class: "space-y-6" do |form| %>
+  <%= hidden_field_tag :return_to, return_to %>
+
+  <% if record.errors.any? %>
+    <section class="alert alert-error" role="alert" aria-labelledby="foundation-form-errors">
+      <div>
+        <h2 id="foundation-form-errors" class="font-semibold"><%= t("foundation_domain.form.errors.heading") %></h2>
+        <ul class="mt-2 list-disc pl-5">
+          <% record.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </section>
+  <% end %>
+
+  <% if record.persisted? %>
+    <div>
+      <%= form.label :file_name, I18n.t("foundation_domain.entities.documents.fields.file_name"), class: "label font-medium" %>
+      <%= form.text_field :file_name, required: true, class: "input input-bordered w-full" %>
+      <% record.errors.full_messages_for(:file_name).each do |message| %>
+        <p class="mt-1 text-sm text-error"><%= message %></p>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :description, I18n.t("foundation_domain.entities.documents.fields.description"), class: "label font-medium" %>
+      <%= form.text_field :description, class: "input input-bordered w-full" %>
+      <% record.errors.full_messages_for(:description).each do |message| %>
+        <p class="mt-1 text-sm text-error"><%= message %></p>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :case_study_id, I18n.t("foundation_domain.entities.documents.fields.case_study_id"), class: "label font-medium" %>
+      <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+      <% record.errors.full_messages_for(:case_study).each do |message| %>
+        <p class="mt-1 text-sm text-error"><%= message %></p>
+      <% end %>
+    </div>
+  <% else %>
+    <div>
+      <%= form.label :file_name, I18n.t("foundation_domain.entities.documents.fields.file_name"), class: "label font-medium" %>
+      <%= form.text_field :file_name, required: true, class: "input input-bordered w-full" %>
+      <% record.errors.full_messages_for(:file_name).each do |message| %>
+        <p class="mt-1 text-sm text-error"><%= message %></p>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :description, I18n.t("foundation_domain.entities.documents.fields.description"), class: "label font-medium" %>
+      <%= form.text_field :description, class: "input input-bordered w-full" %>
+      <% record.errors.full_messages_for(:description).each do |message| %>
+        <p class="mt-1 text-sm text-error"><%= message %></p>
+      <% end %>
+    </div>
+    <div>
+      <%= form.label :case_study_id, I18n.t("foundation_domain.entities.documents.fields.case_study_id"), class: "label font-medium" %>
+      <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+      <% record.errors.full_messages_for(:case_study).each do |message| %>
+        <p class="mt-1 text-sm text-error"><%= message %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex items-center gap-3">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to t("foundation_domain.form.cancel"), cancel_to, class: "btn btn-ghost" %>
+  </div>
+<% end %>

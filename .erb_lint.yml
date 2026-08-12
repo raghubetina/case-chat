@@ -1,0 +1,14 @@
+---
+# Default linters plus HardCodedString: raise_on_missing_translations only fires
+# when t() misses - a hardcoded string never calls t(), so HardCodedString is
+# what enforces all copy going through locale files.
+EnableDefaultLinters: true
+# Don't lint vendored/generated ERB: `--lint-all` otherwise scans the installed
+# gems' own templates (Rails/Brakeman error pages) in CI and flags their strings.
+exclude:
+  - vendor/**/*
+  - tmp/**/*
+  - node_modules/**/*
+linters:
+  HardCodedString:
+    enabled: true

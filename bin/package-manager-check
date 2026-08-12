@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+require "json"
+
+app_root = File.expand_path("..", __dir__)
+Dir.chdir(app_root) do
+  foreign_locks = %w[yarn.lock pnpm-lock.yaml pnpm-lock.yml bun.lock bun.lockb deno.lock].select { |path| File.exist?(path) }
+
+  unless foreign_locks.empty?
+    abort <<~MESSAGE
+      npm is the package manager of record, but found: #{foreign_locks.join(", ")}
+      Remove foreign lockfiles; package-lock.json is the only accepted JavaScript lock.
+    MESSAGE
+  end
+
+  abort "package-lock.json is required; run npm install to create it" unless File.exist?("package-lock.json")
+
+  package_manager = JSON.parse(File.read("package.json")).fetch("packageManager", "")
+  abort "package.json must pin npm with packageManager" unless package_manager.match?(/\Anpm@\d+\.\d+\.\d+\z/)
+end

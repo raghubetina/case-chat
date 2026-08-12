@@ -1,0 +1,18 @@
+<% descriptor = @conversation.created_at.presence || t("foundation_domain.entities.conversations.show.unnamed", id: @conversation.id) %>
+<% content_for :title, t("foundation_domain.entities.conversations.show.title", descriptor: descriptor) %>
+
+<section class="mx-auto max-w-2xl py-10 sm:py-14">
+  <header class="mb-8">
+    <p class="text-sm font-medium text-primary"><%= t("app_name") %></p>
+    <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"><%= descriptor %></h1>
+  </header>
+
+  <div class="flex items-center gap-3">
+    <%= link_to t("foundation_domain.entities.conversations.show.back"), conversations_path, class: "btn btn-ghost" %>
+    <%= link_to t("foundation_domain.entities.conversations.edit.action"), edit_conversation_path(@conversation, return_to: conversation_path(@conversation)),
+      class: "btn btn-primary" %>
+    <%= button_to t("foundation_domain.entities.conversations.destroy.action"), conversation_path(@conversation),
+      method: :delete, params: {return_to: conversations_path}, class: "btn btn-error btn-outline",
+      form: {data: {turbo_confirm: t("foundation_domain.entities.conversations.destroy.confirm")}} %>
+  </div>
+</section>

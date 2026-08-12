@@ -1,0 +1,18 @@
+<% descriptor = @document_share.created_at.presence || t("foundation_domain.entities.document_shares.show.unnamed", id: @document_share.id) %>
+<% content_for :title, t("foundation_domain.entities.document_shares.show.title", descriptor: descriptor) %>
+
+<section class="mx-auto max-w-2xl py-10 sm:py-14">
+  <header class="mb-8">
+    <p class="text-sm font-medium text-primary"><%= t("app_name") %></p>
+    <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl"><%= descriptor %></h1>
+  </header>
+
+  <div class="flex items-center gap-3">
+    <%= link_to t("foundation_domain.entities.document_shares.show.back"), document_shares_path, class: "btn btn-ghost" %>
+    <%= link_to t("foundation_domain.entities.document_shares.edit.action"), edit_document_share_path(@document_share, return_to: document_share_path(@document_share)),
+      class: "btn btn-primary" %>
+    <%= button_to t("foundation_domain.entities.document_shares.destroy.action"), document_share_path(@document_share),
+      method: :delete, params: {return_to: document_shares_path}, class: "btn btn-error btn-outline",
+      form: {data: {turbo_confirm: t("foundation_domain.entities.document_shares.destroy.confirm")}} %>
+  </div>
+</section>

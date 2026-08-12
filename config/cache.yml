@@ -1,0 +1,18 @@
+default: &default
+  store_options:
+    # Cap age of oldest cache entry to fulfill retention policies
+    # max_age: <%= 60.days.to_i %>
+    # Share a small external database with application, Queue, and Cable data.
+    # Raise this deliberately on a larger plan rather than consuming half of a
+    # free Neon database with disposable cache entries.
+    max_size: <%= Integer(ENV.fetch("SOLID_CACHE_MAX_SIZE_MB", "64"), 10).megabytes %>
+    namespace: <%= Rails.env %>
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
