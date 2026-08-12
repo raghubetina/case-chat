@@ -7,10 +7,11 @@
 # two minutes against real material and the author needs something to come back
 # to. Only `ready` carries a payload.
 class CaseDraft < ApplicationRecord
-  enum :status, {drafting: 0, ready: 1, failed: 2}, validate: true
+  enum :status, {drafting: 0, ready: 1, failed: 2}
 
   belongs_to :case_study, class_name: "CaseStudy", optional: false
 
+  validates :status, inclusion: {in: statuses.keys}
   validates :payload, presence: true, if: :ready?
 
   # Replaces any previous proposal for this case, so an author who re-drafts
