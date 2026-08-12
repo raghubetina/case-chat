@@ -1,20 +1,36 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The two-state theme override: flips data-theme and persists the choice;
-// the layout's head script re-applies it before first paint. Untoggled users keep
-// following their OS preference via daisyUI's `--prefersdark` theme flag.
+const THEMES = ["ledger", "bureau", "dusk", "chicago"]
+
+// The theme picker: sets data-theme and persists the choice; the layout's head
+// script re-applies it before first paint. "auto" clears the override so the
+// OS preference rules again (chicago by default, dusk via `prefersdark`).
 export default class extends Controller {
-  static targets = ["checkbox"]
+  static targets = ["option"]
 
   connect() {
-    const stored = localStorage.getItem("theme")
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-    this.checkboxTarget.checked = stored ? stored === "dark" : prefersDark
+    this.reflect()
   }
 
-  toggle() {
-    const theme = this.checkboxTarget.checked ? "dark" : "light"
-    localStorage.setItem("theme", theme)
-    document.documentElement.setAttribute("data-theme", theme)
+  set(event) {
+    const name = event.params.name
+    if (THEMES.includes(name)) {
+      localStorage.setItem("theme", name)
+      document.documentElement.setAttribute("data-theme", name)
+    } else {
+      localStorage.removeItem("theme")
+      document.documentElement.removeAttribute("data-theme")
+    }
+    this.reflect()
+    document.activeElement?.blur() // dropdown is :focus-within-driven; close it
+  }
+
+  reflect() {
+    const stored = localStorage.getItem("theme")
+    for (const option of this.optionTargets) {
+      const name = option.dataset.themeNameParam
+      const active = stored ? name === stored : name === "auto"
+      option.setAttribute("aria-checked", active ? "true" : "false")
+    }
   }
 }

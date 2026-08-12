@@ -1,27 +1,38 @@
 require "application_system_test_case"
 
 # Every visit here runs the axe-core audit automatically (violations raise), so
-# this smoke pass IS the a11y gate for all shipped pages - in both themes, via
-# the real toggle rather than emulation, which also proves persistence.
+# this smoke pass IS the a11y gate for all shipped pages - in every theme, via
+# the real picker rather than emulation, which also proves persistence.
 class BaselinePagesTest < ApplicationSystemTestCase
   SHIPPED_PAGES = ["/", "/privacy", "/terms", "/404", "/422", "/500"]
 
-  test "all shipped pages pass the audit in the default (light) theme" do
+  THEMES = %w[ledger bureau dusk chicago]
+
+  test "all shipped pages pass the audit in the default (chicago) theme" do
     SHIPPED_PAGES.each { |path| visit path }
   end
 
-  test "the theme toggle flips to dark, persists across reload, and pages stay accessible" do
+  test "the theme picker applies a theme, persists across reload, and pages stay accessible" do
     visit "/"
-    assert_equal "light", effective_theme
+    assert_equal "chicago", effective_theme
 
-    find("[data-controller='theme']").click
-    assert_equal "dark", page.evaluate_script("document.documentElement.getAttribute('data-theme')")
+    pick_theme "dusk"
+    assert_equal "dusk", page.evaluate_script("document.documentElement.getAttribute('data-theme')")
 
     visit "/"
-    assert_equal "dark", page.evaluate_script("document.documentElement.getAttribute('data-theme')"),
+    assert_equal "dusk", page.evaluate_script("document.documentElement.getAttribute('data-theme')"),
       "the choice should persist across a reload (localStorage + head script)"
 
     (SHIPPED_PAGES - ["/"]).each { |path| visit path }
+  end
+
+  test "all shipped pages pass the audit in every theme" do
+    THEMES.each do |theme|
+      visit "/"
+      pick_theme theme
+
+      SHIPPED_PAGES.each { |path| visit path }
+    end
   end
 
   test "the flash live regions pre-exist on every page load" do
@@ -58,7 +69,12 @@ class BaselinePagesTest < ApplicationSystemTestCase
   def effective_theme
     page.evaluate_script(<<~JS)
       document.documentElement.getAttribute("data-theme") ||
-        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dusk" : "chicago")
     JS
+  end
+
+  def pick_theme(name)
+    find("[data-controller='theme'] button[aria-label='#{I18n.t("nav.theme.label")}']").click
+    find("[data-theme-name-param='#{name}']").click
   end
 end

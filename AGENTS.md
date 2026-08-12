@@ -23,8 +23,8 @@ if the fix is reusable, carry it back to `firstdraft/foundation-rails-core` for 
 - **Generated ERB copy goes through `t()`** into `config/locales/en.yml`.
   `raise_on_missing_translations` catches bad lookups in dev/test; erb_lint's `HardCodedString` catches literal
   text in ERB. Ruby/JavaScript copy is a review responsibility until a localization layer adds broader tooling.
-- **Every system-test page visit is axe-audited** (violations raise). New pages must pass in both
-  themes — add them to the smoke list in `test/system/baseline_pages_test.rb`. Don't remove the
+- **Every system-test page visit is axe-audited** (violations raise). New pages must pass in every
+  theme — add them to the smoke list in `test/system/baseline_pages_test.rb`. Don't remove the
   audit re-arm block in `test/application_system_test_case.rb`: turbo-rails silently clobbers the
   audit hooks without it.
 - **System tests synchronize with Turbo before every click.** Keep the layout's

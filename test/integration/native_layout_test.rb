@@ -15,7 +15,7 @@ class NativeLayoutTest < ActionDispatch::IntegrationTest
     assert_select ".navbar-start.hotwire-native-hidden", count: 1, text: I18n.t("app_name")
     assert_select ".navbar-center.hotwire-native-hidden", count: 1
     assert_select ".navbar-end.hotwire-native-toolbar", count: 1
-    assert_select "[data-controller='theme'][aria-label='#{I18n.t("nav.toggle_theme")}']", count: 1
+    assert_select "[data-controller='theme'] button[aria-label='#{I18n.t("nav.theme.label")}']", count: 1
   end
 
   test "marks redundant application chrome as hidden for Hotwire Native" do
@@ -27,6 +27,6 @@ class NativeLayoutTest < ActionDispatch::IntegrationTest
     assert_select ".navbar-start.hotwire-native-hidden", count: 1
     assert_select ".navbar-center.hotwire-native-hidden", count: 1
     assert_select ".navbar-end.hotwire-native-toolbar", count: 1
-    assert_select "[data-controller='theme'][aria-label='#{I18n.t("nav.toggle_theme")}']", count: 1
+    assert_select "[data-controller='theme'] button[aria-label='#{I18n.t("nav.theme.label")}']", count: 1
   end
 end

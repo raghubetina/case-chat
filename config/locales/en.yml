@@ -22,7 +22,13 @@ en:
     lede: This app was generated on the Foundation baseline — hardened, observable, accessible, and ready for its real features.
   nav:
     skip_to_content: Skip to main content
-    toggle_theme: Toggle light/dark theme
+    theme:
+      label: Choose theme
+      ledger: Ledger
+      bureau: Bureau
+      dusk: Dusk
+      chicago: Chicago
+      auto: Auto (match system)
   pages:
     placeholder_warning: PLACEHOLDER — replace this copy before inviting real users. A wrong legal page is worse than none.
     privacy:
