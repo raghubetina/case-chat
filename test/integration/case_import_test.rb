@@ -4,6 +4,8 @@ require "test_helper"
 # a person withholds, and withholding is the entire design of a case — so these
 # tests are mostly about what must NOT exist until an author has said yes.
 class CaseImportTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     CaseSeeder::Vesta.new.call
     @case_study = CaseStudy.includes(:author).find_by!(join_code: "VESTA-01")
@@ -24,18 +26,31 @@ class CaseImportTest < ActionDispatch::IntegrationTest
 
   def cast_count = Contact.where(case_study_id: @case_study.id).count
 
+  def draft_now(**params)
+    perform_enqueued_jobs { post author_case_import_path(@case_study), params: params }
+  end
+
+  test "drafting is handed to a job rather than run inside the request" do
+    assert_enqueued_with(job: CaseDraftJob) do
+      post author_case_import_path(@case_study), params: {hint: "keep the expediter hard to reach"}
+    end
+
+    assert_redirected_to new_author_case_import_path(@case_study)
+    assert_equal "drafting", CaseDraft.find_by!(case_study_id: @case_study.id).status
+  end
+
   test "a proposed draft touches nothing" do
     before = cast_count
 
-    post author_case_import_path(@case_study), params: {hint: "keep the expediter hard to reach"}
+    draft_now
 
-    assert_response :success
-    assert_equal before, cast_count, "proposing must not write to the database"
+    assert_equal before, cast_count, "proposing must not write to the cast"
+    get new_author_case_import_path(@case_study)
     assert_match(/#{Regexp.escape(@drafted.contacts.first.full_name)}/, response.body)
   end
 
   test "the proposal survives the author leaving and coming back" do
-    post author_case_import_path(@case_study)
+    draft_now
     get new_author_case_import_path(@case_study)
 
     assert_response :success
@@ -43,7 +58,7 @@ class CaseImportTest < ActionDispatch::IntegrationTest
   end
 
   test "accepting creates the drafted cast" do
-    post author_case_import_path(@case_study)
+    draft_now
 
     assert_difference "Contact.where(case_study_id: @case_study.id).count", @drafted.contacts.size do
       post author_case_import_path(@case_study, accept: 1)
@@ -56,7 +71,7 @@ class CaseImportTest < ActionDispatch::IntegrationTest
   end
 
   test "accepting wires referrals so the drafted cast is reachable" do
-    post author_case_import_path(@case_study)
+    draft_now
     post author_case_import_path(@case_study, accept: 1)
 
     @drafted.referrals.each do |referral|
@@ -72,32 +87,58 @@ class CaseImportTest < ActionDispatch::IntegrationTest
   end
 
   test "accepting consumes the proposal" do
-    post author_case_import_path(@case_study)
+    draft_now
     assert CaseDraft.exists?(case_study_id: @case_study.id)
 
     post author_case_import_path(@case_study, accept: 1)
 
     assert_nil CaseDraft.find_by(case_study_id: @case_study.id),
       "an accepted proposal must not remain acceptable"
+  end
 
-    get new_author_case_import_path(@case_study)
-    assert_no_match(/Proposed draft/, response.body)
+  test "accepting nothing is refused rather than silently ignored" do
+    post author_case_import_path(@case_study, accept: 1)
+
+    assert_redirected_to new_author_case_import_path(@case_study)
+    assert_equal I18n.t("author.imports.nothing_to_accept"), flash[:alert]
+  end
+
+  test "a proposal that is still being drafted cannot be accepted" do
+    post author_case_import_path(@case_study)
+
+    assert_no_difference "Contact.where(case_study_id: @case_study.id).count" do
+      post author_case_import_path(@case_study, accept: 1)
+    end
+  end
+
+  test "a stale payload left over from an earlier draft is not acceptable" do
+    draft_now
+    record = CaseDraft.find_by!(case_study_id: @case_study.id)
+    # Re-drafting reopens the row; the old proposal must not stay live while
+    # the new one is still being produced.
+    record.update_columns(status: CaseDraft.statuses[:drafting])
+
+    assert_nil record.reload.draft
+
+    assert_no_difference "Contact.where(case_study_id: @case_study.id).count" do
+      post author_case_import_path(@case_study, accept: 1)
+    end
   end
 
   test "re-drafting replaces the proposal rather than stacking up alternatives" do
-    post author_case_import_path(@case_study)
+    draft_now
 
     assert_no_difference "CaseDraft.count" do
-      post author_case_import_path(@case_study), params: {hint: "different emphasis"}
+      draft_now(hint: "different emphasis")
     end
   end
 
   test "re-importing the same draft updates people rather than duplicating them" do
-    post author_case_import_path(@case_study)
+    draft_now
     post author_case_import_path(@case_study, accept: 1)
     after_first = cast_count
 
-    post author_case_import_path(@case_study)
+    draft_now
     post author_case_import_path(@case_study, accept: 1)
 
     assert_equal after_first, cast_count, "a contact is keyed by name within a case"
@@ -106,22 +147,27 @@ class CaseImportTest < ActionDispatch::IntegrationTest
   test "refuses to draft from a case with no readable file" do
     Document.where(case_study_id: @case_study.id).find_each { |document| document.file.purge }
 
-    post author_case_import_path(@case_study)
+    assert_no_enqueued_jobs(only: CaseDraftJob) do
+      post author_case_import_path(@case_study)
+    end
 
     assert_redirected_to author_case_documents_path(@case_study)
     assert_equal I18n.t("author.imports.no_documents"), flash[:alert]
   end
 
-  test "a failed draft leaves nothing behind" do
+  test "a failed draft leaves nothing behind and says so" do
     CaseDrafter.current = RefusingDrafter.new
 
     assert_no_difference "Contact.where(case_study_id: @case_study.id).count" do
-      post author_case_import_path(@case_study)
+      draft_now
     end
 
-    assert_nil CaseDraft.find_by(case_study_id: @case_study.id)
-    assert_redirected_to new_author_case_import_path(@case_study)
-    assert_equal I18n.t("author.imports.failed"), flash[:alert]
+    record = CaseDraft.find_by!(case_study_id: @case_study.id)
+    assert_equal "failed", record.status
+    assert_nil record.payload
+
+    get new_author_case_import_path(@case_study)
+    assert_match(/#{Regexp.escape(I18n.t("author.imports.failed"))}/, response.body)
   end
 
   test "someone who does not own the case cannot draft into it" do
@@ -130,12 +176,12 @@ class CaseImportTest < ActionDispatch::IntegrationTest
     post author_case_import_path(@case_study)
 
     assert_response :forbidden
-    assert_equal 0, Contact.where(case_study_id: @case_study.id, full_name: @drafted.contacts.first.full_name).count
+    assert_nil CaseDraft.find_by(case_study_id: @case_study.id)
   end
 
   test "a proposal is per case, so drafting one case cannot populate another" do
     other = CaseStudy.create!(title: "Calder Instruments", author: @author)
-    post author_case_import_path(@case_study)
+    draft_now
 
     assert_no_difference "Contact.where(case_study_id: other.id).count" do
       post author_case_import_path(other, accept: 1)

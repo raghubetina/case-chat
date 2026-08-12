@@ -33,99 +33,17 @@
   <%= form_with url: author_case_import_path(@case_study), method: :post, class: "flex flex-col gap-4 rounded-lg border border-line bg-surface p-6" do |form| %>
     <div class="flex flex-col gap-2">
       <%= form.label :hint, t("author.imports.hint"), class: "kick text-xs text-mute" %>
-      <%= form.text_area :hint, rows: 3, value: params[:hint],
+      <%= form.text_area :hint, rows: 3, value: params[:hint] || @case_draft&.hint,
             placeholder: t("author.imports.hint_placeholder"),
             class: "textarea textarea-bordered w-full" %>
       <p class="max-w-prose text-sm text-mute"><%= t("author.imports.hint_note") %></p>
     </div>
-    <div><%= form.submit @draft ? t("author.imports.redraft") : t("author.imports.draft"), class: "btn btn-primary" %></div>
+    <div><%= form.submit @case_draft ? t("author.imports.redraft") : t("author.imports.draft"), class: "btn btn-primary" %></div>
   <% end %>
 
-  <% if @draft %>
-    <section class="flex flex-col gap-6 rounded-lg border border-accent bg-surface p-6">
-      <div class="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 class="font-head text-lg font-semibold"><%= t("author.imports.proposed") %></h2>
-        <span class="text-sm text-mute"><%= t("author.imports.proposed_note") %></span>
-      </div>
-
-      <% if @draft.notes.any? %>
-        <div class="flex flex-col gap-2 rounded-lg border border-line bg-wash p-4">
-          <span class="kick text-xs text-mute"><%= t("author.imports.notes") %></span>
-          <ul class="list-disc pl-5 text-sm text-mute">
-            <% @draft.notes.each do |note| %><li><%= note %></li><% end %>
-          </ul>
-        </div>
-      <% end %>
-
-      <div class="flex flex-col">
-        <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
-          <span class="kick w-[110px] shrink-0 pt-1 text-xs text-mute"><%= t("author.cases.fields.title") %></span>
-          <span class="min-w-[220px] flex-1 text-base"><%= @draft.title %></span>
-        </div>
-        <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
-          <span class="kick w-[110px] shrink-0 pt-1 text-xs text-mute"><%= t("author.cases.fields.background") %></span>
-          <span class="min-w-[220px] flex-1 whitespace-pre-wrap text-base text-mute"><%= @draft.background %></span>
-        </div>
-        <div class="flex flex-wrap items-start gap-4 border-y border-line py-3">
-          <span class="kick w-[110px] shrink-0 pt-1 text-xs text-mute"><%= t("author.cases.fields.assignment") %></span>
-          <span class="min-w-[220px] flex-1 whitespace-pre-wrap text-base text-mute"><%= @draft.assignment %></span>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-3">
-        <h3 class="kick text-xs text-accent"><%= t("author.cases.cast") %></h3>
-        <div class="flex flex-col">
-          <% @draft.contacts.each do |contact| %>
-            <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
-              <span class="flex w-[170px] shrink-0 flex-col">
-                <span class="text-base font-medium"><%= contact.full_name %></span>
-                <span class="text-base text-mute"><%= contact.role_title %></span>
-              </span>
-              <span class="min-w-[200px] flex-1 text-sm text-mute"><%= contact.description %></span>
-              <% if contact.in_starting_directory %>
-                <span class="kick shrink-0 rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.in_starting") %></span>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-3">
-        <h3 class="kick text-xs text-accent"><%= t("author.imports.proposed_referrals") %></h3>
-        <div class="flex flex-col">
-          <% @draft.referrals.each do |referral| %>
-            <div class="flex flex-wrap items-center gap-4 border-t border-line py-3">
-              <span class="w-[280px] shrink-0 text-base"><%= referral.from_name %> &rarr; <%= referral.to_name %></span>
-              <span class="min-w-[200px] flex-1 text-sm text-mute"><%= referral.condition %></span>
-            </div>
-          <% end %>
-          <% if @draft.referrals.empty? %>
-            <p class="border-t border-line py-3 text-sm text-error"><%= t("author.imports.no_referrals") %></p>
-          <% end %>
-        </div>
-      </div>
-
-      <% if @draft.share_rules.any? %>
-        <div class="flex flex-col gap-3">
-          <h3 class="kick text-xs text-accent"><%= t("author.imports.proposed_shares") %></h3>
-          <div class="flex flex-col">
-            <% @draft.share_rules.each do |rule| %>
-              <div class="flex flex-wrap items-center gap-4 border-t border-line py-3">
-                <span class="w-[240px] shrink-0 truncate text-base"><%= rule.file_name %></span>
-                <span class="min-w-[180px] flex-1 text-sm text-mute">
-                  <%= t("author.imports.share_summary", contact: rule.contact_name, condition: rule.condition) %>
-                </span>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-
-      <div class="flex flex-wrap items-center gap-3 border-t border-line pt-6">
-        <%= button_to t("author.imports.accept"), author_case_import_path(@case_study, accept: 1),
-              method: :post, class: "btn btn-primary" %>
-        <span class="text-sm text-mute"><%= t("author.imports.accept_note") %></span>
-      </div>
-    </section>
+  <% if @case_draft %>
+    <%= turbo_stream_from @case_draft %>
+    <%= render "author/cases/imports/proposal",
+          case_study: @case_study, case_draft: @case_draft, draft: @case_draft.draft %>
   <% end %>
 </div>

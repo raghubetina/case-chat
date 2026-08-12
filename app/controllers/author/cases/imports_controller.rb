@@ -5,49 +5,55 @@ module Author
     class ImportsController < Author::BaseController
       def new
         @case_study = authored_case!
-        @documents = Document.where(case_study_id: @case_study.id).order(:file_name)
-        @draft = stored_draft&.draft
+        @documents = case_documents
+        @case_draft = stored_draft
       end
 
       def create
         @case_study = authored_case!
-        @documents = Document.where(case_study_id: @case_study.id).order(:file_name)
 
-        draft = stored_draft&.draft if params[:accept].present?
-
-        if draft
-          result = CaseImport.new(@case_study, draft).apply!
-          clear_draft
-          redirect_to edit_author_case_path(@case_study), notice: accepted_notice(result)
+        if params[:accept].present?
+          accept
         else
-          draft_and_redisplay
+          start_draft
         end
       end
 
       private
 
-      def draft_and_redisplay
+      # Reading real case material takes about two minutes, so the author gets
+      # a page that waits rather than a request that dies.
+      def start_draft
+        @documents = case_documents
+
         if @documents.none? { |document| document.file.attached? }
           return redirect_to author_case_documents_path(@case_study), alert: t("author.imports.no_documents")
         end
 
-        @draft = CaseDrafter.current.draft(documents: @documents, hint: params[:hint].presence)
-        store_draft(@draft)
-        render :new
-      rescue CaseDrafter::Error => e
-        Rails.logger.error("Case draft failed for #{@case_study.id}: #{e.message}")
-        redirect_to new_author_case_import_path(@case_study), alert: t("author.imports.failed")
+        case_draft = CaseDraft.start!(@case_study, hint: params[:hint])
+        CaseDraftJob.perform_later(case_draft.id)
+        redirect_to new_author_case_import_path(@case_study), notice: t("author.imports.started")
       end
 
-      def store_draft(draft) = CaseDraft.store(@case_study, draft)
+      def accept
+        draft = stored_draft&.draft
+
+        if draft.nil?
+          return redirect_to new_author_case_import_path(@case_study), alert: t("author.imports.nothing_to_accept")
+        end
+
+        result = CaseImport.new(@case_study, draft).apply!
+        # Accepting consumes the proposal, so a resubmitted accept cannot apply
+        # the same draft twice.
+        stored_draft.destroy!
+        redirect_to edit_author_case_path(@case_study), notice: accepted_notice(result)
+      end
+
+      def case_documents = Document.where(case_study_id: @case_study.id).order(:file_name)
 
       def stored_draft
         @stored_draft ||= CaseDraft.find_by(case_study_id: @case_study.id)
       end
-
-      # Accepting consumes the proposal, so a resubmitted accept cannot apply
-      # the same draft twice.
-      def clear_draft = stored_draft&.destroy!
 
       def accepted_notice(result)
         if result.reachability.complete?

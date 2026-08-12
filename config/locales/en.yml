@@ -159,11 +159,13 @@ en:
         other: "Created %{count} contacts from the draft. Read every system prompt before publishing."
       accepted_with_orphans: "Created %{count} contacts, but nobody can reach %{names}. Add a referral before publishing."
       draft: Draft a case from these documents
-      failed: The draft could not be produced. Try again.
+      failed: The draft could not be produced.
+      failed_note: Nothing was created. Check that the files are readable and try again.
       hint: Anything the draft should know
       hint_note: Optional. Say which parts of the material students should have to earn, or who should be hard to reach.
       hint_placeholder: The expediter should be reachable only through the chef, and only after he admits he does not know what happens at eight o'clock.
       no_documents: Upload at least one file before drafting a case from it.
+      nothing_to_accept: There is no draft to accept. Draft one first.
       no_referrals: The draft proposes no referrals, so anyone outside the starting directory would be unreachable.
       not_read: No file, will be skipped
       notes: Check these
@@ -173,8 +175,11 @@ en:
       proposed_shares: Proposed documents to share
       redraft: Draft again
       share_summary: "%{contact} — %{condition}"
+      started: Reading your documents. The draft will appear here when it is ready.
       title: Draft from documents
       what_was_read: What will be read
+      working: Reading your documents
+      working_note: This takes a couple of minutes on a full case. You can leave this page and come back.
       will_read: Will be read
     referrals:
       add: Add referral

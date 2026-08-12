@@ -4,6 +4,8 @@ require "application_system_test_case"
 # actually exists to show was unaudited. Every visit below runs axe (violations
 # raise), which makes this the accessibility gate for the signed-in app.
 class AuthenticatedPagesTest < ApplicationSystemTestCase
+  include ActiveJob::TestHelper
+
   THEMES = %w[ledger bureau dusk chicago]
 
   setup do
@@ -41,6 +43,21 @@ class AuthenticatedPagesTest < ApplicationSystemTestCase
       Conversation.create!(enrollment: enrollment, contact: @contact)
 
     [cases_path, case_path(@case_study), thread_path(conversation)]
+  end
+
+  test "the import page announces work in progress and swaps in the proposal live" do
+    sign_in @author
+    visit new_author_case_import_path(@case_study)
+    click_on I18n.t("author.imports.draft")
+
+    assert_text I18n.t("author.imports.working")
+
+    perform_enqueued_jobs
+
+    # Broadcast, not reload: the author has been waiting on a page with nothing
+    # to poll.
+    assert_text I18n.t("author.imports.proposed"), wait: 10
+    assert_text CaseDrafter::Fake.new.draft(documents: []).contacts.first.full_name
   end
 
   test "every authoring page passes the audit" do
