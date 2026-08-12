@@ -11,6 +11,7 @@
       <% end %>
     </div>
     <div class="flex items-center gap-2">
+      <%= link_to t("author.documents.title"), author_case_documents_path(@case_study), class: "btn btn-outline btn-sm" %>
       <%= link_to t("author.cohort.title"), author_case_cohort_path(@case_study), class: "btn btn-outline btn-sm" %>
       <%= link_to t("author.cases.preview"), case_path(@case_study), class: "btn btn-outline btn-sm" %>
       <%= button_to t("author.cases.publish"), publish_author_case_path(@case_study), class: "btn btn-primary btn-sm" %>

@@ -33,6 +33,12 @@ Rails.application.routes.draw do
     resources :threads, only: :create, module: :cases
   end
 
+  # Downloads go through the app so DocumentPolicy decides, rather than handing
+  # out a signed blob URL that outlives the permission that produced it.
+  resources :documents, only: [] do
+    member { get :download }
+  end
+
   resources :threads, only: :show do
     resources :messages, only: :create, module: :threads
   end
@@ -42,6 +48,7 @@ Rails.application.routes.draw do
     resources :cases, only: %i[index new create edit update] do
       member { post :publish }
       resource :cohort, only: :show, module: :cases
+      resources :documents, only: %i[index new create destroy], module: :cases
       resources :contacts, only: %i[index new create edit update destroy]
     end
     resources :contacts, only: [] do

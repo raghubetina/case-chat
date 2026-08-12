@@ -55,7 +55,7 @@
               <span class="truncate text-base leading-tight text-faint"><%= share.document.description %></span>
             <% end %>
           </span>
-          <%= link_to t("threads.open_document"), document_path(share.document), class: "btn btn-outline btn-sm" %>
+          <%= document_link(share.document, label: t("threads.open_document")) %>
         </div>
       </div>
     <% end %>

@@ -2,7 +2,7 @@ class DocumentsController < ApplicationController
   PAGE_LIMIT = 24
 
   before_action :authenticate
-  before_action :set_document, only: %i[show edit update destroy]
+  before_action :set_document, only: %i[show edit update destroy download]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
@@ -39,6 +39,21 @@ class DocumentsController < ApplicationController
     else
       load_reference_options
       render :edit, status: :unprocessable_content
+    end
+  end
+
+  # Downloads go through the app rather than a signed Active Storage URL: a
+  # signed URL keeps working after the student loses access, and "you only see
+  # what you earned" is the product, not a detail.
+  # Only attached files are served here. A file_url is author-supplied, so
+  # redirecting to it would make this app an open redirect — the views render
+  # it as an ordinary outbound link instead, where a student can see where
+  # they are going before they click.
+  def download
+    if @document.file.attached?
+      redirect_to rails_blob_path(@document.file, disposition: "attachment")
+    else
+      redirect_back_or_to(cases_path, alert: t("documents.missing"))
     end
   end
 

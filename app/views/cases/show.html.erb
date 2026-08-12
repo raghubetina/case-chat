@@ -52,7 +52,7 @@
                 <%= document.given_at_start? ? t("cases.given_at_start") : t("cases.earned") %>
               </span>
             </span>
-            <%= link_to t("threads.open_document"), document_path(document), class: "btn btn-outline btn-sm" %>
+            <%= document_link(document, label: t("threads.open_document")) %>
           </div>
         <% end %>
         <% if @documents.empty? %>
