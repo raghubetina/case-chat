@@ -7,7 +7,7 @@
     "npm": "11.16.x"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.3",
+    "@biomejs/biome": "2.5.7",
     "daisyui": "^5.6.16",
     "esbuild": "^0.28.1"
   },
