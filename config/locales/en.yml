@@ -130,6 +130,27 @@ en:
       saved: Saved.
       shown_in_directory: Shown to students in the directory
       system_prompt_note: Write the persona, what this person knows, and what they withhold. Do not write referral instructions here — those are generated from the rules below, and writing them twice is how the two drift apart.
+    documents:
+      add: Add document
+      added: Document added.
+      earned: Must be earned
+      empty: No documents yet.
+      fields:
+        description: Description
+        file: File
+        file_name: Name
+        file_name_note: Defaults to the uploaded file's name.
+        file_note: PDF, CSV, Excel, Word, PowerPoint, or an image. Up to 25 MB.
+        file_url: Or link to a file held elsewhere
+        file_url_note: Use this when the exhibit already lives in your LMS or a drive.
+        given_at_start: Given to every student at the start
+      no_description: No description
+      no_file: No file
+      note: Anything given at the start is handed to every student. Anything else has to be earned from a contact who holds it — set that up on the contact.
+      remove: Remove
+      remove_confirm: Remove this document? Any share rule pointing at it goes too.
+      removed: Document removed.
+      title: Documents
     referrals:
       add: Add referral
       added: Referral added.
@@ -214,6 +235,8 @@ en:
         other: "%{count} messages"
       new_contact: New contact
       not_contacted: Not contacted
+  documents:
+    missing: That document has no file attached yet.
   errors:
     back_home: Back to the home page
     forbidden:

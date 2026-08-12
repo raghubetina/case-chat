@@ -30,6 +30,10 @@ module CaseChat
     # Deliberate fixtures only; scaffolds do not scatter per-model stubs,
     # per-resource helpers, or asset files.
     config.generators do |g|
+      # Every table in this app uses UUIDv7 primary keys. Active Storage reads
+      # this setting to type its polymorphic record_id; without it the column
+      # is bigint and no attachment can bind to a record here.
+      g.orm :active_record, primary_key_type: :uuid
       g.test_framework :test_unit, fixture: false
       g.helper false
       g.assets false

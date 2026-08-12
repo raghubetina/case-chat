@@ -1,0 +1,86 @@
+<% content_for :title, t("author.documents.title") %>
+
+<div class="mx-auto flex max-w-[880px] flex-col gap-8 py-10">
+  <header class="flex flex-wrap items-end justify-between gap-4">
+    <div class="flex flex-col gap-2">
+      <span class="kick text-xs text-accent"><%= @case_study.title %></span>
+      <h1 class="font-head text-xl font-semibold"><%= t("author.documents.title") %></h1>
+    </div>
+    <%= link_to t("author.contacts.back"), edit_author_case_path(@case_study), class: "btn btn-outline btn-sm" %>
+  </header>
+
+  <p class="max-w-prose text-sm text-mute"><%= t("author.documents.note") %></p>
+
+  <div class="flex flex-col">
+    <% @documents.each do |document| %>
+      <div class="flex flex-wrap items-center gap-3 border-b border-line py-3">
+        <span class="kick flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line text-xs text-accent">
+          <%= document.extension_label || t("threads.file") %>
+        </span>
+        <span class="flex min-w-0 flex-1 flex-col">
+          <span class="truncate text-base font-medium"><%= document.file_name %></span>
+          <span class="truncate text-base text-mute">
+            <%= document.description.presence || t("author.documents.no_description") %>
+          </span>
+        </span>
+        <span class="kick shrink-0 rounded-md <%= document.given_at_start? ? "bg-soft text-accent" : "border border-line text-mute" %> px-2 py-1 text-xs">
+          <%= document.given_at_start? ? t("cases.given_at_start") : t("author.documents.earned") %>
+        </span>
+        <% unless document.downloadable? %>
+          <span class="kick shrink-0 rounded-md border border-error px-2 py-1 text-xs text-error"><%= t("author.documents.no_file") %></span>
+        <% end %>
+        <%= button_to t("author.documents.remove"), author_case_document_path(@case_study, document),
+              method: :delete, class: "btn btn-ghost btn-sm shrink-0",
+              form: {data: {turbo_confirm: t("author.documents.remove_confirm")}} %>
+      </div>
+    <% end %>
+    <% if @documents.empty? %>
+      <p class="border-b border-line py-3 text-sm text-faint"><%= t("author.documents.empty") %></p>
+    <% end %>
+  </div>
+
+  <section class="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6">
+    <h2 class="kick text-xs text-accent"><%= t("author.documents.add") %></h2>
+
+    <%= form_with model: @document, url: author_case_documents_path(@case_study), class: "flex flex-col gap-4" do |form| %>
+      <% if @document.errors.any? %>
+        <div class="alert alert-error" role="alert">
+          <ul class="list-disc pl-5">
+            <% @document.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="flex flex-col gap-2">
+        <%= form.label :file, t("author.documents.fields.file"), class: "kick text-xs text-mute" %>
+        <%= form.file_field :file, class: "file-input file-input-bordered w-full" %>
+        <p class="text-sm text-mute"><%= t("author.documents.fields.file_note") %></p>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="flex flex-col gap-2">
+          <%= form.label :file_name, t("author.documents.fields.file_name"), class: "kick text-xs text-mute" %>
+          <%= form.text_field :file_name, class: "input input-bordered w-full" %>
+          <p class="text-sm text-mute"><%= t("author.documents.fields.file_name_note") %></p>
+        </div>
+        <div class="flex flex-col gap-2">
+          <%= form.label :file_url, t("author.documents.fields.file_url"), class: "kick text-xs text-mute" %>
+          <%= form.url_field :file_url, class: "input input-bordered w-full" %>
+          <p class="text-sm text-mute"><%= t("author.documents.fields.file_url_note") %></p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <%= form.label :description, t("author.documents.fields.description"), class: "kick text-xs text-mute" %>
+        <%= form.text_field :description, class: "input input-bordered w-full" %>
+      </div>
+
+      <label class="label cursor-pointer justify-start gap-3">
+        <%= form.check_box :given_at_start, class: "checkbox" %>
+        <span class="label-text"><%= t("author.documents.fields.given_at_start") %></span>
+      </label>
+
+      <div><%= form.submit t("author.documents.add"), class: "btn btn-primary" %></div>
+    <% end %>
+  </section>
+</div>

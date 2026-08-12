@@ -3,6 +3,11 @@ module CaseSeeder
     JOIN_CODE = "VESTA-01".freeze
     PASSWORD = "case chat demo passphrase".freeze
 
+    # The real case package, if it is sitting next to the app. Seeding works
+    # without it — documents fall back to metadata only — so a fresh clone is
+    # not blocked on having the source material.
+    SOURCE_DIR = Rails.root.join("../seed_data/Restaurant take outs/Vesta by Claude")
+
     def call
       author = upsert_user("Rachel Okonkwo", "rachel@example.test")
       student = upsert_user("Jordan Lin", "jordan@example.test", program: "MBA 2027")
@@ -233,20 +238,44 @@ module CaseSeeder
 
     def upsert_documents(case_study)
       specs = {
-        door_log: ["data_door_log.csv", "One row per party at the door: arrival, size, quoted wait, stayed or left, table, departure.", true],
-        tickets: ["data_kitchen_tickets.csv", "One row per ticket: fired and bumped times only. The printer stamps nothing in between.", true],
-        checks: ["data_checks.csv", "One row per table: covers, check, tip, minutes at table.", true],
-        forecast: ["data_takeout_forecast.csv", "The platform's projected order volume by half hour.", true],
-        case_pdf: ["Vesta_case.pdf", "The case as handed out, five pages.", true],
-        loyalty: ["exhibit_5_loyalty_returns.csv", "Two years of loyalty-programme returns for parties turned away at the door.", false],
-        platform_terms: ["platform_terms.pdf", "The delivery platform's merchant agreement: commission, quoted ready time, refund and ranking rules.", false]
+        door_log: ["data_door_log.csv", "One row per party at the door: arrival, size, quoted wait, stayed or left, table, departure.", true, "data_door_log.csv"],
+        tickets: ["data_kitchen_tickets.csv", "One row per ticket: fired and bumped times only. The printer stamps nothing in between.", true, "data_kitchen_tickets.csv"],
+        checks: ["data_checks.csv", "One row per table: covers, check, tip, minutes at table.", true, "data_checks.csv"],
+        forecast: ["data_takeout_forecast.csv", "The platform's projected order volume by half hour.", true, "data_takeout_forecast.csv"],
+        case_pdf: ["Vesta_case.pdf", "The case as handed out, five pages.", true, "Vesta case.pdf"],
+        loyalty: ["exhibit_5_loyalty_returns.csv", "Two years of loyalty-programme returns for parties turned away at the door.", false, nil],
+        platform_terms: ["platform_terms.pdf", "The delivery platform's merchant agreement: commission, quoted ready time, refund and ranking rules.", false, nil]
       }
 
-      specs.transform_values do |(file_name, description, given_at_start)|
+      specs.transform_values do |(file_name, description, given_at_start, source)|
         document = Document.find_or_initialize_by(case_study: case_study, file_name: file_name)
         document.assign_attributes(description: description, given_at_start: given_at_start)
+        attach_source(document, source) unless document.file.attached?
         document.save!
         document
+      end
+    end
+
+    def attach_source(document, source)
+      return if source.blank?
+
+      path = SOURCE_DIR.join(source)
+      return unless File.exist?(path)
+
+      document.file.attach(
+        io: File.open(path),
+        filename: document.file_name,
+        content_type: content_type_for(path)
+      )
+    end
+
+    def content_type_for(path)
+      case File.extname(path).downcase
+      when ".pdf" then "application/pdf"
+      when ".csv" then "text/csv"
+      when ".xlsx" then "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      when ".docx" then "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      else "text/plain"
       end
     end
 
@@ -288,7 +317,8 @@ module CaseSeeder
       puts "  password:  #{PASSWORD}"
       puts "  cast:      #{case_study.contacts.count} (#{case_study.contacts.where(in_starting_directory: true).count} in the starting directory)"
       puts "  referrals: #{Referral.where(referring_contact_id: case_study.contacts.select(:id)).count}"
-      puts "  documents: #{case_study.documents.count}"
+      attached = Document.where(case_study_id: case_study.id).count { |d| d.file.attached? }
+      puts "  documents: #{Document.where(case_study_id: case_study.id).count} (#{attached} with files)"
     end
     # standard:enable Rails/Output
   end
