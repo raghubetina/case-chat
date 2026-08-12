@@ -1,45 +1,114 @@
-# One-Blueprint deploy: a single web service (the shipped Dockerfile, Thruster in
-# front of Puma; the entrypoint runs db:prepare on boot). The database is external
-# (Neon) - provide DATABASE_URL at Blueprint creation. SECRET_KEY_BASE and the
-# runtime profile are configured automatically (see DEPLOY.md).
+# Production topology for a real deployment, not a portfolio demo.
+#
+# The Foundation blueprint runs everything in one 512MB web service with Solid
+# Queue inside Puma and Action Cable polling Postgres. That is a sound default
+# for a small CRUD app and the wrong shape for this one, because Case Chat has
+# two demanding characteristics:
+#
+#   1. A contact's reply is a 10-60 second streaming job. In-Puma Solid Queue
+#      would hold a worker inside the web process for that entire time, so a
+#      handful of concurrent conversations would starve the request threads
+#      that serve everyone else. Hence a dedicated worker service.
+#
+#   2. Token streaming means many broadcasts per second per active thread.
+#      Solid Cable is database-backed and polls, so every subscriber costs a
+#      recurring query and every token costs a write. Hence Key Value (Redis)
+#      for Action Cable, while Solid Cache and Solid Queue stay on Postgres,
+#      where their access patterns are a good fit.
+databases:
+  - name: case-chat-db
+    plan: basic-1gb
+    region: ohio
+    postgresMajorVersion: "18"
+
 services:
+  # Action Cable only. Cache and queue remain on Postgres.
+  - name: case-chat-cable
+    type: keyvalue
+    plan: starter
+    region: ohio
+    ipAllowList: [] # reachable only from inside the Render private network
+    maxmemoryPolicy: noeviction # dropping pub/sub state would silently break streams
+
   - type: web
-    name: case_chat
+    name: case-chat
     runtime: docker
-    # Foundation deliberately omits `plan`: Render defaults a new service to
-    # paid Starter and preserves an existing service's current instance type.
-    # The Compiler may add `plan: free` only for an explicit disposable demo.
-    region: ohio # US East (AWS us-east-2); create the Neon database in the same region
+    plan: standard
+    region: ohio
     autoDeployTrigger: checksPass
     healthCheckPath: /ready
     envVars:
+      - fromGroup: case-chat-runtime
       - key: PORT
         value: "80"
-      - key: RAILS_ENV
-        value: "production"
-      - key: SECRET_KEY_BASE
-        generateValue: true
-      # Render otherwise injects WEB_CONCURRENCY=1, which starts Puma cluster
-      # mode and wastes memory on a single 512MB instance.
+      # Standard has room for a real cluster; each worker gets its own threads.
       - key: WEB_CONCURRENCY
-        value: "0"
+        value: "2"
       - key: RAILS_MAX_THREADS
-        value: "3"
-      # Three Puma threads + in-process Solid Queue need shared pool headroom.
+        value: "5"
+      # Web processes no longer run jobs — that is the worker's job now.
+      - key: SOLID_QUEUE_IN_PUMA
+        value: "false"
+      # Per Puma worker: threads plus headroom for Action Cable and Solid Cache.
       - key: DB_POOL
         value: "8"
-      - key: SOLID_QUEUE_IN_PUMA
-        value: "true"
+      # Streaming responses are held open by Action Cable, not by a request, so
+      # the ordinary request deadline stays short.
       - key: RACK_TIMEOUT_SERVICE_TIMEOUT
         value: "15"
+
+  - type: worker
+    name: case-chat-worker
+    runtime: docker
+    plan: standard
+    region: ohio
+    autoDeployTrigger: checksPass
+    # Not ./bin/rails server, so the entrypoint's db:prepare does not run here:
+    # migrations belong to one process, and that process is the web service.
+    dockerCommand: ./bin/jobs
+    envVars:
+      - fromGroup: case-chat-runtime
+      # A reply job spends most of its life waiting on the model, so threads
+      # are cheap here; this is IO-bound, not CPU-bound.
+      - key: JOB_CONCURRENCY
+        value: "2"
+      - key: DB_POOL
+        value: "12"
+
+envVarGroups:
+  - name: case-chat-runtime
+    envVars:
+      - key: RAILS_ENV
+        value: production
       - key: RAILS_LOG_LEVEL
-        value: "info"
+        value: info
       - key: BUNDLE_WITHOUT
-        value: "development:test"
-      # External Postgres (Neon), created in AWS us-east-2 to match this region.
-      # Paste the DIRECT connection string (pooling toggle off, no -pooler in the
-      # host) at Blueprint creation: db:prepare on boot + our SET-based statement/
-      # lock timeouts need session state the pooler drops. It carries Solid Cache/
-      # Queue/Cable too.
+        value: development:test
+      # Both services must share this or signed cookies and Active Storage
+      # URLs minted by one are rejected by the other.
+      - key: SECRET_KEY_BASE
+        generateValue: true
       - key: DATABASE_URL
+        fromDatabase:
+          name: case-chat-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: case-chat-cable
+          type: keyvalue
+          property: connectionString
+      # Which model answers as a contact: anthropic | openai.
+      - key: RESPONDER
+        value: anthropic
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # Host for mailer links and Active Storage URLs.
+      - key: APPLICATION_HOST
+        sync: false
+      # Transactional mail stays dormant until both of these are set.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
         sync: false
