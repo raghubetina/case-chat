@@ -19,6 +19,14 @@
   <% end %>
 
   <div>
+    <%= form.label :condition, I18n.t("foundation_domain.entities.share_rules.fields.condition"), class: "label font-medium" %>
+    <%= form.text_area :condition, rows: 3, required: true, class: "textarea textarea-bordered w-full" %>
+    <% record.errors.full_messages_for(:condition).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
     <%= form.label :contact_id, I18n.t("foundation_domain.entities.share_rules.fields.contact_id"), class: "label font-medium" %>
     <%= form.select :contact_id, @contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
     <% record.errors.full_messages_for(:contact).each do |message| %>

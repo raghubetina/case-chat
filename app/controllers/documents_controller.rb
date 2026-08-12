@@ -79,11 +79,11 @@ class DocumentsController < ApplicationController
   end
 
   def create_document_params
-    params.expect(document: %i[file_name description case_study_id])
+    params.expect(document: %i[file_name description file_url byte_size given_at_start case_study_id])
   end
 
   def update_document_params
-    params.expect(document: %i[file_name description case_study_id])
+    params.expect(document: %i[file_name description file_url byte_size given_at_start case_study_id])
   end
 
   def load_reference_options

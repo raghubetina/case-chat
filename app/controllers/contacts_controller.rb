@@ -79,11 +79,11 @@ class ContactsController < ApplicationController
   end
 
   def create_contact_params
-    params.expect(contact: %i[full_name role_title case_study_id])
+    params.expect(contact: %i[full_name role_title description system_prompt in_starting_directory case_study_id])
   end
 
   def update_contact_params
-    params.expect(contact: %i[full_name role_title case_study_id])
+    params.expect(contact: %i[full_name role_title description system_prompt in_starting_directory case_study_id])
   end
 
   def load_reference_options

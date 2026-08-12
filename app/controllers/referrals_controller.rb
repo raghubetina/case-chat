@@ -79,11 +79,11 @@ class ReferralsController < ApplicationController
   end
 
   def create_referral_params
-    params.expect(referral: %i[referring_contact_id referred_contact_id])
+    params.expect(referral: %i[condition enabled referring_contact_id referred_contact_id])
   end
 
   def update_referral_params
-    params.expect(referral: %i[referring_contact_id referred_contact_id])
+    params.expect(referral: %i[condition enabled referring_contact_id referred_contact_id])
   end
 
   def load_reference_options

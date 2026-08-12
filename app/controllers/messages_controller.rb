@@ -79,11 +79,11 @@ class MessagesController < ApplicationController
   end
 
   def create_message_params
-    params.expect(message: %i[conversation_id])
+    params.expect(message: %i[body sent_at from_contact conversation_id])
   end
 
   def update_message_params
-    params.expect(message: %i[conversation_id])
+    params.expect(message: %i[body sent_at from_contact conversation_id])
   end
 
   def load_reference_options

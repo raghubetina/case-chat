@@ -19,6 +19,24 @@
   <% end %>
 
   <div>
+    <%= form.label :condition, I18n.t("foundation_domain.entities.referrals.fields.condition"), class: "label font-medium" %>
+    <%= form.text_area :condition, rows: 3, required: true, class: "textarea textarea-bordered w-full" %>
+    <% record.errors.full_messages_for(:condition).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <label class="label cursor-pointer justify-start gap-3">
+      <%= form.check_box :enabled, class: "checkbox" %>
+      <span class="label-text"><%= I18n.t("foundation_domain.entities.referrals.fields.enabled") %></span>
+    </label>
+    <% record.errors.full_messages_for(:enabled).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
     <%= form.label :referring_contact_id, I18n.t("foundation_domain.entities.referrals.fields.referring_contact_id"), class: "label font-medium" %>
     <%= form.select :referring_contact_id, @referring_contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
     <% record.errors.full_messages_for(:referring_contact).each do |message| %>

@@ -33,6 +33,32 @@
     <% end %>
   </div>
   <div>
+    <%= form.label :file_url, I18n.t("foundation_domain.entities.documents.fields.file_url"), class: "label font-medium" %>
+    <%= form.url_field :file_url, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:file_url).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.label :byte_size, I18n.t("foundation_domain.entities.documents.fields.byte_size"), class: "label font-medium" %>
+    <%= form.number_field :byte_size, min: 1, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:byte_size).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <label class="label cursor-pointer justify-start gap-3">
+      <%= form.check_box :given_at_start, class: "checkbox" %>
+      <span class="label-text"><%= I18n.t("foundation_domain.entities.documents.fields.given_at_start") %></span>
+    </label>
+    <% record.errors.full_messages_for(:given_at_start).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
     <%= form.label :case_study_id, I18n.t("foundation_domain.entities.documents.fields.case_study_id"), class: "label font-medium" %>
     <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
     <% record.errors.full_messages_for(:case_study).each do |message| %>

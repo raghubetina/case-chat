@@ -79,11 +79,11 @@ class CaseStudiesController < ApplicationController
   end
 
   def create_case_study_params
-    params.expect(case_study: %i[title course join_code author_id])
+    params.expect(case_study: %i[title course background assignment join_code due_at published author_id])
   end
 
   def update_case_study_params
-    params.expect(case_study: %i[title course join_code author_id])
+    params.expect(case_study: %i[title course background assignment join_code due_at published author_id])
   end
 
   def load_reference_options

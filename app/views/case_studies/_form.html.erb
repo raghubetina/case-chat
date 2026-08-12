@@ -33,12 +33,46 @@
     <% end %>
   </div>
   <div>
+    <%= form.label :background, I18n.t("foundation_domain.entities.case_studies.fields.background"), class: "label font-medium" %>
+    <%= form.text_area :background, rows: 8, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+    <% record.errors.full_messages_for(:background).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.label :assignment, I18n.t("foundation_domain.entities.case_studies.fields.assignment"), class: "label font-medium" %>
+    <%= form.text_area :assignment, rows: 6, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+    <% record.errors.full_messages_for(:assignment).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
     <%= form.label :join_code, I18n.t("foundation_domain.entities.case_studies.fields.join_code"), class: "label font-medium" %>
     <%= form.text_field :join_code, maxlength: 32, class: "input input-bordered w-full" %>
     <% record.errors.full_messages_for(:join_code).each do |message| %>
       <p class="mt-1 text-sm text-error"><%= message %></p>
     <% end %>
   </div>
+  <div>
+    <%= form.label :due_at, I18n.t("foundation_domain.entities.case_studies.fields.due_at"), class: "label font-medium" %>
+    <%= form.datetime_field :due_at, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:due_at).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <label class="label cursor-pointer justify-start gap-3">
+      <%= form.check_box :published, class: "checkbox" %>
+      <span class="label-text"><%= I18n.t("foundation_domain.entities.case_studies.fields.published") %></span>
+    </label>
+    <% record.errors.full_messages_for(:published).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
   <div>
     <%= form.label :author_id, I18n.t("foundation_domain.entities.case_studies.fields.author_id"), class: "label font-medium" %>
     <%= form.select :author_id, @author_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>

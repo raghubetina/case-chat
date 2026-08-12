@@ -79,11 +79,11 @@ class ShareRulesController < ApplicationController
   end
 
   def create_share_rule_params
-    params.expect(share_rule: %i[contact_id document_id])
+    params.expect(share_rule: %i[condition contact_id document_id])
   end
 
   def update_share_rule_params
-    params.expect(share_rule: %i[contact_id document_id])
+    params.expect(share_rule: %i[condition contact_id document_id])
   end
 
   def load_reference_options

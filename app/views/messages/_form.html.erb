@@ -19,6 +19,32 @@
   <% end %>
 
   <div>
+    <%= form.label :body, I18n.t("foundation_domain.entities.messages.fields.body"), class: "label font-medium" %>
+    <%= form.text_area :body, rows: 4, required: true, class: "textarea textarea-bordered w-full" %>
+    <% record.errors.full_messages_for(:body).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.label :sent_at, I18n.t("foundation_domain.entities.messages.fields.sent_at"), class: "label font-medium" %>
+    <%= form.datetime_field :sent_at, required: true, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:sent_at).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <label class="label cursor-pointer justify-start gap-3">
+      <%= form.check_box :from_contact, class: "checkbox" %>
+      <span class="label-text"><%= I18n.t("foundation_domain.entities.messages.fields.from_contact") %></span>
+    </label>
+    <% record.errors.full_messages_for(:from_contact).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
     <%= form.label :conversation_id, I18n.t("foundation_domain.entities.messages.fields.conversation_id"), class: "label font-medium" %>
     <%= form.select :conversation_id, @conversation_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
     <% record.errors.full_messages_for(:conversation).each do |message| %>

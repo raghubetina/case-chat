@@ -33,6 +33,32 @@
     <% end %>
   </div>
   <div>
+    <%= form.label :description, I18n.t("foundation_domain.entities.contacts.fields.description"), class: "label font-medium" %>
+    <%= form.text_area :description, rows: 3, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+    <% record.errors.full_messages_for(:description).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <%= form.label :system_prompt, I18n.t("foundation_domain.entities.contacts.fields.system_prompt"), class: "label font-medium" %>
+    <%= form.text_area :system_prompt, rows: 12, required: true, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+    <% record.errors.full_messages_for(:system_prompt).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <label class="label cursor-pointer justify-start gap-3">
+      <%= form.check_box :in_starting_directory, class: "checkbox" %>
+      <span class="label-text"><%= I18n.t("foundation_domain.entities.contacts.fields.in_starting_directory") %></span>
+    </label>
+    <% record.errors.full_messages_for(:in_starting_directory).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+
+  <div>
     <%= form.label :case_study_id, I18n.t("foundation_domain.entities.contacts.fields.case_study_id"), class: "label font-medium" %>
     <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
     <% record.errors.full_messages_for(:case_study).each do |message| %>
