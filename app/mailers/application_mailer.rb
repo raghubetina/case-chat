@@ -1,4 +1,6 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "from@example.com"
+  register_interceptor NonProductionMailInterceptor unless Rails.env.production?
+
+  default from: -> { Rails.configuration.x.mail_from }
   layout "mailer"
 end

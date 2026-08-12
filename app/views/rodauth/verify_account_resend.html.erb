@@ -1,0 +1,23 @@
+<%= render "panel" do %>
+  <%= render "header", lede: t("auth.verify_account_resend.lede") %>
+
+  <%= form_with url: rodauth.verify_account_resend_path, method: :post, data: {turbo: false}, class: "space-y-5" do |form| %>
+    <% if params[rodauth.login_param] %>
+      <%= form.hidden_field rodauth.login_param, value: params[rodauth.login_param] %>
+    <% else %>
+      <div class="space-y-1.5">
+        <%= form.label rodauth.login_param, rodauth.login_label, class: "label font-medium" %>
+        <%= form.email_field rodauth.login_param,
+          value: params[rodauth.login_param],
+          id: "email",
+          autocomplete: "email",
+          required: true,
+          class: rodauth_input_class(rodauth, rodauth.login_param),
+          **rodauth_field_attributes(rodauth, rodauth.login_param) %>
+        <%= render "field_error", rodauth:, param_name: rodauth.login_param %>
+      </div>
+    <% end %>
+
+    <%= form.submit rodauth.verify_account_resend_button, class: "btn btn-primary w-full" %>
+  <% end %>
+<% end %>

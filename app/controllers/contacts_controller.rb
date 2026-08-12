@@ -1,23 +1,27 @@
 class ContactsController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_contact, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @contacts = pagy(:offset, Contact.order(:id), limit: PAGE_LIMIT)
+    authorize! Contact, to: :index?
+    @pagy, @contacts = pagy(:offset, authorized_scope(Contact.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! Contact, to: :new?
     @contact = Contact.new
   end
 
   def create
     @contact = Contact.new(create_contact_params)
+    authorize! @contact
     if @contact.save
       redirect_to contact_path(@contact), status: :see_other
     else
@@ -46,7 +50,8 @@ class ContactsController < ApplicationController
   private
 
   def set_contact
-    @contact = Contact.find(params[:id])
+    @contact = Contact.includes(:case_study).find(params[:id])
+    authorize! @contact
   end
 
   def set_return_to
@@ -87,8 +92,7 @@ class ContactsController < ApplicationController
   end
 
   def load_reference_options
-    @case_study_id_options = CaseStudy
-      .order(:title, :id)
+    @case_study_id_options = authorized_scope(CaseStudy.order(:title, :id), as: :authored)
       .pluck(:title, :id)
   end
 end

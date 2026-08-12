@@ -1,23 +1,27 @@
 class CaseStudiesController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_case_study, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @case_studies = pagy(:offset, CaseStudy.order(:id), limit: PAGE_LIMIT)
+    authorize! CaseStudy, to: :index?
+    @pagy, @case_studies = pagy(:offset, authorized_scope(CaseStudy.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! CaseStudy, to: :new?
     @case_study = CaseStudy.new
   end
 
   def create
     @case_study = CaseStudy.new(create_case_study_params)
+    authorize! @case_study
     if @case_study.save
       redirect_to case_study_path(@case_study), status: :see_other
     else
@@ -47,6 +51,7 @@ class CaseStudiesController < ApplicationController
 
   def set_case_study
     @case_study = CaseStudy.find(params[:id])
+    authorize! @case_study
   end
 
   def set_return_to
@@ -87,8 +92,7 @@ class CaseStudiesController < ApplicationController
   end
 
   def load_reference_options
-    @author_id_options = User
-      .order(:full_name, :id)
+    @author_id_options = authorized_scope(User.order(:full_name, :id))
       .pluck(:full_name, :id)
   end
 end

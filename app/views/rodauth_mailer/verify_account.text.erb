@@ -1,0 +1,7 @@
+<%= t("mailers.rodauth.greeting", name: @account.full_name) %>
+
+<%= t("mailers.rodauth.verify_account.body") %>
+
+<%= @rodauth.verify_account_email_link %>
+
+<%= t("mailers.rodauth.not_requested") %>

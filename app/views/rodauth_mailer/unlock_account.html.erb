@@ -1,0 +1,6 @@
+<h1><%= t("mailers.rodauth.unlock_account.heading") %></h1>
+<p><%= t("mailers.rodauth.greeting", name: @account.full_name) %></p>
+<p><%= t("mailers.rodauth.unlock_account.body") %></p>
+<p><%= link_to t("mailers.rodauth.unlock_account.action"), @rodauth.unlock_account_email_link, class: "email-button" %></p>
+<p class="email-muted"><%= t("mailers.rodauth.not_requested") %></p>
+<p class="email-muted email-url"><%= @rodauth.unlock_account_email_link %></p>

@@ -1,6 +1,6 @@
 module DomainTestHelper
   def build_user
-    User.create!(full_name: "Jordan Lin")
+    User.create!(full_name: "Jordan Lin", email: "user-#{SecureRandom.hex(4)}@example.test", status: 2)
   end
 
   def build_case_study(author: build_user)

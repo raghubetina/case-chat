@@ -1,23 +1,27 @@
 class ShareRulesController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_share_rule, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @share_rules = pagy(:offset, ShareRule.order(:id), limit: PAGE_LIMIT)
+    authorize! ShareRule, to: :index?
+    @pagy, @share_rules = pagy(:offset, authorized_scope(ShareRule.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! ShareRule, to: :new?
     @share_rule = ShareRule.new
   end
 
   def create
     @share_rule = ShareRule.new(create_share_rule_params)
+    authorize! @share_rule
     if @share_rule.save
       redirect_to share_rule_path(@share_rule), status: :see_other
     else
@@ -46,7 +50,8 @@ class ShareRulesController < ApplicationController
   private
 
   def set_share_rule
-    @share_rule = ShareRule.find(params[:id])
+    @share_rule = ShareRule.includes(contact: :case_study).find(params[:id])
+    authorize! @share_rule
   end
 
   def set_return_to
@@ -87,11 +92,9 @@ class ShareRulesController < ApplicationController
   end
 
   def load_reference_options
-    @contact_id_options = Contact
-      .order(:full_name, :id)
+    @contact_id_options = authorized_scope(Contact.order(:full_name, :id), as: :authored)
       .pluck(:full_name, :id)
-    @document_id_options = Document
-      .order(:file_name, :id)
+    @document_id_options = authorized_scope(Document.order(:file_name, :id), as: :authored)
       .pluck(:file_name, :id)
   end
 end

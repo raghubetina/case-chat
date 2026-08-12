@@ -1,0 +1,3 @@
+<% if (message = rodauth.field_error(param_name)) %>
+  <p id="<%= rodauth_field_error_id(param_name) %>" class="mt-1 text-sm font-medium text-error"><%= message %></p>
+<% end %>

@@ -72,7 +72,22 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = {host: "example.com"}
+  application_host = ENV["APPLICATION_HOST"].presence
+  resend_api_key = ENV["RESEND_API_KEY"].presence
+  mail_from = ENV["MAIL_FROM"].presence
+  if resend_api_key && application_host.blank?
+    raise "APPLICATION_HOST is required when RESEND_API_KEY is configured"
+  end
+  if resend_api_key && mail_from.blank?
+    raise "MAIL_FROM is required when RESEND_API_KEY is configured"
+  end
+
+  config.action_mailer.default_url_options = {host: application_host || "example.com", protocol: "https"}
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.perform_deliveries = resend_api_key.present?
+  config.action_mailer.delivery_method = resend_api_key ? :resend : :test
+  config.x.mail_from = mail_from || "Case Chat <notifications@example.test>"
+  Resend.api_key = resend_api_key if resend_api_key
 
   # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {

@@ -1,23 +1,27 @@
 class IntroductionsController < ApplicationController
   PAGE_LIMIT = 24
 
+  before_action :authenticate
   before_action :set_introduction, only: %i[show edit update destroy]
   before_action :set_return_to, only: %i[new create edit update destroy]
   before_action :load_reference_options, only: %i[new edit]
 
   def index
-    @pagy, @introductions = pagy(:offset, Introduction.order(:id), limit: PAGE_LIMIT)
+    authorize! Introduction, to: :index?
+    @pagy, @introductions = pagy(:offset, authorized_scope(Introduction.order(:id)), limit: PAGE_LIMIT)
   end
 
   def show
   end
 
   def new
+    authorize! Introduction, to: :new?
     @introduction = Introduction.new
   end
 
   def create
     @introduction = Introduction.new(create_introduction_params)
+    authorize! @introduction
     if @introduction.save
       redirect_to introduction_path(@introduction), status: :see_other
     else
@@ -46,7 +50,8 @@ class IntroductionsController < ApplicationController
   private
 
   def set_introduction
-    @introduction = Introduction.find(params[:id])
+    @introduction = Introduction.includes(:enrollment, {contact: :case_study}).find(params[:id])
+    authorize! @introduction
   end
 
   def set_return_to
@@ -87,11 +92,9 @@ class IntroductionsController < ApplicationController
   end
 
   def load_reference_options
-    @enrollment_id_options = Enrollment
-      .order(:created_at, :id)
+    @enrollment_id_options = authorized_scope(Enrollment.order(:created_at, :id))
       .pluck(:created_at, :id)
-    @contact_id_options = Contact
-      .order(:full_name, :id)
+    @contact_id_options = authorized_scope(Contact.order(:full_name, :id))
       .pluck(:full_name, :id)
   end
 end

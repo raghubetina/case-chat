@@ -1,0 +1,60 @@
+<%= render "panel" do %>
+  <%= render "header", lede: t("auth.create_account.lede") %>
+
+  <%= form_with url: rodauth.create_account_path, method: :post, data: {turbo: false}, class: "space-y-5" do |form| %>
+    <div class="space-y-1.5">
+      <%= form.label :full_name, User.human_attribute_name(:full_name), class: "label font-medium" %>
+      <%= form.text_field :full_name,
+        value: params[:full_name],
+        autocomplete: "name",
+        required: true,
+        class: rodauth_input_class(rodauth, "full_name"),
+        **rodauth_field_attributes(rodauth, "full_name") %>
+      <%= render "field_error", rodauth:, param_name: "full_name" %>
+    </div>
+
+    <div class="space-y-1.5">
+      <%= form.label rodauth.login_param, rodauth.login_label, class: "label font-medium" %>
+      <%= form.email_field rodauth.login_param,
+        value: params[rodauth.login_param],
+        id: "email",
+        autocomplete: "email",
+        required: true,
+        class: rodauth_input_class(rodauth, rodauth.login_param),
+        **rodauth_field_attributes(rodauth, rodauth.login_param) %>
+      <%= render "field_error", rodauth:, param_name: rodauth.login_param %>
+    </div>
+
+    <div class="space-y-1.5">
+      <%= form.label rodauth.password_param, rodauth.password_label, class: "label font-medium" %>
+      <%= form.password_field rodauth.password_param,
+        value: "",
+        id: "password",
+        autocomplete: "new-password",
+        required: true,
+        class: rodauth_input_class(rodauth, rodauth.password_param),
+        **rodauth_field_attributes(rodauth, rodauth.password_param, describedby: "password-hint") %>
+      <p id="password-hint" class="text-xs/5 text-base-content/60"><%= t("auth.password_hint") %></p>
+      <%= render "field_error", rodauth:, param_name: rodauth.password_param %>
+    </div>
+
+    <div class="space-y-1.5">
+      <%= form.label rodauth.password_confirm_param, rodauth.password_confirm_label, class: "label font-medium" %>
+      <%= form.password_field rodauth.password_confirm_param,
+        value: "",
+        id: "password-confirm",
+        autocomplete: "new-password",
+        required: true,
+        class: rodauth_input_class(rodauth, rodauth.password_confirm_param),
+        **rodauth_field_attributes(rodauth, rodauth.password_confirm_param) %>
+      <%= render "field_error", rodauth:, param_name: rodauth.password_confirm_param %>
+    </div>
+
+    <%= form.submit rodauth.create_account_button, class: "btn btn-primary w-full" %>
+  <% end %>
+
+  <p class="mt-6 text-center text-sm text-base-content/70">
+    <%= t("auth.create_account.have_account") %>
+    <%= link_to t("auth.actions.sign_in"), rodauth.login_path, class: "link link-hover" %>
+  </p>
+<% end %>

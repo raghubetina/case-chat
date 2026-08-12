@@ -10,9 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "account_password_hashes", id: :uuid, default: nil, force: :cascade do |t|
+    t.string "password_hash", null: false
+  end
 
   create_table "case_studies", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.text "assignment"
@@ -267,14 +271,46 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_000002) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
-  create_table "users", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "email"
-    t.string "full_name", null: false
-    t.string "program"
-    t.datetime "updated_at", null: false
+  create_table "user_lockouts", id: :uuid, default: nil, force: :cascade do |t|
+    t.datetime "deadline", null: false
+    t.datetime "email_last_sent"
+    t.string "key", null: false
   end
 
+  create_table "user_login_failures", id: :uuid, default: nil, force: :cascade do |t|
+    t.integer "number", default: 1, null: false
+  end
+
+  create_table "user_password_reset_keys", id: :uuid, default: nil, force: :cascade do |t|
+    t.datetime "deadline", null: false
+    t.datetime "email_last_sent", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "key", null: false
+  end
+
+  create_table "user_remember_keys", id: :uuid, default: nil, force: :cascade do |t|
+    t.datetime "deadline", null: false
+    t.string "key", null: false
+  end
+
+  create_table "user_verification_keys", id: :uuid, default: nil, force: :cascade do |t|
+    t.datetime "email_last_sent", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "key", null: false
+    t.datetime "requested_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+  end
+
+  create_table "users", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "full_name", null: false
+    t.string "program"
+    t.integer "status", default: 1, null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.check_constraint "email::text = lower(btrim(email::text))", name: "users_email_canonical"
+    t.check_constraint "status = ANY (ARRAY[1, 2])", name: "users_status_allowed"
+  end
+
+  add_foreign_key "account_password_hashes", "users", column: "id", on_delete: :cascade
   add_foreign_key "case_studies", "users", column: "author_id", on_delete: :restrict
   add_foreign_key "contacts", "case_studies", on_delete: :cascade
   add_foreign_key "conversations", "contacts", on_delete: :cascade
@@ -299,4 +335,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_000002) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "user_lockouts", "users", column: "id", on_delete: :cascade
+  add_foreign_key "user_login_failures", "users", column: "id", on_delete: :cascade
+  add_foreign_key "user_password_reset_keys", "users", column: "id", on_delete: :cascade
+  add_foreign_key "user_remember_keys", "users", column: "id", on_delete: :cascade
+  add_foreign_key "user_verification_keys", "users", column: "id", on_delete: :cascade
 end

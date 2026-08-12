@@ -4,8 +4,13 @@ require_relative "../models/domain_test_helper"
 class DomainMutationsTest < ActionDispatch::IntegrationTest
   include DomainTestHelper
 
+  setup do
+    @author = register_user(full_name: "Rachel Okonkwo")
+    sign_in_as @author
+  end
+
   test "creates a contact with its system prompt through the form" do
-    case_study = build_case_study
+    case_study = CaseStudy.create!(title: "Calder Instruments", author: @author)
 
     assert_difference "Contact.count", 1 do
       post contacts_path, params: {
@@ -26,7 +31,7 @@ class DomainMutationsTest < ActionDispatch::IntegrationTest
   end
 
   test "re-renders the form when a contact lacks a system prompt" do
-    case_study = build_case_study
+    case_study = CaseStudy.create!(title: "Calder Instruments", author: @author)
 
     assert_no_difference "Contact.count" do
       post contacts_path, params: {
@@ -38,7 +43,9 @@ class DomainMutationsTest < ActionDispatch::IntegrationTest
   end
 
   test "creates a message stamping who spoke" do
-    conversation = build_conversation
+    contact = build_contact(case_study: CaseStudy.create!(title: "Calder", author: @author))
+    enrollment = Enrollment.create!(user: @author, case_study: contact.case_study)
+    conversation = Conversation.create!(enrollment: enrollment, contact: contact)
 
     assert_difference "Message.count", 1 do
       post messages_path, params: {
@@ -55,7 +62,7 @@ class DomainMutationsTest < ActionDispatch::IntegrationTest
   end
 
   test "renders every extended form" do
-    build_conversation # populates the reference dropdowns
+    build_contact(case_study: CaseStudy.create!(title: "Calder", author: @author))
 
     %w[case_studies contacts documents referrals share_rules messages].each do |resource|
       get "/#{resource}/new"

@@ -6,6 +6,14 @@
 class ErrorsController < ActionController::Base
   layout "application"
 
+  # The layout's session controls must render even when this controller is
+  # reached outside the full middleware stack; a missing rodauth instance
+  # reads as signed out rather than raising into the failsafe.
+  def current_user
+    request.env["rodauth"] ? rodauth.rails_account : nil
+  end
+  helper_method :current_user
+
   def not_found
     render_error status: :not_found, message: t("errors.not_found.heading")
   end
