@@ -1,0 +1,143 @@
+<% content_for :title, t("author.cases.setup") %>
+
+<div class="mx-auto flex max-w-[1120px] flex-col gap-8 py-10">
+  <header class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <h1 class="font-head text-lg font-semibold"><%= t("author.cases.setup") %></h1>
+      <% if @case_study.published? %>
+        <span class="kick rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.published_badge") %></span>
+      <% else %>
+        <span class="kick rounded-md border border-line px-2 py-1 text-xs text-mute"><%= t("author.cases.draft_badge") %></span>
+      <% end %>
+    </div>
+    <div class="flex items-center gap-2">
+      <%= link_to t("author.cases.preview"), case_path(@case_study), class: "btn btn-outline btn-sm" %>
+      <%= button_to t("author.cases.publish"), publish_author_case_path(@case_study), class: "btn btn-primary btn-sm" %>
+    </div>
+  </header>
+
+  <div class="grid gap-8 xl:grid-cols-[1fr_288px]">
+    <div class="flex max-w-col flex-col gap-8">
+      <%= form_with model: @case_study, url: author_case_path(@case_study), method: :patch, class: "flex flex-col gap-6" do |form| %>
+        <% if @case_study.errors.any? %>
+          <div class="alert alert-error" role="alert">
+            <ul class="list-disc pl-5">
+              <% @case_study.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="flex flex-col gap-2">
+          <%= form.label :title, t("author.cases.fields.title"), class: "kick text-xs text-mute" %>
+          <%= form.text_field :title, required: true, class: "input input-bordered w-full" %>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="flex flex-col gap-2">
+            <%= form.label :course, t("author.cases.fields.course"), class: "kick text-xs text-mute" %>
+            <%= form.text_field :course, class: "input input-bordered w-full" %>
+          </div>
+          <div class="flex flex-col gap-2">
+            <%= form.label :join_code, t("author.cases.fields.join_code"), class: "kick text-xs text-mute" %>
+            <%= form.text_field :join_code, class: "input input-bordered w-full font-mono" %>
+            <p class="text-sm text-mute"><%= t("author.cases.fields.join_code_note") %></p>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between gap-4">
+            <%= form.label :background, t("author.cases.fields.background"), class: "kick text-xs text-mute" %>
+            <span class="kick text-xs text-faint"><%= t("author.cases.fields.students_see_this") %></span>
+          </div>
+          <%= form.text_area :background, rows: 10, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+          <p class="text-sm text-mute"><%= t("author.cases.fields.background_note") %></p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <%= form.label :assignment, t("author.cases.fields.assignment"), class: "kick text-xs text-mute" %>
+          <%= form.text_area :assignment, rows: 7, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <%= form.label :due_at, t("author.cases.fields.due_at"), class: "kick text-xs text-mute" %>
+          <%= form.datetime_field :due_at, class: "input input-bordered w-full" %>
+        </div>
+
+        <div><%= form.submit t("author.cases.save"), class: "btn btn-primary" %></div>
+      <% end %>
+
+      <section class="flex flex-col gap-3">
+        <div class="flex items-baseline justify-between gap-4">
+          <h2 class="font-head text-lg font-semibold"><%= t("author.cases.cast") %></h2>
+          <%= link_to t("author.contacts.add"), new_author_case_contact_path(@case_study), class: "link link-hover text-sm font-medium text-accent" %>
+        </div>
+        <p class="max-w-prose text-sm text-mute"><%= t("author.cases.cast_note") %></p>
+
+        <div class="flex flex-col">
+          <% @contacts.each do |contact| %>
+            <% introducers = @introducers[contact.id] || [] %>
+            <div class="flex items-center gap-3 border-b border-line py-3">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
+                <%= initials_for(contact.full_name) %>
+              </span>
+              <span class="flex min-w-0 flex-1 flex-col">
+                <%= link_to contact.full_name, edit_author_case_contact_path(@case_study, contact),
+                      class: "truncate text-base font-medium link link-hover" %>
+                <span class="truncate text-base text-mute"><%= contact.role_title %></span>
+              </span>
+
+              <% if contact.in_starting_directory? %>
+                <span class="kick shrink-0 rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.in_starting") %></span>
+              <% elsif introducers.any? %>
+                <span class="kick shrink-0 rounded-md border border-line px-2 py-1 text-xs text-mute">
+                  <%= t("author.cases.introduced_by", count: introducers.size) %>
+                </span>
+              <% else %>
+                <span class="kick shrink-0 rounded-md border border-error px-2 py-1 text-xs text-error"><%= t("author.cases.unreachable") %></span>
+              <% end %>
+            </div>
+          <% end %>
+          <% if @contacts.empty? %>
+            <p class="border-b border-line py-3 text-sm text-faint"><%= t("author.cases.no_cast") %></p>
+          <% end %>
+        </div>
+      </section>
+    </div>
+
+    <aside class="flex flex-col gap-4">
+      <%# The check the structured referral rows exist to make possible. %>
+      <div class="flex flex-col gap-3 rounded-lg border <%= @reachability.complete? ? "border-line" : "border-error" %> bg-surface p-4">
+        <span class="kick text-xs <%= @reachability.complete? ? "text-accent" : "text-error" %>"><%= t("author.cases.reachability") %></span>
+        <% if @contacts.empty? %>
+          <p class="text-sm text-mute"><%= t("author.cases.no_cast") %></p>
+        <% elsif @reachability.complete? %>
+          <p class="text-sm text-mute"><%= t("author.cases.reachability_ok", count: @reachability.reachable.size) %></p>
+        <% else %>
+          <p class="text-sm text-mute">
+            <%= t("author.cases.reachability_broken", names: @reachability.unreachable.map(&:full_name).to_sentence) %>
+          </p>
+          <ul class="flex flex-col gap-1">
+            <% @reachability.unreachable.each do |contact| %>
+              <li>
+                <%= link_to t("author.cases.fix_referrals", name: contact.full_name),
+                      edit_author_case_contact_path(@case_study, contact),
+                      class: "link link-hover text-sm font-medium" %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
+
+      <div class="flex flex-col gap-3 rounded-lg border border-line p-4">
+        <span class="kick text-xs text-mute"><%= t("author.cases.checklist") %></span>
+        <div class="flex flex-col gap-2 text-sm">
+          <span><%= t("author.cases.checklist_starting", count: @reachability.starting.size) %></span>
+          <span><%= t("author.cases.checklist_documents", count: @documents.size) %></span>
+          <span class="<%= @reachability.complete? ? "" : "text-error" %>">
+            <%= t("author.cases.checklist_unreachable", count: @reachability.orphan_count) %>
+          </span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>

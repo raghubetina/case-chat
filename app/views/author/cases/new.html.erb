@@ -1,0 +1,30 @@
+<% content_for :title, t("author.cases.new") %>
+
+<div class="mx-auto flex max-w-[640px] flex-col gap-6 py-10">
+  <h1 class="font-head text-xl font-semibold"><%= t("author.cases.new") %></h1>
+
+  <%= form_with model: @case_study, url: author_cases_path, class: "flex flex-col gap-6" do |form| %>
+    <% if @case_study.errors.any? %>
+      <div class="alert alert-error" role="alert">
+        <ul class="list-disc pl-5">
+          <% @case_study.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="flex flex-col gap-2">
+      <%= form.label :title, t("author.cases.fields.title"), class: "kick text-xs text-mute" %>
+      <%= form.text_field :title, required: true, class: "input input-bordered w-full" %>
+    </div>
+    <div class="flex flex-col gap-2">
+      <%= form.label :course, t("author.cases.fields.course"), class: "kick text-xs text-mute" %>
+      <%= form.text_field :course, class: "input input-bordered w-full" %>
+    </div>
+    <div class="flex flex-col gap-2">
+      <%= form.label :join_code, t("author.cases.fields.join_code"), class: "kick text-xs text-mute" %>
+      <%= form.text_field :join_code, class: "input input-bordered w-full font-mono" %>
+    </div>
+
+    <div><%= form.submit t("author.cases.create"), class: "btn btn-primary" %></div>
+  <% end %>
+</div>

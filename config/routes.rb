@@ -37,6 +37,18 @@ Rails.application.routes.draw do
     resources :messages, only: :create, module: :threads
   end
 
+  # Authoring: building the case and its cast.
+  namespace :author do
+    resources :cases, only: %i[index new create edit update] do
+      member { post :publish }
+      resources :contacts, only: %i[index new create edit update destroy]
+    end
+    resources :contacts, only: [] do
+      resources :referrals, only: %i[create destroy], module: :contacts
+      resources :share_rules, only: %i[create destroy], module: :contacts
+    end
+  end
+
   # The Compiler emits App-Schema-derived routes after Core's reserved routes.
   draw :foundation_domain
 end
