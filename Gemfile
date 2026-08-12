@@ -57,6 +57,18 @@ gem "pagy"
 # you author a case or you are enrolled in one.
 gem "action_policy", "~> 0.7"
 
+# First-party Anthropic SDK. Chosen over a cross-provider abstraction because
+# prompt caching is the dominant cost lever here (every contact reply resends
+# the composed briefing plus the whole thread) and cache_control, cache TTL,
+# and cache_read_input_tokens are exactly what an abstraction normalizes away.
+# Provider swappability lives in app/models/responder.rb instead, which we own.
+gem "anthropic", "~> 1.61"
+
+# OpenAI's Responses API, behind the same Responder seam. Kept alongside rather
+# than instead of: it has explicit prompt-cache breakpoints on gpt-5.6+, direct
+# file input, and the realtime audio models a future voice mode would need.
+gem "openai", "~> 0.78"
+
 # Perimeter per-IP rate limiting; counters ride Rails.cache.
 gem "rack-attack"
 
