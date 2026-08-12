@@ -3,8 +3,10 @@ default: &default
     - polling_interval: 1
       batch_size: 500
   workers:
+    # Reply jobs spend most of their life waiting on the model, so threads are
+    # cheap: this is IO-bound, not CPU-bound.
     - queues: "*"
-      threads: 3
+      threads: <%= ENV.fetch("JOB_THREADS", 5) %>
       processes: <%= ENV.fetch("JOB_CONCURRENCY", 1) %>
       polling_interval: 0.1
 

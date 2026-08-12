@@ -8,7 +8,17 @@ development:
 test:
   adapter: test
 
+# Token streaming means many broadcasts per second per active thread. Solid
+# Cable is database-backed and polls, so each subscriber is a recurring query
+# and each token is a write; Redis is the right shape for that traffic. Solid
+# Cable stays as the fallback so an environment without REDIS_URL still runs.
 production:
+  <% if ENV["REDIS_URL"].present? %>
+  adapter: redis
+  url: <%= ENV["REDIS_URL"] %>
+  channel_prefix: case_chat_production
+  <% else %>
   adapter: solid_cable
   polling_interval: 0.1.seconds
   message_retention: 1.day
+  <% end %>
