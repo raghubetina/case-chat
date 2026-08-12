@@ -151,6 +151,31 @@ en:
       remove_confirm: Remove this document? Any share rule pointing at it goes too.
       removed: Document removed.
       title: Documents
+    imports:
+      accept: Create the cast
+      accept_note: You can edit every prompt afterwards, and nothing is visible to students until you publish.
+      accepted:
+        one: Created 1 contact from the draft. Read every system prompt before publishing.
+        other: "Created %{count} contacts from the draft. Read every system prompt before publishing."
+      accepted_with_orphans: "Created %{count} contacts, but nobody can reach %{names}. Add a referral before publishing."
+      draft: Draft a case from these documents
+      failed: The draft could not be produced. Try again.
+      hint: Anything the draft should know
+      hint_note: Optional. Say which parts of the material students should have to earn, or who should be hard to reach.
+      hint_placeholder: The expediter should be reachable only through the chef, and only after he admits he does not know what happens at eight o'clock.
+      no_documents: Upload at least one file before drafting a case from it.
+      no_referrals: The draft proposes no referrals, so anyone outside the starting directory would be unreachable.
+      not_read: No file, will be skipped
+      notes: Check these
+      proposed: Proposed draft
+      proposed_note: Nothing is created until you accept it.
+      proposed_referrals: Proposed referrals
+      proposed_shares: Proposed documents to share
+      redraft: Draft again
+      share_summary: "%{contact} — %{condition}"
+      title: Draft from documents
+      what_was_read: What will be read
+      will_read: Will be read
     referrals:
       add: Add referral
       added: Referral added.
@@ -211,6 +236,7 @@ en:
     start_thread: Start thread
     viewing_past_run: "You are reading run %{number}, which is closed."
   threads:
+    conversation_with: "Conversation with %{name}"
     back_to_case: Case overview
     case_section: Case
     compose_label: Message %{name}

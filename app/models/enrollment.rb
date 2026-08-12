@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: enrollments
+#
+#  id             :uuid             not null, primary key
+#  last_active_at :datetime
+#  started_at     :datetime         not null
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  case_study_id  :uuid             not null
+#  user_id        :uuid             not null
+#
+# Indexes
+#
+#  index_enrollments_on_case_study_id  (case_study_id)
+#  index_enrollments_on_student_runs   (user_id,case_study_id,started_at DESC)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (case_study_id => case_studies.id) ON DELETE => cascade
+#  fk_rails_...  (user_id => users.id) ON DELETE => cascade
+#
 class Enrollment < ApplicationRecord
   belongs_to :user, class_name: "User", optional: false
   belongs_to :case_study, class_name: "CaseStudy", optional: false

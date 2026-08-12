@@ -49,6 +49,7 @@ Rails.application.routes.draw do
       member { post :publish }
       resource :cohort, only: :show, module: :cases
       resources :documents, only: %i[index new create destroy], module: :cases
+      resource :import, only: %i[new create], module: :cases
       resources :contacts, only: %i[index new create edit update destroy]
     end
     resources :contacts, only: [] do

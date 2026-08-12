@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_234500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,6 +44,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
     t.uuid "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "case_drafts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "case_study_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "payload", null: false
+    t.datetime "updated_at", null: false
+    t.index ["case_study_id"], name: "index_case_drafts_on_case_study_id", unique: true
   end
 
   create_table "case_studies", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -342,6 +350,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
   add_foreign_key "account_password_hashes", "users", column: "id", on_delete: :cascade
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "case_drafts", "case_studies"
   add_foreign_key "case_studies", "users", column: "author_id", on_delete: :restrict
   add_foreign_key "contacts", "case_studies", on_delete: :cascade
   add_foreign_key "conversations", "contacts", on_delete: :cascade

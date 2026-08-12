@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: documents
+#
+#  id             :uuid             not null, primary key
+#  byte_size      :integer
+#  description    :string
+#  file_name      :string           not null
+#  file_url       :string
+#  given_at_start :boolean          default(FALSE), not null
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
+#  case_study_id  :uuid             not null
+#
+# Indexes
+#
+#  index_documents_on_case_study_id  (case_study_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (case_study_id => case_studies.id) ON DELETE => cascade
+#
 class Document < ApplicationRecord
   # Case exhibits: the PDFs, spreadsheets and CSVs a contact hands over.
   MAX_BYTES = 25.megabytes

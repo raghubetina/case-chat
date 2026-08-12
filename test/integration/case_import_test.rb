@@ -1,0 +1,144 @@
+require "test_helper"
+
+# Import is two steps on purpose. A drafted system prompt is a guess about what
+# a person withholds, and withholding is the entire design of a case — so these
+# tests are mostly about what must NOT exist until an author has said yes.
+class CaseImportTest < ActionDispatch::IntegrationTest
+  setup do
+    CaseSeeder::Vesta.new.call
+    @case_study = CaseStudy.includes(:author).find_by!(join_code: "VESTA-01")
+    @author = @case_study.author
+    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    @drafted = CaseDrafter::Fake.new.draft(documents: [])
+  end
+
+  teardown do
+    CaseDrafter.reset!
+  end
+
+  # A provider that is up but refuses this request: the case the controller has
+  # to survive without leaving a half-built cast behind.
+  class RefusingDrafter
+    def draft(documents:, hint: nil) = raise(CaseDrafter::Error, "provider refused")
+  end
+
+  def cast_count = Contact.where(case_study_id: @case_study.id).count
+
+  test "a proposed draft touches nothing" do
+    before = cast_count
+
+    post author_case_import_path(@case_study), params: {hint: "keep the expediter hard to reach"}
+
+    assert_response :success
+    assert_equal before, cast_count, "proposing must not write to the database"
+    assert_match(/#{Regexp.escape(@drafted.contacts.first.full_name)}/, response.body)
+  end
+
+  test "the proposal survives the author leaving and coming back" do
+    post author_case_import_path(@case_study)
+    get new_author_case_import_path(@case_study)
+
+    assert_response :success
+    assert_match(/#{Regexp.escape(@drafted.contacts.first.full_name)}/, response.body)
+  end
+
+  test "accepting creates the drafted cast" do
+    post author_case_import_path(@case_study)
+
+    assert_difference "Contact.where(case_study_id: @case_study.id).count", @drafted.contacts.size do
+      post author_case_import_path(@case_study, accept: 1)
+    end
+
+    assert_redirected_to edit_author_case_path(@case_study)
+    @drafted.contacts.each do |contact|
+      assert Contact.exists?(case_study_id: @case_study.id, full_name: contact.full_name)
+    end
+  end
+
+  test "accepting wires referrals so the drafted cast is reachable" do
+    post author_case_import_path(@case_study)
+    post author_case_import_path(@case_study, accept: 1)
+
+    @drafted.referrals.each do |referral|
+      from = Contact.find_by!(case_study_id: @case_study.id, full_name: referral.from_name)
+      to = Contact.find_by!(case_study_id: @case_study.id, full_name: referral.to_name)
+
+      assert Referral.exists?(referring_contact_id: from.id, referred_contact_id: to.id),
+        "#{referral.from_name} must be able to hand a student to #{referral.to_name}"
+    end
+
+    assert CaseReachability.new(@case_study.reload).call.complete?,
+      "an imported cast whose referrals were applied should leave nobody stranded"
+  end
+
+  test "accepting consumes the proposal" do
+    post author_case_import_path(@case_study)
+    assert CaseDraft.exists?(case_study_id: @case_study.id)
+
+    post author_case_import_path(@case_study, accept: 1)
+
+    assert_nil CaseDraft.find_by(case_study_id: @case_study.id),
+      "an accepted proposal must not remain acceptable"
+
+    get new_author_case_import_path(@case_study)
+    assert_no_match(/Proposed draft/, response.body)
+  end
+
+  test "re-drafting replaces the proposal rather than stacking up alternatives" do
+    post author_case_import_path(@case_study)
+
+    assert_no_difference "CaseDraft.count" do
+      post author_case_import_path(@case_study), params: {hint: "different emphasis"}
+    end
+  end
+
+  test "re-importing the same draft updates people rather than duplicating them" do
+    post author_case_import_path(@case_study)
+    post author_case_import_path(@case_study, accept: 1)
+    after_first = cast_count
+
+    post author_case_import_path(@case_study)
+    post author_case_import_path(@case_study, accept: 1)
+
+    assert_equal after_first, cast_count, "a contact is keyed by name within a case"
+  end
+
+  test "refuses to draft from a case with no readable file" do
+    Document.where(case_study_id: @case_study.id).find_each { |document| document.file.purge }
+
+    post author_case_import_path(@case_study)
+
+    assert_redirected_to author_case_documents_path(@case_study)
+    assert_equal I18n.t("author.imports.no_documents"), flash[:alert]
+  end
+
+  test "a failed draft leaves nothing behind" do
+    CaseDrafter.current = RefusingDrafter.new
+
+    assert_no_difference "Contact.where(case_study_id: @case_study.id).count" do
+      post author_case_import_path(@case_study)
+    end
+
+    assert_nil CaseDraft.find_by(case_study_id: @case_study.id)
+    assert_redirected_to new_author_case_import_path(@case_study)
+    assert_equal I18n.t("author.imports.failed"), flash[:alert]
+  end
+
+  test "someone who does not own the case cannot draft into it" do
+    sign_in_as register_user(email: "intruder@example.test")
+
+    post author_case_import_path(@case_study)
+
+    assert_response :forbidden
+    assert_equal 0, Contact.where(case_study_id: @case_study.id, full_name: @drafted.contacts.first.full_name).count
+  end
+
+  test "a proposal is per case, so drafting one case cannot populate another" do
+    other = CaseStudy.create!(title: "Calder Instruments", author: @author)
+    post author_case_import_path(@case_study)
+
+    assert_no_difference "Contact.where(case_study_id: other.id).count" do
+      post author_case_import_path(other, accept: 1)
+    end
+  end
+end
