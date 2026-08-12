@@ -18,37 +18,20 @@
     </section>
   <% end %>
 
-  <% if record.persisted? %>
-    <div>
-      <%= form.label :user_id, I18n.t("foundation_domain.entities.enrollments.fields.user_id"), class: "label font-medium" %>
-      <%= form.select :user_id, @user_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:user).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :case_study_id, I18n.t("foundation_domain.entities.enrollments.fields.case_study_id"), class: "label font-medium" %>
-      <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:case_study).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% else %>
-    <div>
-      <%= form.label :user_id, I18n.t("foundation_domain.entities.enrollments.fields.user_id"), class: "label font-medium" %>
-      <%= form.select :user_id, @user_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:user).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :case_study_id, I18n.t("foundation_domain.entities.enrollments.fields.case_study_id"), class: "label font-medium" %>
-      <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:case_study).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% end %>
+  <div>
+    <%= form.label :user_id, I18n.t("foundation_domain.entities.enrollments.fields.user_id"), class: "label font-medium" %>
+    <%= form.select :user_id, @user_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+    <% record.errors.full_messages_for(:user).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+  <div>
+    <%= form.label :case_study_id, I18n.t("foundation_domain.entities.enrollments.fields.case_study_id"), class: "label font-medium" %>
+    <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+    <% record.errors.full_messages_for(:case_study).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
 
   <div class="flex items-center gap-3">
     <%= form.submit class: "btn btn-primary" %>

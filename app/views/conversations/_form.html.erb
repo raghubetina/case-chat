@@ -18,37 +18,20 @@
     </section>
   <% end %>
 
-  <% if record.persisted? %>
-    <div>
-      <%= form.label :enrollment_id, I18n.t("foundation_domain.entities.conversations.fields.enrollment_id"), class: "label font-medium" %>
-      <%= form.select :enrollment_id, @enrollment_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:enrollment).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :contact_id, I18n.t("foundation_domain.entities.conversations.fields.contact_id"), class: "label font-medium" %>
-      <%= form.select :contact_id, @contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:contact).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% else %>
-    <div>
-      <%= form.label :enrollment_id, I18n.t("foundation_domain.entities.conversations.fields.enrollment_id"), class: "label font-medium" %>
-      <%= form.select :enrollment_id, @enrollment_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:enrollment).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :contact_id, I18n.t("foundation_domain.entities.conversations.fields.contact_id"), class: "label font-medium" %>
-      <%= form.select :contact_id, @contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:contact).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% end %>
+  <div>
+    <%= form.label :enrollment_id, I18n.t("foundation_domain.entities.conversations.fields.enrollment_id"), class: "label font-medium" %>
+    <%= form.select :enrollment_id, @enrollment_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+    <% record.errors.full_messages_for(:enrollment).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+  <div>
+    <%= form.label :contact_id, I18n.t("foundation_domain.entities.conversations.fields.contact_id"), class: "label font-medium" %>
+    <%= form.select :contact_id, @contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+    <% record.errors.full_messages_for(:contact).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
 
   <div class="flex items-center gap-3">
     <%= form.submit class: "btn btn-primary" %>

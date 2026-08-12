@@ -18,51 +18,27 @@
     </section>
   <% end %>
 
-  <% if record.persisted? %>
-    <div>
-      <%= form.label :full_name, I18n.t("foundation_domain.entities.contacts.fields.full_name"), class: "label font-medium" %>
-      <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:full_name).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :role_title, I18n.t("foundation_domain.entities.contacts.fields.role_title"), class: "label font-medium" %>
-      <%= form.text_field :role_title, required: true, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:role_title).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :case_study_id, I18n.t("foundation_domain.entities.contacts.fields.case_study_id"), class: "label font-medium" %>
-      <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:case_study).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% else %>
-    <div>
-      <%= form.label :full_name, I18n.t("foundation_domain.entities.contacts.fields.full_name"), class: "label font-medium" %>
-      <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:full_name).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :role_title, I18n.t("foundation_domain.entities.contacts.fields.role_title"), class: "label font-medium" %>
-      <%= form.text_field :role_title, required: true, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:role_title).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :case_study_id, I18n.t("foundation_domain.entities.contacts.fields.case_study_id"), class: "label font-medium" %>
-      <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:case_study).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% end %>
+  <div>
+    <%= form.label :full_name, I18n.t("foundation_domain.entities.contacts.fields.full_name"), class: "label font-medium" %>
+    <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:full_name).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+  <div>
+    <%= form.label :role_title, I18n.t("foundation_domain.entities.contacts.fields.role_title"), class: "label font-medium" %>
+    <%= form.text_field :role_title, required: true, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:role_title).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+  <div>
+    <%= form.label :case_study_id, I18n.t("foundation_domain.entities.contacts.fields.case_study_id"), class: "label font-medium" %>
+    <%= form.select :case_study_id, @case_study_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+    <% record.errors.full_messages_for(:case_study).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
 
   <div class="flex items-center gap-3">
     <%= form.submit class: "btn btn-primary" %>

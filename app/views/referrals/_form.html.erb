@@ -18,37 +18,20 @@
     </section>
   <% end %>
 
-  <% if record.persisted? %>
-    <div>
-      <%= form.label :referring_contact_id, I18n.t("foundation_domain.entities.referrals.fields.referring_contact_id"), class: "label font-medium" %>
-      <%= form.select :referring_contact_id, @referring_contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:referring_contact).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :referred_contact_id, I18n.t("foundation_domain.entities.referrals.fields.referred_contact_id"), class: "label font-medium" %>
-      <%= form.select :referred_contact_id, @referred_contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:referred_contact).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% else %>
-    <div>
-      <%= form.label :referring_contact_id, I18n.t("foundation_domain.entities.referrals.fields.referring_contact_id"), class: "label font-medium" %>
-      <%= form.select :referring_contact_id, @referring_contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:referring_contact).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :referred_contact_id, I18n.t("foundation_domain.entities.referrals.fields.referred_contact_id"), class: "label font-medium" %>
-      <%= form.select :referred_contact_id, @referred_contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
-      <% record.errors.full_messages_for(:referred_contact).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% end %>
+  <div>
+    <%= form.label :referring_contact_id, I18n.t("foundation_domain.entities.referrals.fields.referring_contact_id"), class: "label font-medium" %>
+    <%= form.select :referring_contact_id, @referring_contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+    <% record.errors.full_messages_for(:referring_contact).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+  <div>
+    <%= form.label :referred_contact_id, I18n.t("foundation_domain.entities.referrals.fields.referred_contact_id"), class: "label font-medium" %>
+    <%= form.select :referred_contact_id, @referred_contact_id_options, {include_blank: true}, {class: "select select-bordered w-full", required: true} %>
+    <% record.errors.full_messages_for(:referred_contact).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
 
   <div class="flex items-center gap-3">
     <%= form.submit class: "btn btn-primary" %>

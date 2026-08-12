@@ -18,51 +18,27 @@
     </section>
   <% end %>
 
-  <% if record.persisted? %>
-    <div>
-      <%= form.label :full_name, I18n.t("foundation_domain.entities.users.fields.full_name"), class: "label font-medium" %>
-      <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:full_name).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :email, I18n.t("foundation_domain.entities.users.fields.email"), class: "label font-medium" %>
-      <%= form.text_field :email, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:email).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :program, I18n.t("foundation_domain.entities.users.fields.program"), class: "label font-medium" %>
-      <%= form.text_field :program, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:program).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% else %>
-    <div>
-      <%= form.label :full_name, I18n.t("foundation_domain.entities.users.fields.full_name"), class: "label font-medium" %>
-      <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:full_name).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :email, I18n.t("foundation_domain.entities.users.fields.email"), class: "label font-medium" %>
-      <%= form.text_field :email, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:email).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-    <div>
-      <%= form.label :program, I18n.t("foundation_domain.entities.users.fields.program"), class: "label font-medium" %>
-      <%= form.text_field :program, class: "input input-bordered w-full" %>
-      <% record.errors.full_messages_for(:program).each do |message| %>
-        <p class="mt-1 text-sm text-error"><%= message %></p>
-      <% end %>
-    </div>
-  <% end %>
+  <div>
+    <%= form.label :full_name, I18n.t("foundation_domain.entities.users.fields.full_name"), class: "label font-medium" %>
+    <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:full_name).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+  <div>
+    <%= form.label :email, I18n.t("foundation_domain.entities.users.fields.email"), class: "label font-medium" %>
+    <%= form.text_field :email, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:email).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
+  <div>
+    <%= form.label :program, I18n.t("foundation_domain.entities.users.fields.program"), class: "label font-medium" %>
+    <%= form.text_field :program, class: "input input-bordered w-full" %>
+    <% record.errors.full_messages_for(:program).each do |message| %>
+      <p class="mt-1 text-sm text-error"><%= message %></p>
+    <% end %>
+  </div>
 
   <div class="flex items-center gap-3">
     <%= form.submit class: "btn btn-primary" %>
