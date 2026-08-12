@@ -36,13 +36,14 @@
       </div>
     </nav>
 
-    <main class="flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface">
+    <section aria-label="<%= t("threads.conversation_with", name: @contact.full_name) %>"
+      class="flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface">
       <div class="flex h-[57px] shrink-0 items-center gap-3 border-b border-line px-4">
         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
           <%= initials_for(@contact.full_name) %>
         </div>
         <div class="flex min-w-0 flex-col">
-          <span class="truncate font-head text-lg font-semibold leading-tight"><%= @contact.full_name %></span>
+          <h1 class="truncate font-head text-lg font-semibold leading-tight"><%= @contact.full_name %></h1>
           <span class="truncate text-sm text-mute"><%= @contact.role_title %></span>
         </div>
         <% unless @enrollment.current? %>
@@ -66,6 +67,6 @@
       </div>
 
       <%= render "threads/composer", conversation: @conversation %>
-    </main>
+    </section>
   </div>
 </div>

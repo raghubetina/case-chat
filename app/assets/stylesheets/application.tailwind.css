@@ -137,8 +137,8 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
-  --t-mute: #666666;
-  --t-faint: #666666;
+  --t-mute: #5f5f5f;
+  --t-faint: #5f5f5f;
   --t-wash: #f2f2f2;
   --t-soft: #d9d9d9;
   --t-railmute: #d9d9d9;
@@ -225,7 +225,7 @@
   --depth: 0;
   --noise: 0;
   --t-mute: #6d635a;
-  --t-faint: #7d7367;
+  --t-faint: #70675c;
   --t-wash: #efeae0;
   --t-soft: #f3e6e2;
   --t-railmute: #a99c8c;
@@ -268,7 +268,7 @@
   --depth: 0;
   --noise: 0;
   --t-mute: #5d6874;
-  --t-faint: #6b7683;
+  --t-faint: #636d79;
   --t-wash: #eef1f5;
   --t-soft: #e8eefd;
   --t-railmute: #93a0b1;
