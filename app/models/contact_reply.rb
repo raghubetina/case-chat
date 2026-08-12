@@ -17,9 +17,14 @@ class ContactReply
   end
 
   # Returns the persisted assistant Message.
-  def generate!
+  #
+  # Nothing is written until the reply is complete. A half-written message row
+  # would be visible to the author's cohort view and would survive a crash as a
+  # permanent fragment; the live text belongs on the wire, not in the table.
+  # `on_delta` is where it goes instead.
+  def generate!(&on_delta)
     briefing = ContactBriefing.new(contact)
-    reply = responder.reply(briefing: briefing, history: history)
+    reply = responder.reply(briefing: briefing, history: history, on_delta: on_delta)
 
     ApplicationRecord.transaction do
       message = persist_message(reply)

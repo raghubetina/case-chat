@@ -1,0 +1,12 @@
+<div id="<%= dom_id(conversation, :pending) %>" class="flex gap-3">
+  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
+    <%= initials_for(conversation.contact.full_name) %>
+  </div>
+  <div class="flex min-w-0 flex-col gap-1">
+    <div class="flex items-baseline gap-2">
+      <span class="text-sm font-semibold"><%= conversation.contact.full_name %></span>
+      <span class="kick text-xs text-accent"><%= t("threads.replying") %></span>
+    </div>
+    <p class="caret max-w-prose text-base" id="<%= dom_id(conversation, :pending_body) %>"></p>
+  </div>
+</div>

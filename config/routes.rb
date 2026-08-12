@@ -25,6 +25,18 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
 
+  # The app people actually use. The Compiler's CRUD routes below are the
+  # authoring substrate; these are the two experiences the product is about.
+  resources :cases, only: %i[index show] do
+    collection { post :join }
+    member { post :restart }
+    resources :threads, only: :create, module: :cases
+  end
+
+  resources :threads, only: :show do
+    resources :messages, only: :create, module: :threads
+  end
+
   # The Compiler emits App-Schema-derived routes after Core's reserved routes.
   draw :foundation_domain
 end

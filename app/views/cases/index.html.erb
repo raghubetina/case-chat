@@ -1,0 +1,63 @@
+<% content_for :title, t("cases.index.title") %>
+
+<div class="mx-auto flex max-w-[880px] flex-col gap-8 py-10">
+  <header class="flex flex-col gap-2">
+    <span class="kick text-xs text-accent"><%= t("app_name") %></span>
+    <h1 class="font-head text-xl font-semibold"><%= t("cases.index.heading") %></h1>
+  </header>
+
+  <section class="flex flex-col gap-3 rounded-lg border border-line bg-surface p-6">
+    <span class="kick text-xs text-accent"><%= t("cases.join.heading") %></span>
+    <p class="max-w-prose text-sm text-mute"><%= t("cases.join.note") %></p>
+    <%= form_with url: join_cases_path, method: :post, class: "flex flex-wrap items-end gap-3" do |form| %>
+      <div class="flex flex-col gap-2">
+        <%= form.label :join_code, t("cases.join.label"), class: "kick text-xs text-mute" %>
+        <%= form.text_field :join_code, required: true, placeholder: "CALDER-04",
+              autocomplete: "off", autocapitalize: "characters",
+              class: "input input-bordered w-full font-mono" %>
+      </div>
+      <%= form.submit t("cases.join.action"), class: "btn btn-primary" %>
+    <% end %>
+  </section>
+
+  <section class="flex flex-col gap-4">
+    <h2 class="font-head text-lg font-semibold"><%= t("cases.index.your_cases") %></h2>
+
+    <% if @enrollments.empty? %>
+      <div class="rounded-lg border border-dashed border-line bg-surface px-6 py-12 text-center">
+        <p class="text-lg font-semibold"><%= t("cases.index.empty_heading") %></p>
+        <p class="mt-2 text-sm/6 text-mute"><%= t("cases.index.empty_body") %></p>
+      </div>
+    <% end %>
+
+    <% @enrollments.group_by(&:case_study_id).each_value do |runs| %>
+      <% current = runs.first %>
+      <article class="flex flex-col gap-3 rounded-lg border border-line bg-surface p-6">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="flex flex-col gap-1">
+            <span class="kick text-xs text-accent"><%= current.case_study.course %></span>
+            <%= link_to current.case_study.title, case_path(current.case_study),
+                  class: "font-head text-lg font-semibold link link-hover" %>
+          </div>
+          <div class="flex items-center gap-2">
+            <%= link_to t("cases.open"), case_path(current.case_study), class: "btn btn-primary btn-sm" %>
+            <%= button_to t("cases.restart.action"), restart_case_path(current.case_study),
+                  class: "btn btn-outline btn-sm",
+                  form: {data: {turbo_confirm: t("cases.restart.confirm")}} %>
+          </div>
+        </div>
+
+        <%# Earlier runs stay readable: the point of re-running is comparing. %>
+        <% if runs.size > 1 %>
+          <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 text-sm text-mute">
+            <span class="kick text-xs"><%= t("cases.past_runs") %></span>
+            <% runs.drop(1).each do |run| %>
+              <%= link_to t("cases.run_label", number: run.run_number, on: l(run.started_at.to_date, format: :long)),
+                    case_path(current.case_study, run: run.id), class: "link link-hover" %>
+            <% end %>
+          </div>
+        <% end %>
+      </article>
+    <% end %>
+  </section>
+</div>

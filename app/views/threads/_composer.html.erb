@@ -1,0 +1,19 @@
+<div id="composer" class="composer border-t border-line px-4 py-3">
+  <% if conversation.enrollment.current? %>
+    <%= form_with url: thread_messages_path(conversation), method: :post, id: "composer_form",
+          data: {controller: "composer", action: "turbo:submit-end->composer#clear"} do |form| %>
+      <div class="flex items-end gap-2 rounded-lg border border-line bg-surface p-2" style-focus-within="border-color:var(--color-accent)">
+        <%= form.text_area :body,
+              rows: 1,
+              required: true,
+              "aria-label": t("threads.compose_label", name: conversation.contact.full_name),
+              placeholder: t("threads.compose_placeholder", name: conversation.contact.full_name),
+              class: "max-h-[160px] min-h-[40px] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-base leading-snug outline-none",
+              data: {composer_target: "input", action: "input->composer#grow keydown->composer#submitOnEnter"} %>
+        <%= form.submit t("threads.send"), class: "btn btn-primary h-10 shrink-0" %>
+      </div>
+    <% end %>
+  <% else %>
+    <p class="text-sm text-mute"><%= t("threads.run_closed") %></p>
+  <% end %>
+</div>

@@ -1,2 +1,3 @@
-# Development sample data: rich enough to click around the app meaningfully.
-# Idempotent like all seeds. Repopulate from scratch with bin/rails db:seed:replant.
+# A real teaching case, so development is exercised against real material
+# rather than lorem ipsum. Idempotent: safe to re-run.
+Rake::Task["case_chat:seed_vesta"].invoke

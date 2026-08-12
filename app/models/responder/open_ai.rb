@@ -20,8 +20,21 @@ module Responder
       @model = model
     end
 
-    def reply(briefing:, history:)
-      response = client.responses.create(**request_for(briefing:, history:))
+    def reply(briefing:, history:, on_delta: nil)
+      request = request_for(briefing:, history:)
+
+      # `create` raises if handed stream: true — streaming is a separate method.
+      response =
+        if on_delta
+          stream = client.responses.stream(**request)
+          stream.each do |event|
+            on_delta.call(event.delta) if event.is_a?(::OpenAI::Streaming::ResponseTextDeltaEvent)
+          end
+          stream.get_final_response
+        else
+          client.responses.create(**request)
+        end
+
       collect(response, briefing)
     rescue ::OpenAI::Errors::APIError => e
       raise Error, "OpenAI request failed: #{e.class} #{e.message}"
