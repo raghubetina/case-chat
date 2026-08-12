@@ -24,9 +24,17 @@ module Responder
     end
 
     # history is an ordered Array of Message records; the last one is the
-    # student's turn that we are answering.
-    def reply(briefing:, history:)
+    # student's turn that we are answering. `on_delta` receives text fragments
+    # as they arrive, which is how the reply reaches the page live.
+    def reply(briefing:, history:, on_delta: nil)
       stream = client.messages.stream(**request_for(briefing:, history:))
+
+      if on_delta
+        stream.each do |event|
+          on_delta.call(event.text) if event.is_a?(::Anthropic::Streaming::TextEvent)
+        end
+      end
+
       collect(stream)
     rescue ::Anthropic::Errors::APIError => e
       raise Error, "Anthropic request failed: #{e.class} #{e.message}"

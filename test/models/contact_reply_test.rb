@@ -87,7 +87,7 @@ class ContactReplyTest < ActiveSupport::TestCase
     rogue = Class.new {
       def initialize(id) = @id = id
 
-      def reply(briefing:, history:)
+      def reply(briefing:, history:, on_delta: nil)
         Responder::Reply.new(
           text: "Talk to someone else.",
           introduced_contact_ids: [@id],
@@ -111,7 +111,7 @@ class ContactReplyTest < ActiveSupport::TestCase
     rogue = Class.new {
       def initialize(id) = @id = id
 
-      def reply(briefing:, history:)
+      def reply(briefing:, history:, on_delta: nil)
         Responder::Reply.new(
           text: "Here you go.",
           introduced_contact_ids: [],

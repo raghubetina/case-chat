@@ -38,6 +38,68 @@ en:
       lede: Confirm this email address to finish creating your account.
     verify_account_resend:
       lede: Request another verification message for an unverified account.
+  cases:
+    assignment: Assignment
+    back_to_current: Back to your current run
+    background: Case background
+    contacts_found: "%{found} of %{total} contacts"
+    directory: Directory
+    directory_note: People are introduced to you as you talk. Ask who else you should meet.
+    documents: Documents
+    documents_note: What you have been given, and what you have earned.
+    earned: Shared with you
+    given_at_start: Given at the start
+    index:
+      empty_body: Enter the code your instructor posted with the assignment.
+      empty_heading: You are not in a case yet
+      heading: Your cases
+      title: Cases
+      your_cases: Your cases
+    join:
+      action: Join case
+      already_enrolled: You are already in that case.
+      heading: Join a case
+      joined: You joined %{title}.
+      label: Case code
+      note: Your instructor posts the code with the assignment.
+      unknown_code: We do not recognise that code.
+    no_documents: Nothing yet. Documents arrive when someone hands them to you.
+    open: Open
+    past_runs: Earlier runs
+    prepare_by: "Prepare by %{when}"
+    restart:
+      action: Start a new run
+      confirm: Start over? Your current run stays readable as history.
+      started: New run started. Your directory is back to the people you begin with.
+    resume: Resume
+    run_label: "Run %{number}, %{on}"
+    start_thread: Start thread
+    viewing_past_run: "You are reading run %{number}, which is closed."
+  threads:
+    back_to_case: Case overview
+    case_section: Case
+    compose_label: Message %{name}
+    compose_placeholder: Message %{name}
+    contact_shared: Contact shared
+    contacts_section: Contacts
+    empty: Nothing yet. Ask %{name} something.
+    file: FILE
+    file_shared: File shared
+    log_label: Conversation with %{name}
+    open_document: Open
+    open_thread: Start thread
+    past_run: Run %{number}
+    replying: Replying
+    reply_failed: That answer did not come through. Try again.
+    run_closed: This run is closed. Start a new run to keep interviewing.
+    send: Send
+    sidebar_label: Case and contacts
+    summary:
+      messages:
+        one: 1 message
+        other: "%{count} messages"
+      new_contact: New contact
+      not_contacted: Not contacted
   errors:
     back_home: Back to the home page
     forbidden:

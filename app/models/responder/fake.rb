@@ -24,13 +24,18 @@ module Responder
       @calls = []
     end
 
-    def reply(briefing:, history:)
+    def reply(briefing:, history:, on_delta: nil)
       last = history.rfind { |message| !message.from_contact? }
       prompt = last&.body.to_s.downcase
       @calls << {contact: briefing.contact.full_name, prompt: prompt}
+      text = @text || "#{briefing.contact.full_name} here. #{canned_answer(prompt)}"
+
+      # Deltas arrive word by word so the streaming path is exercised offline,
+      # including the join behavior that decides whether spaces survive.
+      text.scan(/\S+\s*/).each { |chunk| on_delta.call(chunk) } if on_delta
 
       Reply.new(
-        text: @text || "#{briefing.contact.full_name} here. #{canned_answer(prompt)}",
+        text: text,
         introduced_contact_ids: triggered_referral_ids(briefing, prompt),
         shared_document_ids: triggered_document_ids(briefing, prompt),
         usage: Usage.new(

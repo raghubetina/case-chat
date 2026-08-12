@@ -1,0 +1,102 @@
+<% content_for :title, @case_study.title %>
+
+<div class="mx-auto flex max-w-[1120px] flex-col gap-8 py-10">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div class="flex flex-col gap-2">
+      <span class="kick text-xs text-accent"><%= @case_study.course %></span>
+      <h1 class="font-head text-xl font-semibold"><%= @case_study.title %></h1>
+    </div>
+    <div class="flex items-center gap-3 text-sm text-mute">
+      <span><%= t("cases.contacts_found", found: @contacts.size, total: @case_study.contacts.count) %></span>
+      <% if @case_study.due_at %>
+        <span class="h-3 w-px bg-line"></span>
+        <span><%= t("cases.prepare_by", when: l(@case_study.due_at, format: :long)) %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <% unless @enrollment.current? %>
+    <div class="rounded-lg border border-line bg-wash p-4 text-sm text-mute">
+      <%= t("cases.viewing_past_run", number: @enrollment.run_number) %>
+      <%= link_to t("cases.back_to_current"), case_path(@case_study), class: "link link-hover font-medium" %>
+    </div>
+  <% end %>
+
+  <% if @case_study.background.present? %>
+    <section class="flex flex-col gap-3 rounded-lg border border-line bg-surface p-6">
+      <span class="kick text-xs text-accent"><%= t("cases.background") %></span>
+      <div class="max-w-prose whitespace-pre-wrap text-base"><%= @case_study.background %></div>
+    </section>
+  <% end %>
+
+  <div class="grid gap-4 lg:grid-cols-[1fr_360px]">
+    <% if @case_study.assignment.present? %>
+      <section class="flex flex-col gap-3 rounded-lg border border-line bg-surface p-6">
+        <span class="kick text-xs text-accent"><%= t("cases.assignment") %></span>
+        <div class="max-w-prose whitespace-pre-wrap text-base"><%= @case_study.assignment %></div>
+      </section>
+    <% end %>
+
+    <section class="flex flex-col gap-3 rounded-lg border border-line bg-surface p-6">
+      <span class="kick text-xs text-accent"><%= t("cases.documents") %></span>
+      <p class="text-sm text-mute"><%= t("cases.documents_note") %></p>
+      <div class="flex flex-col">
+        <% @documents.each do |document| %>
+          <div class="flex items-center gap-3 border-t border-line py-3">
+            <span class="kick flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line text-xs text-accent">
+              <%= File.extname(document.file_name).delete(".").upcase.presence || t("threads.file") %>
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col gap-1">
+              <span class="truncate text-base font-medium leading-tight"><%= document.file_name %></span>
+              <span class="text-base leading-tight text-faint">
+                <%= document.given_at_start? ? t("cases.given_at_start") : t("cases.earned") %>
+              </span>
+            </span>
+            <%= link_to t("threads.open_document"), document_path(document), class: "btn btn-outline btn-sm" %>
+          </div>
+        <% end %>
+        <% if @documents.empty? %>
+          <p class="border-t border-line py-3 text-sm text-faint"><%= t("cases.no_documents") %></p>
+        <% end %>
+      </div>
+    </section>
+  </div>
+
+  <section class="flex flex-col gap-4">
+    <div class="flex flex-wrap items-baseline justify-between gap-3">
+      <h2 class="font-head text-lg font-semibold"><%= t("cases.directory") %></h2>
+      <span class="text-sm text-mute"><%= t("cases.directory_note") %></span>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <% @contacts.each do |contact| %>
+        <% conversation = @threads_by_contact[contact.id] %>
+        <article class="@container flex flex-col gap-4 rounded-lg border border-line bg-surface p-4">
+          <div class="flex items-start gap-3">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[15px] font-semibold tracking-normal text-accent">
+              <%= initials_for(contact.full_name) %>
+            </div>
+            <div class="flex min-w-0 flex-col">
+              <span class="font-head text-lg font-semibold leading-tight"><%= contact.full_name %></span>
+              <span class="text-sm text-mute"><%= contact.role_title %></span>
+            </div>
+          </div>
+
+          <% if contact.description.present? %>
+            <p class="text-sm text-mute"><%= contact.description %></p>
+          <% end %>
+
+          <div class="@max-[380px]:flex-col @max-[380px]:items-stretch mt-auto flex items-center justify-between gap-3 border-t border-line pt-3">
+            <span class="text-sm text-faint"><%= message_summary(conversation) %></span>
+            <% if conversation %>
+              <%= link_to t("cases.resume"), thread_path(conversation), class: "btn btn-outline btn-sm" %>
+            <% else %>
+              <%= button_to t("cases.start_thread"), case_threads_path(@case_study, contact_id: contact.id),
+                    class: "btn btn-primary btn-sm" %>
+            <% end %>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  </section>
+</div>

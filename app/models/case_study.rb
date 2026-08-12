@@ -11,4 +11,10 @@ class CaseStudy < ApplicationRecord
   validates :published, inclusion: {in: [true, false]}
 
   normalizes :join_code, with: ->(code) { code.strip.upcase.presence }
+
+  scope :joinable, -> { where(published: true).where.not(join_code: nil) }
+
+  def self.find_by_join_code(code)
+    joinable.find_by(join_code: code.to_s.strip.upcase.presence)
+  end
 end

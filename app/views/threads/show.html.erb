@@ -1,0 +1,71 @@
+<% content_for :title, @contact.full_name %>
+<%= turbo_stream_from @conversation %>
+
+<div class="flex h-[calc(100dvh-57px)] flex-col">
+  <div class="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[272px_1fr]">
+
+    <nav aria-label="<%= t("threads.sidebar_label") %>" class="hidden min-h-0 flex-col overflow-hidden border-r border-line bg-wash md:flex">
+      <div class="flex h-[57px] shrink-0 items-center border-b border-line px-4">
+        <%= link_to @case_study.title, case_path(@case_study),
+              class: "truncate font-head text-lg font-semibold leading-tight link link-hover" %>
+      </div>
+
+      <div class="scroll-y flex flex-1 flex-col gap-4 p-2">
+        <div class="flex flex-col gap-1">
+          <span class="kick flex h-8 items-center px-2 text-xs text-mute"><%= t("threads.case_section") %></span>
+          <%= link_to t("threads.back_to_case"), case_path(@case_study),
+                class: "rounded-md px-2 py-2 text-left text-sm hover:bg-surface" %>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <span class="kick flex h-8 items-center px-2 text-xs text-mute"><%= t("threads.contacts_section") %></span>
+          <% @directory.each do |contact| %>
+            <% current = contact.id == @contact.id %>
+            <%= button_to case_threads_path(@case_study, contact_id: contact.id),
+                  class: "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left #{current ? "bg-soft" : "hover:bg-surface"}" do %>
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface font-mono text-[11px] font-semibold tracking-normal text-accent">
+                <%= initials_for(contact.full_name) %>
+              </span>
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="truncate text-sm <%= current ? "font-semibold" : "font-medium" %>"><%= contact.full_name %></span>
+                <span class="truncate text-sm text-mute"><%= contact.role_title %></span>
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </nav>
+
+    <main class="flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface">
+      <div class="flex h-[57px] shrink-0 items-center gap-3 border-b border-line px-4">
+        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
+          <%= initials_for(@contact.full_name) %>
+        </div>
+        <div class="flex min-w-0 flex-col">
+          <span class="truncate font-head text-lg font-semibold leading-tight"><%= @contact.full_name %></span>
+          <span class="truncate text-sm text-mute"><%= @contact.role_title %></span>
+        </div>
+        <% unless @enrollment.current? %>
+          <span class="kick ml-auto rounded-md border border-line px-2 py-1 text-xs text-mute">
+            <%= t("threads.past_run", number: @enrollment.run_number) %>
+          </span>
+        <% end %>
+      </div>
+
+      <div role="log" aria-live="polite"
+           aria-label="<%= t("threads.log_label", name: @contact.full_name) %>"
+           class="scroll-y flex flex-1 flex-col gap-6 px-4 py-6"
+           data-controller="autoscroll" data-autoscroll-target="container">
+        <div id="transcript" class="flex flex-col gap-6">
+          <% if @messages.empty? %>
+            <p class="text-sm text-mute"><%= t("threads.empty", name: @contact.full_name) %></p>
+          <% end %>
+          <%= render partial: "threads/message",
+                collection: @messages, as: :message, locals: {streaming: false} %>
+        </div>
+      </div>
+
+      <%= render "threads/composer", conversation: @conversation %>
+    </main>
+  </div>
+</div>

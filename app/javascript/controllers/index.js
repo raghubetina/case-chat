@@ -11,3 +11,11 @@ application.register("dismissable", DismissableController)
 import ThemeController from "./theme_controller"
 
 application.register("theme", ThemeController)
+
+import ComposerController from "./composer_controller"
+
+application.register("composer", ComposerController)
+
+import AutoscrollController from "./autoscroll_controller"
+
+application.register("autoscroll", AutoscrollController)

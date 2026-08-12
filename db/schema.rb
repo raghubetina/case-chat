@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_000004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -79,9 +79,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_000003) do
     t.uuid "case_study_id", null: false
     t.datetime "created_at", null: false
     t.datetime "last_active_at"
+    t.datetime "started_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.index ["case_study_id"], name: "index_enrollments_on_case_study_id"
+    t.index ["user_id", "case_study_id", "started_at"], name: "index_enrollments_on_student_runs", order: { started_at: :desc }
     t.index ["user_id"], name: "index_enrollments_on_user_id"
   end
 
