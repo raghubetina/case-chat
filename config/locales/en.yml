@@ -91,6 +91,25 @@ en:
       saved: Saved.
       setup: Case setup
       unreachable: Unreachable
+    cohort:
+      contacts: Contacts
+      documents: Documents
+      empty_body: "Nobody has joined yet. Students enter %{code} to start."
+      empty_heading: No one in the cohort yet
+      last_active: Last active
+      median_contacts: Contacts found, median
+      median_documents: Documents earned, median
+      median_messages: Messages sent, median
+      messages: Messages
+      not_started: Not started
+      reach: Who the cohort reached
+      reach_note: A contact almost nobody reaches is either buried behind a condition that never fires, or holds something the case gives students no reason to ask about.
+      runs: Runs
+      started: Started
+      student: Student
+      students: Students
+      table_caption: Each student's progress through the case
+      title: Cohort progress
     contacts:
       add: Add contact
       back: Back to case setup

@@ -41,6 +41,7 @@ Rails.application.routes.draw do
   namespace :author do
     resources :cases, only: %i[index new create edit update] do
       member { post :publish }
+      resource :cohort, only: :show, module: :cases
       resources :contacts, only: %i[index new create edit update destroy]
     end
     resources :contacts, only: [] do

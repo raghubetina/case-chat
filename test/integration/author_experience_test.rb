@@ -120,6 +120,29 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "the cohort page reports what the class earned" do
+    student = register_user(full_name: "Lena Ahmed")
+    enrollment = Enrollment.create!(user: student, case_study: @case_study)
+    conversation = Conversation.create!(enrollment: enrollment, contact: @marco)
+    Message.create!(conversation: conversation, body: "Why?", sent_at: Time.current, from_contact: false)
+    Introduction.create!(enrollment: enrollment, contact: @denny, introducing_contact: @marco)
+
+    get author_case_cohort_path(@case_study)
+
+    assert_response :success
+    assert_match(/Lena Ahmed/, response.body)
+    assert_match(/Denny Vasquez/, response.body)
+  end
+
+  test "only the case's author can read its cohort" do
+    stranger = register_user(full_name: "Someone Else")
+    sign_in_as stranger
+
+    get author_case_cohort_path(@case_study)
+
+    assert_response :forbidden
+  end
+
   test "the cast editor warns about an orphaned contact" do
     Referral.where(referred_contact_id: @denny.id).destroy_all
 
