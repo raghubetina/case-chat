@@ -1,13 +1,12 @@
 # Target domain model
 
 **Status:** accepted for the prototype<br>
-**Implementation:** planned; current tables and generated CRUD are obsolete<br>
+**Implementation:** verified for persistence and lifecycle semantics; concurrent authoring integration, auth, and product UI remain planned<br>
 **Last verified:** 2026-08-13
 
-This is the canonical target, not a description of the current schema. The
-existing `CaseStudy`, `Contact`, top-level join code, and raw CRUD controllers
-came from the first design pass and should be replaced rather than preserved for
-compatibility.
+This is the canonical model implemented by the current schema and lifecycle
+services. The first-pass `CaseStudy`, `Contact`, top-level join code, and raw
+CRUD surface have been removed rather than preserved for compatibility.
 
 ```mermaid
 erDiagram
@@ -78,8 +77,14 @@ attempts; learners see only their current one.
 
 `Stakeholder` belongs to a case and has `name`, `role_title`, `description`,
 free-form `instructions`, `knows_case_background` (default `true`),
-`available_at_start`, `provider`, `model_id`, and a small provider-settings JSON
-object.
+`available_at_start`, `included_in_publication`, `provider`, `model_id`, and a
+small provider-settings JSON object. `included_in_publication` is explicit
+draft state, not soft deletion: an author can exclude a stakeholder from a
+later publication and re-include it later. `publication_locked_at` records when
+the stakeholder first enters a published snapshot; it can still be edited or
+excluded from later publications, but cannot be hard-deleted after that point.
+Deleting an unpublished stakeholder also deletes its disposable author test
+drives; a published stakeholder and its runtime history remain protected.
 
 `Referral` links a source stakeholder to a target stakeholder in the same case
 and contains author guidance about when an introduction is natural. Row
@@ -94,11 +99,20 @@ first references its attachment; from then on the file cannot be replaced,
 purged, or hard-deleted. An author replaces it by creating a new document record
 for a later publication, preserving the file seen by active conversations.
 
-`DocumentBundle` belongs to a stakeholder and has a human-readable name plus
-sharing guidance.
+`DocumentBundle` belongs to a stakeholder and has a human-readable name,
+sharing guidance, `included_in_publication`, and `publication_locked_at` with
+the same exclusion and no-hard-delete semantics as a published stakeholder.
 `DocumentBundleItem` orders case documents within a bundle. Bundles express one
 domain action without duplicating files when several documents should arrive
 together.
+
+Only documents available at the start or present in an included configured
+bundle enter a publication snapshot and become locked. This deliberately does
+not compute referral-graph reachability. Unused draft documents remain
+editable. Publication creates a durable lock row for every snapshotted
+document, including text-only documents, and records
+`attachment_locked_at`; restrictive foreign keys prevent an attached file or
+published document from being hard-deleted.
 
 ### Conversation, Message, and ModelRun
 
@@ -107,15 +121,17 @@ together.
 - a learner `Attempt`; or
 - an author `TestDrive`, with a `slot` of `left` or `right`.
 
-It stores the pinned `provider`, `model_id`, provider conversation identifier
-when applicable, and `configuration_snapshot`. There is one conversation per
+It stores the pinned `provider`, `model_id`, provider response cursor when
+applicable, and `configuration_snapshot`. There is one conversation per
 `[attempt_id, stakeholder_id]` and at most one per `[test_drive_id, slot]`.
 Learner conversation configuration comes from its attempt; test-drive
 configuration comes from its test drive.
 
 `Message` stores ordered `user`, `assistant`, and tool-result content with a
 status of `pending`, `streaming`, `complete`, or `failed`. It never represents
-direction with a nullable boolean.
+direction with a nullable boolean. User and tool-result messages are persisted
+only when complete. Tool-result rows require a tool name, call ID, and object
+result; other roles cannot carry tool metadata.
 
 Each assistant `Message` may have multiple `ModelRun` attempts. A run records
 the provider/model, provider response and request IDs, status, usage, latency,
@@ -130,8 +146,9 @@ These records are successful domain effects, not untrusted model claims.
 `DocumentRelease` belongs to an attempt and document bundle. Both link to the
 assistant message that caused them. The server accepts them only when the tool
 call matches the attempt's pinned configuration, and each effect is idempotent
-per attempt. An existing release resolves its bundle and document list from
-that snapshot, never from subsequently edited draft rows.
+per attempt. A closed attempt rejects new effects. An existing release resolves
+its bundle and document list from that snapshot, never from subsequently edited
+draft rows.
 
 Test-drive tool calls validate against the test drive's pinned draft snapshot
 and return persisted preview results in the transcript. They do not create
@@ -149,6 +166,16 @@ Tool effects render as previews only. A reset creates a fresh test drive from
 the latest draft; switching a model in the middle of a test conversation is
 intentionally unsupported.
 
+A test drive snapshots attachment metadata for the current preview, but does
+not lock or retain historical draft blobs. Authors can keep replacing draft
+attachments while experimenting; a new test drive picks up the latest file.
+Its snapshot also carries learner-safe identity for each allowed referral
+target, so prompt tools and previews never need mutable live draft rows.
+
+`TestDrives::Start` implements creation/reset and atomically pins one or two
+validated model slots from an author-scoped draft. Provider tool execution and
+persisted preview rendering remain planned for the AI integration slice.
+
 ## Required invariants
 
 - One author per case; only that author can edit, publish, inspect its learner
@@ -156,11 +183,17 @@ intentionally unsupported.
 - A cohort join code is unique after trimming and case-folding.
 - One enrollment per user and cohort.
 - One open attempt per enrollment.
+- Every publication has at least one included stakeholder available at the
+  start. Included stakeholders and bundles can be excluded from later
+  publications without deleting their normalized rows or changing old attempts.
 - Attempt configuration never changes after the attempt begins; introductions
   and released bundle contents resolve through that snapshot.
 - Test-drive configuration never changes after it begins; tool effects are
   validated previews and never create attempt-scoped records.
-- Conversation context is exactly one of attempt or test drive.
+- Test-drive identity and snapshot, and conversation context identity, are
+  immutable immediately after creation.
+- Conversation context is exactly one of attempt or test drive, and a test-drive
+  conversation uses that test drive's stakeholder.
 - Conversation provider/model/configuration never changes after its first
   message.
 - Referral endpoints, bundle stakeholder, and bundle documents belong to the
@@ -168,6 +201,8 @@ intentionally unsupported.
 - A stakeholder cannot refer to itself.
 - Introductions and releases must be allowed by the pinned published
   configuration and are unique within an attempt.
+- A provider tool-call ID appears at most once per conversation, so a
+  redelivered result cannot duplicate the transcript.
 - Published document attachments are immutable; replacements enter a later
   publication as new records.
 - Runtime records restrict deletion of referenced stakeholders, bundles, and
@@ -179,11 +214,20 @@ intentionally unsupported.
   usage ceilings across attempt and test-drive resets.
 - Learners cannot access another enrollment, an author's test drives, hidden
   stakeholders, unreleased documents, or prior attempts.
+- Published, attempt, and conversation configuration snapshots are private
+  server state. Learner-facing domain projections explicitly allowlist
+  stakeholder, document, and attachment-display fields, never a raw snapshot.
 
 Use database constraints for shape and uniqueness, application authorization
 for actor access, and service validation for cross-record case membership. Test
 each boundary; generated foreign-key inputs must never be trusted merely because
 the referenced row exists.
+
+Publishing holds the parent `Case` row lock while reading and replacing the
+snapshot. Authoring mutation commands must acquire that same parent lock before
+changing child records so an accepted publication cannot mix concurrent draft
+states. Those authoring commands are not implemented yet, so concurrent
+authoring coherence is an integration seam rather than a verified guarantee.
 
 ## Deliberately deferred
 

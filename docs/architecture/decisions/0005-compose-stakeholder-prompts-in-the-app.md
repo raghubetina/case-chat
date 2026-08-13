@@ -24,7 +24,7 @@ Use a few semantic XML tags only to delimit complex authored data. Modern models
 do not require XML everywhere; clear prose, headings, and whitespace remain the
 default. XML is structure, not a security boundary.
 
-Expose `introduce_contact` and `share_documents` as provider-native tools. The
+Expose `introduce_stakeholder` and `release_documents` as provider-native tools. The
 server validates every requested effect against the attempt's pinned
 configuration before creating an `Introduction` or `DocumentRelease`.
 

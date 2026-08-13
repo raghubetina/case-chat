@@ -14,12 +14,13 @@ before it grows into a general case-management platform.
 ## Current status
 
 The repository began as a First Draft Rails shell and is now one fully owned
-application. Its infrastructure is being adapted for this product, but much of
-the generated domain scaffold still reflects the original design sketch and is
-not the target model.
+application. The target persistence model and lifecycle services for publishing,
+attempt reset, pinned conversations, introductions, and document releases are
+implemented. The obsolete public CRUD scaffold has been removed.
 
-Do not deploy the current generated scaffold: its domain CRUD routes are not
-yet protected by the authentication and authorization required for Case Chat.
+The prototype is not deploy-ready yet. Authentication, authorization, product
+UI, and provider integrations remain planned; no domain product routes are
+currently exposed.
 
 Start with [`docs/README.md`](docs/README.md). It distinguishes accepted
 decisions from implemented behavior and links to the product brief, canonical
@@ -41,6 +42,11 @@ bin/production-smoke
 - `bin/ci` runs application tests, lint, audits, and reproducibility checks.
 - `bin/production-smoke` exercises the production artifact against fresh
   PostgreSQL.
+
+This pre-launch branch replaces the generated domain schema rather than
+migrating its disposable scaffold data. If this checkout already has that old
+local database, run `bin/setup --reset` once. It destroys local data. Deployed
+or otherwise valuable databases require a deliberate migration instead.
 
 Agents should read [`AGENTS.md`](AGENTS.md) and then the documentation reading
 order. Deployment guidance lives in [`DEPLOY.md`](DEPLOY.md).

@@ -9,7 +9,7 @@ these files preserve why it was chosen and when to revisit it.
 | [0001](0001-use-repository-documentation-and-adrs.md) | Repository documentation plus lean ADRs | Accepted | Verified |
 | [0002](0002-use-rodauth-rails.md) | Use `rodauth-rails` for accounts | Accepted | Planned |
 | [0003](0003-use-first-party-ai-sdks.md) | Integrate providers through first-party SDKs | Accepted | Planned |
-| [0004](0004-publish-an-atomic-configuration.md) | Publish an atomic configuration snapshot | Accepted | Planned |
+| [0004](0004-publish-an-atomic-configuration.md) | Publish an atomic configuration snapshot | Accepted | Lifecycle verified; concurrent authoring planned |
 | [0005](0005-compose-stakeholder-prompts-in-the-app.md) | Compose stakeholder prompts in the app | Accepted | Planned |
 | [0006](0006-use-rails-native-infrastructure.md) | Keep the prototype Rails-native | Accepted | Planned |
 
