@@ -33,32 +33,11 @@ After handoff, owner-authored work is **Unique**. Unique is provenance, not a fo
 directory. The strata explain how the Foundation was composed, not who may edit it; the result is one ordinary,
 fully owned Rails application.
 
-## Domain-route seam
+## Application ownership
 
-Core owns `config/routes.rb` and draws the empty `config/routes/foundation_domain.rb` fragment. The Compiler's
-Domain renderer replaces only that fragment with routes derived from the App Schema + Plan; the fragment uses
-the ordinary Rails routing DSL without another `Rails.application.routes.draw` wrapper. Core routes are
-declared first and retain recognition precedence. The Core-owned `root`, `rails_health_check`,
-`readiness_check`, `pwa_manifest`, `privacy`, and `terms` route names are reserved because repeating a name
-fails when Rails loads the routes. The empty Core reference adds no routes, so its existing health, readiness,
-PWA, legal, error, and home routes are unchanged.
-
-## Application-shell seam
-
-Core owns the application layout, the empty `app/views/shared/_main_navigation.html.erb` replacement seam, and
-the shell marker derived from `turbo-rails`' `hotwire_native_app?` helper. The Compiler's Domain renderer owns
-the navigation partial's generated contents. Browser-only brand and primary-navigation chrome uses
-`hotwire-native-hidden`; native requests hide it while retaining the shared header and useful toolbar controls.
-Ordinary web requests keep the complete branded fallback.
-
-This seam does not make a native client part of Core. A selected native Capability supplies UIKit navigation,
-tabs, path configuration, and the client project.
-
-Core deliberately does not opt into `viewport-fit=cover` or add CSS safe-area padding. Before either becomes a
-shared rule, a composed Rails+iOS artifact must prove it in both single-navigator and native-tab configurations:
-a repeatable Simulator UI test must keep the first and last web-content controls visible beneath the native
-navigation and tab bars, and must distinguish missing inset handling from duplicate top or bottom padding.
-Until that integration proof exists, this reference makes no Dynamic Island or safe-area qualification claim.
+The generated route fragment, navigation partial, and other composition seams are ordinary application code
+after handoff. Case Chat may keep, replace, or remove them as its product architecture evolves. Their presence
+does not imply that this repository remains a reusable or schema-independent Foundation template.
 
 ## Deployment posture
 

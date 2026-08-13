@@ -22,7 +22,7 @@ class ShareRulesController < ApplicationController
       redirect_to share_rule_path(@share_rule), status: :see_other
     else
       load_reference_options
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -34,7 +34,7 @@ class ShareRulesController < ApplicationController
       redirect_to share_rule_path(@share_rule), status: :see_other
     else
       load_reference_options
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -48,7 +48,7 @@ class ShareRulesController < ApplicationController
   def set_share_rule
     @share_rule = ShareRule.find(params[:id])
   end
-  
+
   def set_return_to
     expected = case action_name
     when "new", "create"
@@ -61,7 +61,7 @@ class ShareRulesController < ApplicationController
     candidate = params.fetch(:return_to, expected)
     @return_to = candidate if valid_return_to?(candidate, expected)
     raise ActionController::BadRequest, "invalid return destination" unless @return_to
-  
+
     @cancel_to = case action_name
     when "new", "create"
       share_rules_path
@@ -69,7 +69,7 @@ class ShareRulesController < ApplicationController
       @return_to
     end
   end
-  
+
   def valid_return_to?(candidate, expected)
     if expected == "foundation:mutation-record:show"
       candidate == expected
@@ -77,15 +77,15 @@ class ShareRulesController < ApplicationController
       url_from(candidate) == expected
     end
   end
-  
+
   def create_share_rule_params
     params.expect(share_rule: %i[contact_id document_id])
   end
-  
+
   def update_share_rule_params
     params.expect(share_rule: %i[contact_id document_id])
   end
-  
+
   def load_reference_options
     @contact_id_options = Contact
       .order(:full_name, :id)

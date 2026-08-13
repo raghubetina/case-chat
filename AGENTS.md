@@ -1,9 +1,8 @@
-# AGENTS.md — Rails Foundation Core
+# AGENTS.md — Case Chat
 
-This app began from **Rails Foundation Core** (`firstdraft/foundation-rails-core`): the universal, hardened,
-observable, accessible, and i18n-ready part of its generated Foundation. The Compiler composes the full
-Foundation from **Core + selected Capabilities + App-Schema-derived Domain**; owner-authored work after handoff
-is **Unique**, not a layer. This file is what an agent must know to build on it **without breaking its guarantees**.
+This app began from **Rails Foundation Core** (`firstdraft/foundation-rails-core`). It has crossed the handoff
+boundary and is now one fully owned Rails application. Keep the useful operational and accessibility guarantees,
+but replace template seams and generated domain code when the product needs a different decision.
 
 ## How to run things
 - **Setup:** `bin/setup` (idempotent; add `--skip-server` to not boot). Dev server: `bin/dev`.
@@ -30,10 +29,10 @@ if the fix is reusable, carry it back to `firstdraft/foundation-rails-core` for 
 - **System tests synchronize with Turbo before every click.** Keep the layout's
   `data-turbo-not-loaded`, application.js's submit/load markers, and
   `WaitForTurboBeforeClick` together; the trio closes Turbo's form-redirect busy-state gap.
-- **Native presentation is a three-part shell seam.** Keep the layout's `data-hotwire-native-app` marker and
+- **Native presentation is a three-part application seam.** Keep the layout's `data-hotwire-native-app` marker and
   `hotwire-native-hidden`/`hotwire-native-toolbar` hooks, the unlayered CSS rules that override DaisyUI's
-  layered navbar declarations, and the named native system-test driver together. The Compiler may populate
-  `shared/_main_navigation`; Core still owns the ordinary web fallback and retained toolbar.
+  layered navbar declarations, and the named native system-test driver together. This app owns
+  `shared/_main_navigation`, the ordinary web fallback, and the retained toolbar.
 - **Flash messages render into the existing live regions** (`shared/_flash`): inject content into
   `#flash_notices` / `#flash_alerts`, never insert a new `role="status"` region at announce time
   (late regions aren't announced by screen readers).
@@ -63,11 +62,11 @@ if the fix is reusable, carry it back to `firstdraft/foundation-rails-core` for 
   contracts and *your* behavior.
 - **No network in tests** — webmock enforces it. Stub external HTTP explicitly.
 
-## What is deliberately absent
-Auth, email delivery, uploads, jobs dashboards, Web Push, and native clients: **Capabilities**, not Core. They
-are selected from the App Schema + Plan when the app calls for them (reference implementations live in
-`firstdraft/photogram-golden`); of these, Core ships only the inert application-shell seam described in
-`FOUNDATION.md`. Don't hand-add a parallel auth stack; if this app needs one, it should arrive as its Capability.
+## Product capabilities
+Authentication, uploads, background work, and streamed AI conversations are application features now, not
+future Compiler capabilities. Implement each once, from the product's documented decisions, and remove obsolete
+generated code rather than preserving compatibility with the schema-independent template. Authentication and
+authorization are not implemented yet; every generated domain controller is currently unguarded CRUD.
 
 ## Launch checklist (before inviting real users)
 - [ ] Replace the PLACEHOLDER copy on `/privacy` and `/terms`.
