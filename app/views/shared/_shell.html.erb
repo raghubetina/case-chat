@@ -1,0 +1,53 @@
+<%# The Design's workspace shell: a search rail across the top, a sidebar that
+    never moves, and a pane that swaps beneath them.
+
+    Every screen inside a case renders through here rather than being its own
+    centred page, so the case you are in, the people you have met, and your
+    place in the sidebar all survive moving between panes. The layout drops its
+    own header for these screens — the rail below IS the header. %>
+<% content_for :shell, true %>
+
+<div class="flex h-dvh flex-col" data-controller="drawer"
+     data-action="turbo:before-visit->drawer#closeOnNavigate">
+
+  <div role="search" class="flex shrink-0 items-center bg-rail py-2 pl-4 md:pl-0">
+    <div class="hidden w-[272px] shrink-0 md:block"></div>
+
+    <%= form_with url: search_url, method: :get, data: {turbo_action: "advance"},
+          class: "flex w-full flex-1 items-center gap-2 rounded-md border border-railline px-3 py-2",
+          style: "background:color-mix(in srgb, var(--color-railink) 14%, transparent); border-color:color-mix(in srgb, var(--color-railink) 45%, transparent)" do |form| %>
+      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="shrink-0 text-railink">
+        <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+      </svg>
+      <%= form.search_field :q, value: params[:q],
+            "aria-label": t("shell.search_label"),
+            placeholder: t("shell.search_placeholder", title: search_scope),
+            autocomplete: "off",
+            class: "rail-search min-w-0 flex-1 border-0 bg-transparent text-base text-railink outline-none" %>
+      <% if params[:q].present? %>
+        <%= link_to t("shell.clear_search"), search_url,
+              class: "kick shrink-0 text-xs text-railmute hover:text-railink" %>
+      <% end %>
+    <% end %>
+
+    <div class="flex shrink-0 justify-end px-4 md:w-[272px]">
+      <%= render "shared/user_menu" %>
+    </div>
+  </div>
+
+  <%# Only ever visible under md, where the sidebar covers the pane. %>
+  <div hidden data-drawer-target="scrim" data-action="click->drawer#close"
+       class="fixed inset-0 z-20 bg-black/35 md:hidden"></div>
+
+  <div class="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[272px_1fr]">
+    <%= render sidebar %>
+
+    <main id="main-content" tabindex="-1"
+          class="flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface">
+      <%# Inside main, not above it: content outside a landmark fails the axe
+          region rule, and the banner is about this pane anyway. %>
+      <%= render local_assigns[:banner] if local_assigns[:banner] %>
+      <%= yield %>
+    </main>
+  </div>
+</div>

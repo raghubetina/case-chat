@@ -27,9 +27,18 @@ Rails.application.routes.draw do
 
   # The app people actually use. The Compiler's CRUD routes below are the
   # authoring substrate; these are the two experiences the product is about.
+  # `show` is the directory; the rest are the other panes of the same shell, so
+  # each one is a real URL you can link to, reload, and go back to.
   resources :cases, only: %i[index show] do
     collection { post :join }
-    member { post :restart }
+    member do
+      post :restart
+      get :background
+      get :assignment
+      get :files
+      get :collected
+      get :search
+    end
     resources :threads, only: :create, module: :cases
   end
 

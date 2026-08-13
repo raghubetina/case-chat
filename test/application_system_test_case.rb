@@ -88,3 +88,8 @@ Capybara::Node::Element.prepend(WaitForTurboBeforeClick)
 
 # CSS animations/transitions are a whole class of flaky waits; kill them in tests.
 Capybara.disable_animation = true
+
+# The shell labels its controls with aria-label where the Design shows no
+# visible label (the rail's search, the drawer toggles). Those are the labels
+# assistive tech reads, so tests should find fields by them too.
+Capybara.enable_aria_label = true

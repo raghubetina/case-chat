@@ -4,18 +4,17 @@
 
 import { application } from "./application"
 
-import DismissableController from "./dismissable_controller"
-
-application.register("dismissable", DismissableController)
-
-import ThemeController from "./theme_controller"
-
-application.register("theme", ThemeController)
+import AutoscrollController from "./autoscroll_controller"
+application.register("autoscroll", AutoscrollController)
 
 import ComposerController from "./composer_controller"
-
 application.register("composer", ComposerController)
 
-import AutoscrollController from "./autoscroll_controller"
+import DismissableController from "./dismissable_controller"
+application.register("dismissable", DismissableController)
 
-application.register("autoscroll", AutoscrollController)
+import DrawerController from "./drawer_controller"
+application.register("drawer", DrawerController)
+
+import ThemeController from "./theme_controller"
+application.register("theme", ThemeController)

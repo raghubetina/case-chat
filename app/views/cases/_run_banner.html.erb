@@ -1,0 +1,9 @@
+<%# Past runs stay readable — that is the point of restarting. This sits above
+    every pane so you cannot forget which run you are reading, and so the empty
+    composer in an old thread is explained rather than broken-looking. %>
+<% unless @enrollment.current? %>
+  <div class="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-wash px-4 py-2 text-sm text-mute">
+    <span><%= t("cases.viewing_past_run", number: @enrollment.run_number) %></span>
+    <%= link_to t("cases.back_to_current"), case_path(@case_study), class: "link link-hover font-medium" %>
+  </div>
+<% end %>

@@ -1,0 +1,15 @@
+<%# One file, in the Design's list shape. `meta` is whatever distinguishes this
+    list — a size for case files, who handed it over for collected ones. %>
+<div class="@container @max-[380px]:flex-col @max-[380px]:items-stretch flex items-center gap-3 border-b border-line p-3 last:border-b-0">
+  <span class="kick flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line text-xs text-accent">
+    <%= File.extname(document.file_name).delete(".").upcase.presence || t("threads.file") %>
+  </span>
+
+  <span class="flex min-w-0 flex-1 flex-col gap-1">
+    <span class="truncate text-base font-medium leading-tight"><%= document.file_name %></span>
+    <%= meta %>
+  </span>
+
+  <%= document_link(document, label: t("threads.open_document"),
+        css: "@max-[380px]:w-full btn btn-outline btn-sm h-10 shrink-0") %>
+</div>

@@ -1,0 +1,102 @@
+<%# The student's sidebar: the case you are in, its panes, and the people you
+    have met. Present on every workspace screen, so `row-on` is what tells you
+    where you are. %>
+<nav id="workspace-sidebar" aria-label="<%= t("shell.sidebar_label") %>"
+     class="sidebar-col hidden min-h-0 flex-col overflow-hidden border-r border-line bg-wash md:flex">
+
+  <div class="flex h-[57px] shrink-0 items-center border-b border-line px-4">
+    <div class="flex w-full items-center gap-2">
+      <div class="dropdown min-w-0 flex-1">
+        <button type="button"
+                class="-mx-2 flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-surface">
+          <span class="truncate font-head text-lg font-semibold leading-tight"><%= @case_study.title %></span>
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="ml-auto shrink-0 text-mute">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+
+        <%# No `flex` on .dropdown-content: daisyUI closes the dropdown with
+            `display:none` from inside a cascade layer, and a Tailwind display utility
+            is unlayered, so it wins and the panel stays open over the page forever. %>
+        <div aria-label="<%= t("shell.your_cases") %>" class="dropdown-content z-30 mt-1 w-[240px] rounded-lg border border-line bg-surface py-1 shadow">
+          <span class="kick block px-3 py-2 text-xs text-mute"><%= t("shell.your_cases") %></span>
+          <% switchable_cases.each do |other| %>
+            <% here = other.id == @case_study.id %>
+            <%= link_to case_path(other),
+                  class: "flex items-center gap-3 px-3 py-2 text-sm hover:bg-wash #{"font-medium" if here}",
+                  aria: {current: ("true" if here)} do %>
+              <%= other.title %>
+              <% if here %>
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="ml-auto shrink-0 text-accent">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              <% end %>
+            <% end %>
+          <% end %>
+          <span class="my-1 block h-px bg-line"></span>
+          <%= link_to t("shell.all_cases"), cases_path,
+                class: "block px-3 py-2 text-sm hover:bg-wash" %>
+        </div>
+      </div>
+
+      <button type="button" data-action="drawer#close" aria-label="<%= t("shell.close_menu") %>"
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-mute hover:bg-surface md:hidden">
+        <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="scroll-y flex flex-1 flex-col gap-4 p-2">
+    <% if @query.present? %>
+      <%= render "cases/search_results" %>
+    <% else %>
+      <div class="flex flex-col gap-1">
+        <span class="kick flex h-8 items-center px-2 text-xs text-mute"><%= t("shell.case_section") %></span>
+        <%= sidebar_row t("shell.panes.background"), background_case_path(@case_study, run: run_param) %>
+        <%= sidebar_row t("shell.panes.assignment"), assignment_case_path(@case_study, run: run_param) %>
+        <%= sidebar_row t("shell.panes.files"), files_case_path(@case_study, run: run_param), count: case_files.size %>
+        <%= sidebar_row t("shell.panes.collected"), collected_case_path(@case_study, run: run_param), count: collected_documents.size %>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <%= link_to case_path(@case_study, run: run_param),
+              class: "kick sec-link flex h-8 items-center gap-2 rounded-md px-2 text-xs #{current_page?(case_path(@case_study, run: run_param)) ? "text-ink" : "text-mute"}" do %>
+          <%= t("shell.contacts_section") %>
+          <span class="text-faint"><%= @directory.size %></span>
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6" /></svg>
+        <% end %>
+
+        <% @directory.each do |contact| %>
+          <% conversation = @threads_by_contact[contact.id] %>
+          <% here = @conversation&.contact_id == contact.id %>
+          <% row_class = "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left #{here ? "row-on" : "row-off"}" %>
+
+          <% row = capture do %>
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-surface font-mono text-[11px] font-semibold tracking-normal text-accent">
+              <%= initials_for(contact.full_name) %>
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="truncate text-sm font-medium"><%= contact.full_name %></span>
+              <span class="truncate text-sm text-mute"><%= contact.role_title %></span>
+            </span>
+            <% if conversation.nil? %>
+              <span class="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+              <span class="sr-only"><%= t("shell.not_contacted") %></span>
+            <% end %>
+          <% end %>
+
+          <%# An existing thread is a place, so it is a link you can go back to.
+              The first click on a new contact opens the conversation, which is
+              a write — hence a button. %>
+          <% if conversation %>
+            <%= link_to row, thread_path(conversation),
+                  class: row_class, aria: {current: ("page" if here)} %>
+          <% else %>
+            <%= button_to row, case_threads_path(@case_study, contact_id: contact.id),
+                  class: row_class, form: {class: "contents"} %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</nav>

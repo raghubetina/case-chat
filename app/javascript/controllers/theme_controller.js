@@ -30,7 +30,7 @@ export default class extends Controller {
     for (const option of this.optionTargets) {
       const name = option.dataset.themeNameParam
       const active = stored ? name === stored : name === "auto"
-      option.setAttribute("aria-checked", active ? "true" : "false")
+      option.setAttribute("aria-pressed", active ? "true" : "false")
     }
   }
 }

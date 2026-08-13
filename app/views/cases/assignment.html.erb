@@ -1,0 +1,21 @@
+<% content_for :title, t("shell.panes.assignment") %>
+
+<%= render layout: "shared/shell", locals: student_shell do %>
+  <%= render "shared/pane_header", title: t("shell.panes.assignment") %>
+
+  <div class="scroll-y flex-1 px-4 py-6">
+    <div class="mx-auto flex w-full max-w-col flex-col gap-6">
+      <% if @case_study.assignment.present? %>
+        <div class="whitespace-pre-wrap text-base"><%= @case_study.assignment %></div>
+      <% else %>
+        <p class="text-base text-mute"><%= t("cases.no_assignment") %></p>
+      <% end %>
+
+      <% if @case_study.due_at %>
+        <p class="border-t border-line pt-4 text-base text-mute">
+          <%= t("cases.due", when: l(@case_study.due_at, format: :long)) %>
+        </p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

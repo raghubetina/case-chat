@@ -82,15 +82,74 @@ class StudentLoopTest < ApplicationSystemTestCase
     end
   end
 
-  test "the thread uses the full width rather than the centred column" do
+  test "the pane fills everything the sidebar does not" do
     open_thread_with @june
 
-    # The centred container would cap main's width well below the viewport.
-    main_width = evaluate_script("document.getElementById('main-content').getBoundingClientRect().width")
-    viewport_width = evaluate_script("document.documentElement.clientWidth")
+    viewport = evaluate_script("document.documentElement.clientWidth")
+    sidebar = evaluate_script("document.getElementById('workspace-sidebar').getBoundingClientRect().width")
+    pane = evaluate_script("document.getElementById('main-content').getBoundingClientRect().width")
 
-    assert_in_delta viewport_width, main_width, 1,
-      "the thread view must be full-bleed, not inside the centred container"
+    assert_equal 272, sidebar.round, "the sidebar is a fixed 272px column"
+    assert_in_delta viewport - sidebar, pane, 1,
+      "the pane must take the rest of the viewport, not sit in a centred container"
+  end
+
+  test "the shell survives moving between panes" do
+    visit case_path(@case_study)
+
+    [
+      [I18n.t("shell.panes.background"), background_case_path(@case_study)],
+      [I18n.t("shell.panes.assignment"), assignment_case_path(@case_study)],
+      [I18n.t("shell.panes.files"), files_case_path(@case_study)],
+      [I18n.t("shell.panes.collected"), collected_case_path(@case_study)]
+    ].each do |label, path|
+      within("#workspace-sidebar") { click_on label }
+      assert_current_path path
+
+      # The whole point of a shell: the sidebar does not go away, and it says
+      # where you are.
+      assert_selector "#workspace-sidebar", text: @june.full_name
+      assert_selector "#workspace-sidebar a[aria-current='page']", text: label
+      assert_selector "h1", text: label
+    end
+  end
+
+  test "a contact in the sidebar opens their thread from any pane" do
+    open_thread_with @june
+    visit files_case_path(@case_study)
+
+    within("#workspace-sidebar") { click_on @june.full_name }
+
+    assert_selector "#composer_form"
+    assert_selector "h1", text: @june.full_name
+    assert_selector "#workspace-sidebar [aria-current='page']", text: @june.full_name
+  end
+
+  test "search finds what was said and lists it in the sidebar" do
+    open_thread_with @june
+    fill_in "message_body", with: "Tell me about the takeout economics."
+    click_on I18n.t("threads.send")
+    assert_text "Tell me about the takeout economics."
+
+    field = find_field(I18n.t("shell.search_label"))
+    field.fill_in(with: "takeout")
+    field.send_keys(:enter)
+
+    assert_current_path(/\/search\?/)
+    # The sidebar stops being a map and becomes the result list.
+    within("#workspace-sidebar") { assert_text "takeout" }
+    assert_no_selector "#workspace-sidebar", text: I18n.t("shell.case_section")
+  end
+
+  test "search never reaches a conversation this run has not had" do
+    other_run = Enrollment.create!(user: @student, case_study: @case_study)
+    other = Conversation.create!(enrollment: other_run, contact: @june)
+    other.messages.create!(body: "secret from another run", sent_at: Time.current, from_contact: false)
+
+    first_run = Enrollment.where(user: @student, case_study: @case_study).newest_first.last
+    visit search_case_path(@case_study, run: first_run.id, q: "secret")
+
+    assert_no_text "secret from another run"
   end
 
   test "the signed-out landing page offers a way in" do

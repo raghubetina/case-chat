@@ -1,7 +1,11 @@
-# The student's front door: the cases you are working, and the code that gets
-# you into a new one.
+# The student's front door, and the panes of the workspace that are about the
+# case rather than a conversation. Every action but #index and the two mutations
+# renders inside the shell.
 class CasesController < ApplicationController
+  include CaseWorkspace
+
   before_action :authenticate
+  before_action :load_case, only: %i[show background assignment files collected search]
 
   def index
     @enrollments = authorized_scope(Enrollment.all)
@@ -10,14 +14,39 @@ class CasesController < ApplicationController
       .newest_first
   end
 
+  # The directory pane: everyone this run has met.
   def show
-    @enrollment = current_run!
-    @case_study = @enrollment.case_study
-    authorize! @case_study, to: :show?
+  end
 
-    @contacts = directory_for(@enrollment)
-    @documents = earned_documents(@enrollment)
-    @threads_by_contact = @enrollment.conversations.includes(:messages).index_by(&:contact_id)
+  def background
+  end
+
+  def assignment
+  end
+
+  def files
+  end
+
+  def collected
+  end
+
+  # Search runs over what this run can actually see — messages you have
+  # exchanged and files you hold — never the whole case.
+  def search
+    @query = params[:q].to_s.strip
+    return if @query.blank?
+
+    @message_hits = Message
+      .where(conversation_id: @enrollment.conversations.select(:id))
+      .where("body ILIKE ?", "%#{Message.sanitize_sql_like(@query)}%")
+      .includes(conversation: :contact)
+      .order(sent_at: :desc)
+      .limit(20)
+
+    @document_hits = visible_documents
+      .where("file_name ILIKE :q OR description ILIKE :q", q: "%#{Document.sanitize_sql_like(@query)}%")
+      .order(file_name: :asc)
+      .limit(20)
   end
 
   # Students join with the code the instructor posts alongside the assignment.
@@ -57,38 +86,18 @@ class CasesController < ApplicationController
 
   private
 
+  def load_case
+    enrollment = current_run!
+    authorize! enrollment.case_study, to: :show?
+    load_workspace(enrollment)
+  end
+
   # `run` selects an older enrollment; without it you get the live one.
   def current_run!
     runs = Enrollment.where(user_id: current_user.id, case_study_id: params[:id]).newest_first
     enrollment = params[:run].present? ? runs.find(params[:run]) : runs.first
     raise ActiveRecord::RecordNotFound if enrollment.nil?
 
-    Enrollment.includes(:case_study).find(enrollment.id)
-  end
-
-  # The directory is what this run has earned: everyone in the starting
-  # directory, plus everyone introduced so far.
-  def directory_for(enrollment)
-    met_ids = Introduction.where(enrollment_id: enrollment.id).pluck(:contact_id)
-
-    Contact
-      .where(case_study_id: enrollment.case_study_id)
-      .where(in_starting_directory: true).or(
-        Contact.where(case_study_id: enrollment.case_study_id, id: met_ids)
-      )
-      .order(in_starting_directory: :desc, full_name: :asc)
-  end
-
-  def earned_documents(enrollment)
-    shared_ids = DocumentShare
-      .where(message_id: Message.where(conversation_id: enrollment.conversations.select(:id)).select(:id))
-      .select(:document_id)
-
-    Document
-      .where(case_study_id: enrollment.case_study_id)
-      .where(given_at_start: true).or(
-        Document.where(case_study_id: enrollment.case_study_id, id: shared_ids)
-      )
-      .order(given_at_start: :desc, file_name: :asc)
+    Enrollment.includes(case_study: :author).find(enrollment.id)
   end
 end

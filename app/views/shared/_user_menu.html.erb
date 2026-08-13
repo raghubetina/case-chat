@@ -1,0 +1,56 @@
+<%# The rail's account menu. Inside the shell this is the whole of the global
+    navigation — the case switcher lives in the sidebar, so everything that is
+    not about the current case (the other side of the app, the theme, signing
+    out) is here. daisyUI's dropdown is :focus-within-driven, which is why the
+    theme controller blurs after choosing. %>
+<%# Deliberately not role="menu": the panel holds a heading, dividers, links and
+    a sign-out form, none of which an ARIA menu admits, and it has no arrow-key
+    handling to justify the role. A labelled group of ordinary controls is what
+    it actually is, and daisyUI's :focus-within keeps it open while you tab. %>
+<div class="dropdown dropdown-end" data-controller="theme">
+  <button type="button"
+          aria-label="<%= t("shell.account_menu", name: current_user.full_name) %>"
+          class="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-railline">
+    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-railline font-mono text-[11px] font-semibold tracking-normal text-railink"
+          style="background:color-mix(in srgb, var(--color-railink) 14%, transparent); border-color:color-mix(in srgb, var(--color-railink) 45%, transparent)">
+      <%= initials_for(current_user.full_name) %>
+    </span>
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="hidden shrink-0 text-railink sm:block">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  </button>
+
+  <%# No `flex` on .dropdown-content: daisyUI closes the dropdown with
+      `display:none` from inside a cascade layer, and a Tailwind display utility
+      is unlayered, so it wins and the panel stays open over the page forever. %>
+  <div aria-label="<%= t("shell.account_menu", name: current_user.full_name) %>" class="dropdown-content z-50 mt-1 w-[240px] rounded-lg border border-line bg-surface py-1 shadow">
+    <span class="flex flex-col gap-1 px-3 py-2">
+      <span class="truncate text-sm font-medium leading-tight"><%= current_user.full_name %></span>
+      <span class="truncate text-sm leading-tight text-mute"><%= current_user.program.presence || current_user.email %></span>
+    </span>
+
+    <span class="my-1 block h-px bg-line"></span>
+
+    <%= link_to t("nav.my_cases"), cases_path,
+          class: "block px-3 py-2 text-sm hover:bg-wash" %>
+    <%= link_to t("nav.authoring"), author_cases_path,
+          class: "block px-3 py-2 text-sm hover:bg-wash" %>
+
+    <span class="my-1 block h-px bg-line"></span>
+
+    <span class="kick block px-3 py-1 text-xs text-mute"><%= t("nav.theme.label") %></span>
+    <% %w[ledger bureau dusk chicago auto].each do |name| %>
+      <button type="button" aria-pressed="false"
+              class="block w-full px-3 py-2 text-left text-sm hover:bg-wash"
+              data-theme-target="option" data-action="theme#set" data-theme-name-param="<%= name %>">
+        <%= t("nav.theme.#{name}") %>
+      </button>
+    <% end %>
+
+    <span class="my-1 block h-px bg-line"></span>
+
+    <%= button_to t("nav.sign_out"), rodauth.logout_path, method: :post,
+          class: "block w-full px-3 py-2 text-left text-sm hover:bg-wash",
+          form: {data: {turbo: false}, class: "contents"} %>
+  </div>
+</div>

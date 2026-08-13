@@ -1,0 +1,26 @@
+<% content_for :title, t("shell.panes.files") %>
+
+<%= render layout: "shared/shell", locals: student_shell do %>
+  <%= render "shared/pane_header", title: t("shell.panes.files") %>
+
+  <div class="scroll-y flex-1 px-4 py-6">
+    <div class="mx-auto flex w-full max-w-col flex-col gap-6">
+      <p class="text-base text-mute"><%= t("cases.files_note") %></p>
+
+      <% if case_files.any? %>
+        <div class="flex flex-col rounded-lg border border-line">
+          <% case_files.each do |document| %>
+            <% detail = document.description.presence ||
+                        (number_to_human_size(document.byte_size) if document.byte_size) %>
+            <%= render "cases/document_row", document: document,
+                  meta: tag.span(detail, class: "truncate text-base leading-tight text-faint") %>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="rounded-lg border border-dashed border-line px-6 py-12 text-center text-base text-faint">
+          <%= t("cases.no_documents") %>
+        </p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

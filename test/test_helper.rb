@@ -33,9 +33,15 @@ module ActiveSupport
   class TestCase
     include AuthenticationTestHelper
 
-    # Prevent one test's authentication requests from rate-limiting another.
+    # Prevent one test's requests from rate-limiting another. Both limiters key
+    # on the client IP, and every test is 127.0.0.1, so without this the
+    # perimeter's 300-requests-per-5-minutes ceiling is a shared budget across
+    # the whole run: adding tests eventually starts 429ing unrelated ones, and
+    # which ones depends on the seed. RateLimitingTest installs its own store,
+    # so it still proves the limiter works.
     setup do
       RodauthController::AUTH_RATE_LIMIT_STORE.clear
+      Rack::Attack.reset!
     end
 
     # Run tests in parallel with specified workers

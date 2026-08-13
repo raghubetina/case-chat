@@ -208,6 +208,16 @@ en:
       when_placeholder: Once the student has asked to see the numbers.
   cases:
     assignment: Assignment
+    collected_note: Files people have shared with you in conversation.
+    course: Course
+    due: "Due %{when}. Bring one page."
+    files_note: Given to everyone at the start of the case.
+    instructor: Instructor
+    no_assignment: Your instructor has not posted an assignment yet.
+    no_background: Your instructor has not written a background yet.
+    nothing_collected: Nothing yet. Files arrive when someone hands them to you.
+    prepare_by_label: Prepare by
+    shared_by: "%{name} · %{when}"
     back_to_current: Back to your current run
     background: Case background
     contacts_found: "%{found} of %{total} contacts"
@@ -243,6 +253,33 @@ en:
     run_label: "Run %{number}, %{on}"
     start_thread: Start thread
     viewing_past_run: "You are reading run %{number}, which is closed."
+  shell:
+    account_menu: "%{name}, account menu"
+    all_cases: All your cases
+    case_section: Case
+    clear_search: Clear
+    close_menu: Close case menu
+    contacts_section: Contacts
+    no_results: Nothing matched.
+    not_contacted: Not contacted yet
+    open_menu: Open case menu
+    panes:
+      assignment: Assignment
+      background: Background
+      collected: Collected from contacts
+      directory: All contacts
+      files: Case files
+    results_for: "Results for \"%{query}\""
+    search_label: Search this case
+    search_placeholder: "Search %{title}"
+    search_prompt: Search your conversations and the files you hold.
+    search_summary:
+      one: 1 result for "%{query}"
+      other: "%{count} results for \"%{query}\""
+      zero: "Nothing matched \"%{query}\""
+    search_title: Search
+    sidebar_label: Case and contacts
+    your_cases: Your cases
   threads:
     no_answer: (no answer)
     conversation_with: "Conversation with %{name}"

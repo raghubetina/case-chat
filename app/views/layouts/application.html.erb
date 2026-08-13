@@ -30,8 +30,17 @@
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
-  <body class="min-h-screen bg-base-100" data-hotwire-native-app="<%= hotwire_native_app? %>">
+  <%# Workspace screens are a fixed-height shell that owns the whole viewport:
+      it supplies its own rail and its own <main>, and nothing outside it
+      scrolls. Every other screen is an ordinary scrolling page under the rail
+      header below. %>
+  <body class="<%= content_for?(:shell) ? "h-dvh overflow-hidden" : "min-h-screen" %> bg-base-100" data-hotwire-native-app="<%= hotwire_native_app? %>">
     <%= link_to t("nav.skip_to_content"), "#main-content", class: "sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-base-100 focus:p-3" %>
+
+    <% if content_for?(:shell) %>
+      <%= render "shared/flash" %>
+      <%= yield %>
+    <% else %>
 
     <%# The Design's rail: a dark bar carrying pill navigation, not a light
         daisyUI navbar. Colours come from the theme's --color-rail family, so it
@@ -60,16 +69,14 @@
           <button type="button" class="kick rounded-md px-2 py-1 text-xs pill-off" aria-haspopup="menu" aria-label="<%= t("nav.theme.label") %>">
             <%= t("nav.theme.short") %>
           </button>
-          <ul role="menu" aria-label="<%= t("nav.theme.label") %>" class="dropdown-content menu z-50 mt-1 w-44 rounded-box border border-line bg-surface p-1 shadow">
+          <div aria-label="<%= t("nav.theme.label") %>" class="dropdown-content menu z-50 mt-1 w-44 rounded-box border border-line bg-surface p-1 shadow">
             <% %w[ledger bureau dusk chicago auto].each do |name| %>
-              <li>
-                <button type="button" role="menuitemradio" aria-checked="false"
-                  data-theme-target="option" data-action="theme#set" data-theme-name-param="<%= name %>">
-                  <%= t("nav.theme.#{name}") %>
-                </button>
-              </li>
+              <button type="button" aria-pressed="false" class="text-left"
+                data-theme-target="option" data-action="theme#set" data-theme-name-param="<%= name %>">
+                <%= t("nav.theme.#{name}") %>
+              </button>
             <% end %>
-          </ul>
+          </div>
         </div>
       </div>
     </header>
@@ -82,5 +89,6 @@
     <main id="main-content" class="<%= content_for?(:full_bleed) ? "" : "container mx-auto px-4" %>" tabindex="-1">
       <%= yield %>
     </main>
+    <% end %>
   </body>
 </html>

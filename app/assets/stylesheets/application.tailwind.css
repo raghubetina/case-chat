@@ -377,6 +377,47 @@
   scrollbar-width: thin;
 }
 
+/* Sidebar rows, from the Design. `row-on` is the pane you are looking at. */
+@utility row-on {
+  background: var(--t-soft);
+  font-weight: 600;
+}
+
+@utility row-off {
+  &:hover {
+    background: var(--color-base-100);
+  }
+}
+
+/* Section headers in the sidebar that are themselves links (e.g. Contacts). */
+@utility sec-link {
+  &:hover {
+    background: var(--color-base-100);
+    color: var(--color-base-content);
+  }
+}
+
+/* The rail's search sits on the dark bar, so its placeholder needs the rail's
+   muted ink rather than the browser default grey, which fails contrast there. */
+.rail-search::placeholder {
+  color: var(--t-railmute);
+  opacity: 1;
+}
+
+/* The sidebar is permanent from md up. Below that it slides in over the pane,
+   which is why it is `hidden` in markup and revealed by the drawer state. */
+@media (max-width: 767px) {
+  [data-drawer="open"] .sidebar-col {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: flex;
+    width: 272px;
+  }
+}
+
 [data-hotwire-native-app="true"] .hotwire-native-hidden {
   display: none;
 }

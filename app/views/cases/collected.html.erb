@@ -1,0 +1,32 @@
+<% content_for :title, t("shell.panes.collected") %>
+
+<%= render layout: "shared/shell", locals: student_shell do %>
+  <%= render "shared/pane_header", title: t("shell.panes.collected") %>
+
+  <div class="scroll-y flex-1 px-4 py-6">
+    <div class="mx-auto flex w-full max-w-col flex-col gap-6">
+      <p class="text-base text-mute"><%= t("cases.collected_note") %></p>
+
+      <% if collected_documents.any? %>
+        <div class="flex flex-col rounded-lg border border-line">
+          <% collected_documents.each do |share| %>
+            <% giver = share.message.conversation.contact %>
+            <%# Who gave it to you and when is the whole point of this list —
+                a file you cannot attribute is not evidence. %>
+            <% attribution = tag.span(class: "flex min-w-0 items-center gap-2 text-base leading-tight text-mute") do
+                 tag.span(initials_for(giver.full_name),
+                   class: "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line font-mono text-[11px] font-semibold tracking-normal text-accent") +
+                 tag.span(t("cases.shared_by", name: giver.full_name,
+                   when: l(share.message.sent_at, format: :short)), class: "truncate")
+               end %>
+            <%= render "cases/document_row", document: share.document, meta: attribution %>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="rounded-lg border border-dashed border-line px-6 py-12 text-center text-base text-faint">
+          <%= t("cases.nothing_collected") %>
+        </p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

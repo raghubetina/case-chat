@@ -42,7 +42,18 @@ class AuthenticatedPagesTest < ApplicationSystemTestCase
     conversation = Conversation.find_by(enrollment: enrollment) ||
       Conversation.create!(enrollment: enrollment, contact: @contact)
 
-    [cases_path, case_path(@case_study), thread_path(conversation)]
+    # Every pane of the shell, including the search state, which replaces the
+    # sidebar's navigation with results and so is a different page to audit.
+    [
+      cases_path,
+      case_path(@case_study),
+      background_case_path(@case_study),
+      assignment_case_path(@case_study),
+      files_case_path(@case_study),
+      collected_case_path(@case_study),
+      search_case_path(@case_study, q: "takeout"),
+      thread_path(conversation)
+    ]
   end
 
   test "the import page announces work in progress and swaps in the proposal live" do
