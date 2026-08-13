@@ -22,7 +22,7 @@ class CaseStudiesController < ApplicationController
       redirect_to case_study_path(@case_study), status: :see_other
     else
       load_reference_options
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -34,7 +34,7 @@ class CaseStudiesController < ApplicationController
       redirect_to case_study_path(@case_study), status: :see_other
     else
       load_reference_options
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -48,7 +48,7 @@ class CaseStudiesController < ApplicationController
   def set_case_study
     @case_study = CaseStudy.find(params[:id])
   end
-  
+
   def set_return_to
     expected = case action_name
     when "new", "create"
@@ -61,7 +61,7 @@ class CaseStudiesController < ApplicationController
     candidate = params.fetch(:return_to, expected)
     @return_to = candidate if valid_return_to?(candidate, expected)
     raise ActionController::BadRequest, "invalid return destination" unless @return_to
-  
+
     @cancel_to = case action_name
     when "new", "create"
       case_studies_path
@@ -69,7 +69,7 @@ class CaseStudiesController < ApplicationController
       @return_to
     end
   end
-  
+
   def valid_return_to?(candidate, expected)
     if expected == "foundation:mutation-record:show"
       candidate == expected
@@ -77,15 +77,15 @@ class CaseStudiesController < ApplicationController
       url_from(candidate) == expected
     end
   end
-  
+
   def create_case_study_params
     params.expect(case_study: %i[title course join_code author_id])
   end
-  
+
   def update_case_study_params
     params.expect(case_study: %i[title course join_code author_id])
   end
-  
+
   def load_reference_options
     @author_id_options = User
       .order(:full_name, :id)

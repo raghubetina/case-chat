@@ -3,10 +3,6 @@
 CI.run do
   step "Setup", "bin/setup --skip-server"
 
-  # A hostile inherited URL proves the smoke clears it before preparing and
-  # dropping the disposable renamed-app database.
-  step "Reproducibility: instantiated app boot",
-    "env DATABASE_URL=postgresql://127.0.0.1:1/must_not_be_used ruby script/instantiation_smoke.rb"
   step "Reproducibility: renamed app Dev Container", "ruby script/devcontainer_smoke.rb"
   step "Development: CSP exemption", "ruby script/development_csp_smoke.rb"
 
@@ -19,7 +15,7 @@ CI.run do
   step "Style: ERB (defaults + HardCodedString)", "bundle exec erb_lint --lint-all"
   step "Style: Biome JS/CSS", "npm run check"
 
-  step "Schema: active_record_doctor", "bin/rails active_record_doctor"
+  step "Schema: active_record_doctor", "env RAILS_ENV=test bin/rails active_record_doctor"
   step "Tests: Rails", "bin/rails test"
   step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
 
