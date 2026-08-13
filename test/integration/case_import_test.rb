@@ -24,6 +24,11 @@ class CaseImportTest < ActionDispatch::IntegrationTest
     def draft(documents:, hint: nil) = raise(CaseDrafter::Error, "provider refused")
   end
 
+  # Not a CaseDrafter::Error: a dropped connection, or a bug.
+  class BrokenDrafter
+    def draft(documents:, hint: nil) = raise(IOError, "connection reset")
+  end
+
   def cast_count = Contact.where(case_study_id: @case_study.id).count
 
   def draft_now(**params)
@@ -244,6 +249,28 @@ class CaseImportTest < ActionDispatch::IntegrationTest
 
     get new_author_case_import_path(@case_study)
     assert_match(/#{Regexp.escape(I18n.t("author.imports.failed"))}/, response.body)
+  end
+
+  test "an unexpected error still clears the spinner instead of leaving one forever" do
+    CaseDrafter.current = BrokenDrafter.new
+    post author_case_import_path(@case_study)
+    record = CaseDraft.find_by!(case_study_id: @case_study.id)
+    assert_equal "drafting", record.status
+
+    # Re-raised so the failure is reported and the job can be retried.
+    assert_raises(IOError) { CaseDraftJob.perform_now(record.id) }
+
+    assert_equal "failed", record.reload.status,
+      "a row left in drafting is an author watching a spinner that will never resolve"
+  end
+
+  test "a proposal that already landed is not redrafted by a retried job" do
+    draft_now
+    record = CaseDraft.find_by!(case_study_id: @case_study.id)
+    CaseDrafter.current = BrokenDrafter.new
+
+    assert_nothing_raised { CaseDraftJob.perform_now(record.id) }
+    assert_equal "ready", record.reload.status
   end
 
   test "someone who does not own the case cannot draft into it" do
