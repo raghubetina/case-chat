@@ -47,9 +47,33 @@ class BaselinePagesTest < ApplicationSystemTestCase
 
     assert_title "#{I18n.t("pages.privacy.heading")} · #{I18n.t("app_name")}"
     assert_selector "a[href='#main-content']", text: I18n.t("nav.skip_to_content"), visible: :all
-    assert_selector ".navbar-start", visible: true
+    assert_selector ".app-header__brand", visible: true
     assert_link I18n.t("app_name"), href: root_path, visible: true
     assert_selector "main#main-content[tabindex='-1']"
+  end
+
+  test "shows keyboard focus on the theme control" do
+    visit "/"
+
+    find(".app-header__brand a").send_keys(:tab)
+
+    assert page.evaluate_script("document.activeElement.classList.contains('theme-toggle__input')")
+    assert_equal "solid", page.evaluate_script("getComputedStyle(document.querySelector('.theme-toggle')).outlineStyle")
+    assert_operator page.evaluate_script("parseFloat(getComputedStyle(document.querySelector('.theme-toggle')).outlineWidth)"), :>=, 3
+  end
+
+  test "centers hero content within the available width" do
+    visit "/"
+
+    offset = page.evaluate_script(<<~JS)
+      (() => {
+        const parent = document.querySelector(".hero-layout-inner").getBoundingClientRect();
+        const child = document.querySelector(".hero-layout-inner > div").getBoundingClientRect();
+        return Math.abs((parent.left + parent.width / 2) - (child.left + child.width / 2));
+      })()
+    JS
+
+    assert_operator offset, :<, 1
   end
 
   private

@@ -1,8 +1,8 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified on the maintenance baseline<br>
-**Last audited:** 2026-08-13
+**Implementation:** verified for the current domain and infrastructure<br>
+**Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
 observable outcomes and authorization, lifecycle, provider-adapter, and data
@@ -34,9 +34,20 @@ they assert template composition or schema-less constraints that no longer
 describe this owned application. The documentation branch is rebased onto that
 maintenance baseline and its full application gate passes.
 
-Render-topology coverage changes with ADR 0006. Native-presentation and PWA
-coverage will be kept, replaced, or removed with the infrastructure and UI
-decisions that determine whether those product surfaces remain. Generated CRUD
-and baseline-page tests should not be polished in place when the obsolete
-surface is about to be replaced; feature slices add focused coverage as their
-real flows land.
+`RenderBlueprintTest`, `SolidAdapterTopologyTest`,
+`ProductionDatabaseTopologyTest`, `DaisyuiRemovalTest`, and
+`ActiveStorageTopologyTest` cover the application-owned infrastructure
+contracts accepted in ADR 0006. `bin/production-smoke` exercises those
+contracts with a real image and fresh PostgreSQL databases, including the
+worker's read-only preparation gate before any service process starts.
+
+The domain model suites cover atomic publication, immutable attachment and
+conversation snapshots, attempt reset, graph effects, runtime message
+contracts, cross-case boundaries, and side-by-side test-drive lifecycle. They
+exercise application-owned transitions rather than retesting Active Record or
+Active Storage declarations.
+
+Native-presentation and PWA coverage will be kept, replaced, or removed with
+the UI decisions that determine whether those product surfaces remain. The
+obsolete generated CRUD tests are gone; feature slices add focused coverage as
+their real flows land.

@@ -1,20 +1,20 @@
 <%# Persistent live regions: they exist on every page load, and flash content is
     injected INTO them - a region inserted at announce time is not reliably
     announced by screen readers. Polite for notices, assertive for alerts. %>
-<div id="flash_notices" role="status" class="toast toast-top toast-center z-50 empty:hidden">
+<div id="flash_notices" role="status" class="flash-stack empty:hidden">
   <% flash.each do |type, message| %>
     <% next if type.to_s == "alert" %>
-    <div class="alert alert-info shadow-lg" data-controller="dismissable">
+    <div class="notice notice-info" data-controller="dismissable">
       <span><%= message %></span>
-      <button type="button" class="btn btn-ghost btn-xs" data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
+      <button type="button" class="button button-ghost button-compact" data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
     </div>
   <% end %>
 </div>
-<div id="flash_alerts" role="alert" class="toast toast-top toast-center z-50 empty:hidden">
+<div id="flash_alerts" role="alert" class="flash-stack empty:hidden">
   <% if flash[:alert].present? %>
-    <div class="alert alert-error shadow-lg" data-controller="dismissable">
+    <div class="notice notice-error" data-controller="dismissable">
       <span><%= flash[:alert] %></span>
-      <button type="button" class="btn btn-ghost btn-xs" data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
+      <button type="button" class="button button-ghost button-compact" data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
     </div>
   <% end %>
 </div>

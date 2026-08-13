@@ -1,45 +1,97 @@
-# One-Blueprint deploy: a single web service (the shipped Dockerfile, Thruster in
-# front of Puma; the entrypoint runs db:prepare on boot). The database is external
-# (Neon) - provide DATABASE_URL at Blueprint creation. SECRET_KEY_BASE and the
-# runtime profile are configured automatically (see DEPLOY.md).
+# Paid prototype topology. The four URLs can address separate logical databases
+# on one managed PostgreSQL instance; Render cannot create those databases in a
+# Blueprint, so DEPLOY.md owns that one-time setup.
+# Render environment groups cannot prompt for secret values. Provider and
+# object-storage keys are added to this shared group in the dashboard.
 services:
   - type: web
-    name: case_chat
+    name: case-chat-web
     runtime: docker
-    # Foundation deliberately omits `plan`: Render defaults a new service to
-    # paid Starter and preserves an existing service's current instance type.
-    # The Compiler may add `plan: free` only for an explicit disposable demo.
-    region: ohio # US East (AWS us-east-2); create the Neon database in the same region
+    plan: standard
+    region: ohio
     autoDeployTrigger: checksPass
     healthCheckPath: /ready
+    preDeployCommand: ./bin/rails db:prepare
     envVars:
-      - key: PORT
-        value: "80"
-      - key: RAILS_ENV
-        value: "production"
+      - fromGroup: case-chat-production
       - key: SECRET_KEY_BASE
         generateValue: true
-      # Render otherwise injects WEB_CONCURRENCY=1, which starts Puma cluster
-      # mode and wastes memory on a single 512MB instance.
+      - key: DATABASE_URL
+        sync: false
+      - key: CACHE_DATABASE_URL
+        sync: false
+      - key: QUEUE_DATABASE_URL
+        sync: false
+      - key: CABLE_DATABASE_URL
+        sync: false
+      - key: QUEUE_DB_POOL
+        value: "2"
+
+  - type: worker
+    name: case-chat-worker
+    runtime: docker
+    plan: standard
+    region: ohio
+    autoDeployTrigger: checksPass
+    preDeployCommand: ./bin/wait-for-database-preparation
+    dockerCommand: ./bin/jobs
+    maxShutdownDelaySeconds: 60
+    envVars:
+      - fromGroup: case-chat-production
+      - key: SECRET_KEY_BASE
+        fromService:
+          type: web
+          name: case-chat-web
+          envVarKey: SECRET_KEY_BASE
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: case-chat-web
+          envVarKey: DATABASE_URL
+      - key: CACHE_DATABASE_URL
+        fromService:
+          type: web
+          name: case-chat-web
+          envVarKey: CACHE_DATABASE_URL
+      - key: QUEUE_DATABASE_URL
+        fromService:
+          type: web
+          name: case-chat-web
+          envVarKey: QUEUE_DATABASE_URL
+      - key: CABLE_DATABASE_URL
+        fromService:
+          type: web
+          name: case-chat-web
+          envVarKey: CABLE_DATABASE_URL
+      - key: CABLE_DB_POOL
+        value: "5"
+      - key: QUEUE_DB_POOL
+        value: "7"
+
+envVarGroups:
+  - name: case-chat-production
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: PORT
+        value: "80"
       - key: WEB_CONCURRENCY
-        value: "0"
+        value: "2"
       - key: RAILS_MAX_THREADS
-        value: "3"
-      # Three Puma threads + in-process Solid Queue need shared pool headroom.
+        value: "5"
       - key: DB_POOL
-        value: "8"
-      - key: SOLID_QUEUE_IN_PUMA
-        value: "true"
+        value: "5"
+      - key: CACHE_DB_POOL
+        value: "3"
+      - key: CABLE_DB_POOL
+        value: "3"
+      - key: AI_JOB_THREADS
+        value: "5"
+      - key: DEFAULT_JOB_THREADS
+        value: "2"
       - key: RACK_TIMEOUT_SERVICE_TIMEOUT
         value: "15"
       - key: RAILS_LOG_LEVEL
-        value: "info"
+        value: info
       - key: BUNDLE_WITHOUT
-        value: "development:test"
-      # External Postgres (Neon), created in AWS us-east-2 to match this region.
-      # Paste the DIRECT connection string (pooling toggle off, no -pooler in the
-      # host) at Blueprint creation: db:prepare on boot + our SET-based statement/
-      # lock timeouts need session state the pooler drops. It carries Solid Cache/
-      # Queue/Cable too.
-      - key: DATABASE_URL
-        sync: false
+        value: development:test

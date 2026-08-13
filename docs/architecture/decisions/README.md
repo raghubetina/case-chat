@@ -11,7 +11,7 @@ these files preserve why it was chosen and when to revisit it.
 | [0003](0003-use-first-party-ai-sdks.md) | Integrate providers through first-party SDKs | Accepted | Planned |
 | [0004](0004-publish-an-atomic-configuration.md) | Publish an atomic configuration snapshot | Accepted | Lifecycle verified; concurrent authoring planned |
 | [0005](0005-compose-stakeholder-prompts-in-the-app.md) | Compose stakeholder prompts in the app | Accepted | Planned |
-| [0006](0006-use-rails-native-infrastructure.md) | Keep the prototype Rails-native | Accepted | Planned |
+| [0006](0006-use-rails-native-infrastructure.md) | Keep the prototype Rails-native | Accepted | Verified |
 
 New ADRs should include: status, implementation status, date, context, decision,
 consequences, confirmation, revisit trigger, and sources. When superseding an

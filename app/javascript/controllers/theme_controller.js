@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // The two-state theme override: flips data-theme and persists the choice;
 // the layout's head script re-applies it before first paint. Untoggled users keep
-// following their OS preference via daisyUI's `--prefersdark` theme flag.
+// following their OS preference via the stylesheet's media query.
 export default class extends Controller {
   static targets = ["checkbox"]
 

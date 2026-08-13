@@ -1,134 +1,191 @@
-# Deploying to Render
+# Deploying Case Chat to Render
 
-The repo ships `render.yaml`: one Docker web service in Render's `ohio` region (AWS us-east-2),
-with an external Neon Postgres database created in the same AWS region. Cache, Queue, and Cable share that
-database.
+The prototype runs as one paid web service and one paid worker service backed by
+managed PostgreSQL and private S3-compatible object storage. `render.yaml` is
+the executable service topology. It deliberately uses no Redis: Solid Cache,
+Solid Queue, and Solid Cable each use a separate logical PostgreSQL database.
 
-Foundation deliberately omits the Blueprint `plan` field. Render currently creates a new service on paid
-`starter` when that field is absent, and retains the current instance type for an existing service. That is the
-safe default for an application whose data or delivery obligations may become durable. A future Compiler may
-add `plan: free` only when the App Schema explicitly declares `Project.data_posture == disposable_demo`; low
-traffic alone is not enough to opt an application into sleeping and best-effort background work.
+## Provision PostgreSQL
 
-Ohio is the default because the initial apps and maintainers are centered around Chicago. If an application's
-users are elsewhere, choose a nearer supported region before first deploy and change Render and Neon together.
+Create one current-generation PostgreSQL 18 instance with at least 8 GB of RAM
+in the same Render region as the services. The 8 GB tier supplies 200 direct
+connections; this profile keeps 30 available during a worst-case rolling deploy
+after reserving 10 for PostgreSQL and Render internals. Case Chat uses
+PostgreSQL's built-in `uuidv7()` function, which is not available on earlier
+major versions. On that instance create four fresh logical databases, for
+example:
 
-## First deploy
+- `case_chat_production`
+- `case_chat_production_cache`
+- `case_chat_production_queue`
+- `case_chat_production_cable`
 
-1. Push the repository to GitHub and let its CI checks pass.
-2. In Neon, create a project in **AWS us-east-2 (Ohio)**. Copy the direct connection string with
-   connection pooling off (no `-pooler` in the hostname). `db:prepare` uses migration advisory locks and the
-   application installs session-level query timeouts, both of which require a direct/session connection.
-3. In Render, choose **New → Blueprint**, select the repository, and paste the Neon string as `DATABASE_URL`.
-   It is the only prompted value; Render generates `SECRET_KEY_BASE`, and observability remains dormant until
-   its optional keys are added later. Confirm that the proposed instance type is **Starter** unless this is an
-   explicitly disposable demo.
-4. Wait for the required GitHub checks and deploy. `https://<your-app>.onrender.com/ready` should return 200.
+Render Blueprints cannot declare additional logical databases or derive one
+database URL from another. Before the first deploy, paste the four direct
+connection strings into the web service prompts for `DATABASE_URL`,
+`CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL`, and `CABLE_DATABASE_URL`. The worker
+receives those values from the web service. All four databases may share the
+same host and credentials; separation here isolates schemas and transactions,
+not compute, storage, or failure domains.
 
-Render regions are immutable after service creation. Recreate, rather than reconfigure, a service created in
-the wrong region. Keep the database and service colocated: even a tiny app pays cross-region latency on every
-Solid Cache, Queue, Cable, and domain query.
+Use direct/session connections for migration advisory locks and the connection
+variables in `config/database.yml`. Keep the database and both services in the
+same region.
 
-Removing `plan: free` does not upgrade an existing service: Render preserves its current instance type when the
-field is omitted. Upgrade an existing durable application in the Render dashboard or declare the desired paid
-plan before relying on always-on behavior.
+### Fresh database baseline
 
-## The single-instance 512 MB runtime profile
+This release does not support an in-place upgrade from the generated scaffold.
+The target domain deliberately replaces tables such as `users`, `enrollments`,
+and `conversations`; its new baseline migration expects those names not to
+exist. The irreversible migration that removes legacy Solid tables does not
+make an old application schema compatible.
 
-The Blueprint settings are a coupled profile for one 512 MB Render instance. Both Free and Starter currently
-have 512 MB RAM, so an explicitly disposable demo can reuse the same Puma, Queue, and database-pool settings:
+For an existing prototype deployment, preserve a backup if its data is useful,
+then point all four URLs at fresh PostgreSQL 18 logical databases. Do not run
+this release against the old primary database. Legacy application rows, queued
+jobs, cache entries, and Cable messages are not copied.
 
-- `WEB_CONCURRENCY=0` keeps Puma in single mode. Render otherwise supplies `1`, which starts a cluster master
-  plus worker and wastes memory.
-- `RAILS_MAX_THREADS=3` bounds request concurrency.
-- `SOLID_QUEUE_IN_PUMA=true` runs Solid Queue in async/thread mode in the Puma process. Fork mode is a better
-  isolation boundary when memory allows, but exceeds the free instance's budget.
-- `DB_POOL=8` leaves connection headroom for three request threads plus Queue execution, polling, and heartbeat
-  work.
-- Rack::Attack counters use a small process-memory store so perimeter traffic cannot amplify primary-database
-  load. On Render they key from the first `X-Forwarded-For` field, which Render guarantees is the real client;
-  elsewhere they use Rails' `remote_ip`. A missing or malformed Render field falls back to the socket peer, then
-  a shared fail-closed key. Counters reset on restart and are intentionally single-instance; scaled deployments
-  need an edge/shared KV.
-- jemalloc is preloaded and configured in the Docker image to return dirty pages promptly and limit arenas.
-- `db:prepare` runs in the web entrypoint so the same artifact also works on an explicitly selected free plan,
-  where Render's coordinated pre-deploy command is unavailable.
+## Create the Blueprint
 
-These are not universal high-scale defaults. On a paid/multi-instance deployment, move jobs to a separate
-worker, run migrations once in a coordinated release phase, and size workers, threads, and database pools from
-measurements.
+1. Log the Render CLI into the target workspace and run
+   `render blueprints validate render.yaml`. GitHub CI checks the public schema;
+   this authenticated pass also applies Render's workspace-specific semantic
+   and conflict checks.
+2. Push the repository and let GitHub checks pass.
+3. In Render, create a Blueprint from `render.yaml` and supply the four database
+   URLs when prompted.
+4. Let the first sync create the `case-chat-production` environment group. The
+   first production boot can fail at this point: object-storage identity is a
+   required boot-time contract, while Render cannot prompt for secret values in
+   a Blueprint-managed environment group.
+5. In that new group, add the model-provider and object-storage variables listed
+   below, plus any optional observability keys, in the Render dashboard. They are
+   wholly omitted from `render.yaml`: key-only group entries fail current Render
+   Blueprint validation, and `sync: false` is unsupported in groups. Omission
+   also lets Render preserve dashboard-managed values on later Blueprint syncs.
+   Saving the linked group redeploys the services.
+6. Confirm the resulting deploy succeeds and `https://<host>/ready` returns 200.
 
-The memory profile came from deployed student apps, not an estimate: the incident sequence is recorded in
-`appdev-projects/rails-8-template` [PR #22](https://github.com/appdev-projects/rails-8-template/pull/22)
-(Puma cluster OOM), [PR #23](https://github.com/appdev-projects/rails-8-template/pull/23) (Solid Queue fork versus
-async), and [PR #27](https://github.com/appdev-projects/rails-8-template/pull/27) (region colocation). Render's
-[environment-variable documentation](https://render.com/docs/environment-variables) explains its injected Puma
-concurrency, and its [Blueprint specification](https://render.com/docs/blueprint-spec) defines the omitted-plan
-default, region, and checks-passed deployment behavior. Render's
-[instance-type reference](https://render.com/docs/compute-plans) records the current memory and CPU budgets.
-Render's [DDoS guidance](https://render.com/articles/how-render-handles-ddos-attacks) uses the first forwarded
-address for application rate limiting, and Render staff document that this first field is provider-controlled in
-the completed [X-Forwarded-For request](https://feedback.render.com/features/p/send-the-correct-xforwardedfor).
-Rails' [RemoteIp documentation](https://api.rubyonrails.org/classes/ActionDispatch/RemoteIp.html) explains why
-its general-purpose last-untrusted-address algorithm is not equivalent to that provider contract.
+The web service alone runs `./bin/rails db:prepare`, once across the primary,
+cache, queue, and cable configurations. Render deploys services independently,
+so the worker's pre-deploy command waits until every primary migration and every
+Solid schema is ready before it starts the new worker image. It never runs a
+second, racing `db:prepare`. A failed or timed-out gate fails only the new worker
+deploy; Render retains the last successful worker. The container entrypoint does
+not migrate on boot.
 
-## Secrets and encrypted credentials
+That gate does not make destructive migrations safe while old service instances
+are still running. After this fresh prototype baseline, use expand/contract:
+add compatible schema first, deploy code that tolerates both shapes, backfill,
+and remove old schema only in a later release. If a Solid adapter schema changes,
+add its upgrade migration under `db/cache_migrate`, `db/queue_migrate`, or
+`db/cable_migrate` as appropriate; changing only a schema dump prepares fresh
+databases but cannot upgrade an initialized one.
 
-`render.yaml` generates a persistent `SECRET_KEY_BASE`. It signs cookies, sessions, and CSRF tokens and does
-not decrypt Rails credentials, so no master key is needed for the baseline.
+`SECRET_KEY_BASE` is generated on the web service and copied to the worker. The
+shared group intentionally reaches both services for this prototype. It is a
+convenience boundary, not least-privilege isolation.
 
-The Foundation deliberately ships no `config/credentials.yml.enc` or shared master key. If the application
-later adopts encrypted credentials, run `bin/rails credentials:edit` to create a fresh pair for that application,
-commit only the encrypted file, and add the generated `config/master.key` value to Render as
-`RAILS_MASTER_KEY`. Never commit the key. You may then opt into `config.require_master_key = true`.
+## Runtime profile
+
+The Blueprint starts two paid Standard services:
+
+- Web: two Puma processes, five request threads each, and no in-process job
+  supervisor.
+- Worker: Solid Queue's default forked supervisor and dispatcher, with an `ai`
+  worker at five threads and a `[mailers, default]` worker at two threads.
+
+The web uses a two-connection Queue pool for short enqueue writes. The worker's
+`QUEUE_DB_POOL` must stay at least two larger than the larger worker thread
+count. Because Solid Queue forks one process per worker entry, each child owns
+its connection pool; do not add both thread counts when sizing that one pool.
+The worker overrides `CABLE_DB_POOL` to five so all five concurrent AI streams
+can publish without competing for three Cable connections; the web keeps three.
+`maxShutdownDelaySeconds` gives Render 60 seconds, while Rails configures Solid
+Queue to wait up to 50 seconds for its children before requesting an immediate
+stop.
+
+Successful job records are deleted as they complete. Failed jobs remain for
+inspection, while application-level model-run records provide durable provider
+history. The app therefore needs no recurring cleanup task and Solid Queue does
+not fork a scheduler solely to delete generated history.
+
+The configured steady-state pool ceiling is 80 direct connections: 26 across
+the two Puma processes and 54 across the Queue supervisor, dispatcher, and two
+worker processes. Pools open lazily, but independent zero-downtime deploys can
+briefly run both old and new service containers, raising the theoretical ceiling
+to 160. Against the tier's 200-connection headline limit, reserving 10 for
+PostgreSQL and Render internals still leaves 30 for migration, readiness, and
+operator sessions. Recalculate the whole budget before changing service counts,
+`WEB_CONCURRENCY`, worker entries, recurring tasks, or pool sizes.
 
 ## Environment keys
 
-| Key | Required? | What it does |
+| Key | Default/owner | Purpose |
 |---|---|---|
-| `DATABASE_URL` | you provide | Direct Neon connection; application and all three Solid adapters share it |
-| `SECRET_KEY_BASE` | generated by Render | Cookie/session/CSRF signing |
-| `WEB_CONCURRENCY` | Blueprint (`0`) | Puma single mode for the 512 MB profile |
-| `RAILS_MAX_THREADS` | Blueprint (`3`) | Puma request threads |
-| `DB_POOL` | Blueprint (`8`) | Shared Active Record connection ceiling |
-| `SOLID_QUEUE_IN_PUMA` | Blueprint (`true`) | Enables in-process Solid Queue async mode; only the literal `true` enables it |
-| `RACK_ATTACK_LIMIT` | optional (`300`) | Per-IP requests allowed in each five-minute perimeter window |
-| `RACK_TIMEOUT_SERVICE_TIMEOUT` | Blueprint (`15`) | Hard request deadline in seconds |
-| `SOLID_CACHE_MAX_SIZE_MB` | optional (`64`) | Disposable cache budget inside the shared database |
-| `ROLLBAR_ACCESS_TOKEN` | optional | Activates production error reporting; absent is silent and dormant |
-| `SKYLIGHT_AUTHENTICATION` | optional | Activates production APM; absent is silent and dormant |
-| `RAILS_LOG_LEVEL` | Blueprint (`info`) | Production log level |
+| `DATABASE_URL` | web prompt | Product data |
+| `CACHE_DATABASE_URL` | web prompt | Solid Cache |
+| `QUEUE_DATABASE_URL` | web prompt | Solid Queue |
+| `CABLE_DATABASE_URL` | web prompt | Solid Cable |
+| `SECRET_KEY_BASE` | generated on web | Cookie/session/CSRF signing |
+| `PORT` | group (`80`) | Thruster's public HTTP port |
+| `WEB_CONCURRENCY` | group (`2`) | Puma processes |
+| `RAILS_MAX_THREADS` | group (`5`) | Puma request threads |
+| `DB_POOL` | group (`5`) | Product database connections per process |
+| `CACHE_DB_POOL` | group (`3`) | Cache database connections per process |
+| `QUEUE_DB_POOL` | web (`2`), worker (`7`) | Queue connections per process |
+| `CABLE_DB_POOL` | web/group (`3`), worker (`5`) | Cable connections per process |
+| `AI_JOB_THREADS` | group (`5`) | Concurrent provider streams |
+| `DEFAULT_JOB_THREADS` | group (`2`) | Mailer and ordinary job concurrency |
+| `OPENAI_API_KEY` | group/dashboard | Platform-owned OpenAI credential |
+| `ANTHROPIC_API_KEY` | group/dashboard | Platform-owned Anthropic credential |
+| `OBJECT_STORAGE_ACCESS_KEY_ID` | group/dashboard | S3 API access key |
+| `OBJECT_STORAGE_SECRET_ACCESS_KEY` | group/dashboard | S3 API secret key |
+| `OBJECT_STORAGE_REGION` | group/dashboard | Bucket region (`auto` for providers that require it) |
+| `OBJECT_STORAGE_BUCKET` | group/dashboard | Private document bucket |
+| `OBJECT_STORAGE_ENDPOINT` | optional group/dashboard | Custom S3-compatible HTTPS endpoint; omit for AWS S3 |
+| `OBJECT_STORAGE_FORCE_PATH_STYLE` | optional (`false`) | Put the bucket in URL paths when the provider requires it |
+| `SOLID_CACHE_MAX_SIZE_MB` | optional (`256`) | Disposable cache budget |
+| `RACK_ATTACK_LIMIT` | optional (`300`) | Per-IP requests per five minutes |
+| `RACK_TIMEOUT_SERVICE_TIMEOUT` | group (`15`) | Request deadline in seconds |
+| `ROLLBAR_ACCESS_TOKEN` | optional | Error reporting |
+| `SKYLIGHT_AUTHENTICATION` | optional | APM |
 
-Foundation is host-agnostic: it does not configure Host Authorization or a canonical host. A generic baseline does
-not know which public domains an application should serve. When the Designer supplies domain intent, the generated
-domain policy owns any coordinated Render subdomain setting, host allowlist, and canonical-redirect behavior.
+Do not set `SOLID_QUEUE_IN_PUMA` in production. The dedicated worker owns all
+job execution. Production boot also rejects a missing database URL or two URLs
+that resolve to the same logical database, so an incomplete Blueprint prompt or
+copy/paste mistake fails with the key name instead of a later libpq/table error.
 
-## Health, sleeping, and background work
+## Health, files, and launch gates
 
-- `/up` is process liveness and intentionally does not touch the database. Docker uses it to decide whether the
-  container booted.
-- `/ready` performs a real database round-trip. Render and availability monitors use it to decide whether the
-  application can serve traffic.
-- Neither route proves that a time-sensitive job has completed. Add a Queue heartbeat/dead-job alert before
-  making delivery promises for push, scheduled email, or recurring work.
+`/up` proves process liveness. `/ready` performs a primary-database round trip.
+Neither proves worker timeliness; add queue-heartbeat and failed-job monitoring
+before making delivery promises.
 
-When the Compiler explicitly selects Free for a disposable demo, Render sleeps the service after an idle period,
-and its in-process Queue sleeps with it. An external monitor that calls `/ready` frequently can keep the service
-awake, but it also keeps the app querying Neon and defeats database scale-to-zero. Do not describe scheduled work
-on that profile as reliable. Durable apps keep the paid default and add Queue heartbeat/dead-job monitoring before
-making delivery promises.
+The container filesystem is ephemeral, so production uses the private
+`production` S3-compatible Active Storage service. Create the bucket before the
+first deploy and grant the supplied identity `ListBucket`, `PutObject`,
+`GetObject`, and `DeleteObject` access. Both web and worker receive the same
+storage configuration through the shared environment group. A custom endpoint
+automatically selects the SDK's compatibility checksum mode; path-style URLs
+remain opt-in because AWS S3 expects virtual-hosted bucket URLs by default.
 
-The container filesystem is ephemeral. Any selected upload Capability must use external object storage;
-never place durable user files on the production `:local` service.
+Before inviting users, replace the placeholder privacy/terms copy and complete
+ADR 0002's authentication and authorization confirmation. `bin/production-smoke`
+builds the production image against fresh PostgreSQL, prepares all four logical
+databases, boots web and worker, constructs the production S3 adapter without a
+remote request, and performs one `ai` plus one `default` job.
 
-Neon's free storage is shared by application rows and Solid Cache/Queue/Cable. The baseline caps disposable
-cache data at 64MB; monitor finished jobs, cable retention, and storage before approaching the provider limit.
+Solid Cable retries a transient database interruption with bounded backoff for
+almost four minutes. A longer database outage still requires the web service to
+restart before streaming subscriptions resume; monitor the managed database and
+web process together.
 
-## Email
-
-The baseline sends no mail. A later `sends-email` layer owns the provider configuration, a real application host,
-delivery monitoring, and the SPF/DKIM/DMARC launch checklist.
-
-Further provider behavior: [Render health checks](https://render.com/docs/health-checks),
-[Render free instances](https://render.com/docs/free), and
-[Neon scale to zero](https://neon.com/docs/introduction/scale-to-zero).
+Render references: [Blueprint specification](https://render.com/docs/blueprint-spec),
+[environment groups](https://render.com/docs/configure-environment-variables),
+[pre-deploy commands](https://render.com/docs/deploys), and
+[multiple PostgreSQL databases](https://render.com/docs/postgresql-creating-connecting).
+Storage references: [Rails Active Storage](https://guides.rubyonrails.org/active_storage_overview.html#s3-service-amazon-s3-and-s3-compatible-apis)
+and the [AWS SDK for Ruby S3 client](https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/S3/Client.html).
+The [PostgreSQL UUID function reference](https://www.postgresql.org/docs/18/functions-uuid.html)
+documents the PostgreSQL 18 `uuidv7()` requirement.

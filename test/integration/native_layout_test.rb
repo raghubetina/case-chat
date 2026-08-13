@@ -11,10 +11,10 @@ class NativeLayoutTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select 'body[data-hotwire-native-app="false"]'
-    assert_select "header.navbar", count: 1
-    assert_select ".navbar-start.hotwire-native-hidden", count: 1, text: I18n.t("app_name")
-    assert_select ".navbar-center.hotwire-native-hidden", count: 1
-    assert_select ".navbar-end.hotwire-native-toolbar", count: 1
+    assert_select "header.app-header", count: 1
+    assert_select ".app-header__brand.hotwire-native-hidden", count: 1, text: I18n.t("app_name")
+    assert_select ".app-header__nav.hotwire-native-hidden", count: 1
+    assert_select ".app-header__toolbar.hotwire-native-toolbar", count: 1
     assert_select "[data-controller='theme'][aria-label='#{I18n.t("nav.toggle_theme")}']", count: 1
   end
 
@@ -23,10 +23,10 @@ class NativeLayoutTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select 'body[data-hotwire-native-app="true"]'
-    assert_select "header.navbar", count: 1
-    assert_select ".navbar-start.hotwire-native-hidden", count: 1
-    assert_select ".navbar-center.hotwire-native-hidden", count: 1
-    assert_select ".navbar-end.hotwire-native-toolbar", count: 1
+    assert_select "header.app-header", count: 1
+    assert_select ".app-header__brand.hotwire-native-hidden", count: 1
+    assert_select ".app-header__nav.hotwire-native-hidden", count: 1
+    assert_select ".app-header__toolbar.hotwire-native-toolbar", count: 1
     assert_select "[data-controller='theme'][aria-label='#{I18n.t("nav.toggle_theme")}']", count: 1
   end
 end

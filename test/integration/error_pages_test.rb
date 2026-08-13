@@ -5,7 +5,7 @@ class ErrorPagesTest < ActionDispatch::IntegrationTest
     with_rendered_exceptions { get "/definitely-not-a-real-page" }
 
     assert_response :not_found
-    assert_select "header.navbar", count: 1, text: /#{Regexp.escape(I18n.t("app_name"))}/
+    assert_select "header.app-header", count: 1, text: /#{Regexp.escape(I18n.t("app_name"))}/
     assert_select "h1", I18n.t("errors.not_found.heading")
     assert_security_headers
   end
@@ -47,7 +47,7 @@ class ErrorPagesTest < ActionDispatch::IntegrationTest
       with_rendered_exceptions { get "/boom" }
 
       assert_response :internal_server_error
-      assert_select "header.navbar", count: 1, text: /#{Regexp.escape(I18n.t("app_name"))}/
+      assert_select "header.app-header", count: 1, text: /#{Regexp.escape(I18n.t("app_name"))}/
       assert_select "h1", I18n.t("errors.internal_error.heading")
       assert_security_headers
     end

@@ -41,11 +41,11 @@ does not imply that this repository remains a reusable or schema-independent Fou
 
 ## Deployment posture
 
-Foundation does not opt every application into a free hosting plan. Its Render Blueprint omits `plan`, which
-currently makes new services paid Starter while preserving the instance type of an existing service. The future
-Compiler may add `plan: free` only for an explicit `Project.data_posture == disposable_demo`; durable is the safe
-default. This choice changes availability and background-job guarantees, so it is application intent rather than
-a template convenience. See `DEPLOY.md` for the runtime profile and graduation guidance.
+Case Chat replaced the inherited single-service portfolio profile after
+handoff. Its Blueprint now declares paid web and worker services, four logical
+PostgreSQL databases, web-only pre-deploy migrations, and no in-Puma job
+supervisor. This is application-specific infrastructure, not a new Foundation
+default. See `DEPLOY.md` and ADR 0006.
 
 The perimeter rate limit follows the deployment proxy's client-IP contract. On Render it uses the normalized
 first `X-Forwarded-For` field that Render controls; elsewhere it delegates to Rails' `remote_ip`. Invalid Render
