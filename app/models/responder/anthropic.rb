@@ -55,8 +55,14 @@ module Responder
         output_config: {effort: EFFORT},
         # The briefing is the stable prefix; the breakpoint goes at its end so
         # every later turn in this thread reads it instead of re-paying for it.
+        #
+        # ttl "1h", not the 5m default. Thinking between questions is the whole
+        # activity in a case interview, and a student who takes six minutes over
+        # their next question would re-pay for the entire briefing on a 5m
+        # window. The briefing is stable per contact and shared by the whole
+        # cohort, so a long window is exactly what it wants.
         system_: [
-          {type: "text", text: briefing.system_text, cache_control: {type: "ephemeral"}}
+          {type: "text", text: briefing.system_text, cache_control: {type: "ephemeral", ttl: "1h"}}
         ],
         messages: history.map { |message| serialize(message) }
       }

@@ -101,7 +101,10 @@ class ResponderTest < ActiveSupport::TestCase
 
     system_block = request[:system_].first
     assert_equal @briefing.system_text, system_block[:text]
-    assert_equal({type: "ephemeral"}, system_block[:cache_control])
+    # The ttl is the point, not decoration: the SDK defaults this breakpoint to
+    # 5 minutes, and a student thinking for six minutes between questions would
+    # re-pay for the whole briefing.
+    assert_equal({type: "ephemeral", ttl: "1h"}, system_block[:cache_control])
     assert_equal ContactBriefing::INTRODUCE_TOOL, request[:tools].first[:name]
   end
 

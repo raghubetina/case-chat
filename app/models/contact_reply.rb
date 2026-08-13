@@ -25,6 +25,7 @@ class ContactReply
   def generate!(&on_delta)
     briefing = ContactBriefing.new(contact)
     reply = responder.reply(briefing: briefing, history: history, on_delta: on_delta)
+    log_usage(reply.usage)
 
     ApplicationRecord.transaction do
       message = persist_message(reply)
@@ -36,6 +37,17 @@ class ContactReply
   end
 
   private
+
+  # Prompt caching is the cost lever this app is shaped around — the briefing is
+  # resent on every turn — but the numbers that say whether it is working were
+  # being thrown away. Cached reads are the line to watch: on a warm briefing
+  # they should dwarf fresh input.
+  def log_usage(usage)
+    Rails.logger.info(
+      "[reply] contact=#{contact.id} input=#{usage.input_tokens} output=#{usage.output_tokens} " \
+      "cache_read=#{usage.cache_read_tokens} cache_write=#{usage.cache_write_tokens}"
+    )
+  end
 
   def contact = conversation.contact
 
