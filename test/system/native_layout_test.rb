@@ -23,9 +23,8 @@ class NativeLayoutSystemTest < ApplicationSystemTestCase
     visit "/"
 
     assert_selector 'body[data-hotwire-native-app="true"]'
-    assert_selector "header.navbar"
-    assert_no_selector ".navbar-start", visible: true
-    assert_no_selector ".navbar-center", visible: true
+    assert_selector "header.app-header"
+    assert_no_selector ".app-header-start", visible: true
     assert_selector "[data-controller='theme'] button[aria-label='#{I18n.t("nav.theme.label")}']"
   end
 end

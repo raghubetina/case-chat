@@ -1,12 +1,18 @@
-<nav aria-label="<%= t("foundation_domain.navigation.label") %>">
-  <ul class="menu menu-horizontal gap-1 px-1">
-    <li>
-      <%= link_to t("nav.my_cases"), cases_path, class: "btn btn-ghost btn-sm",
-            aria: {current: ("page" if controller_name == "cases" && controller_path == "cases")} %>
-    </li>
-    <li>
-      <%= link_to t("nav.authoring"), author_cases_path, class: "btn btn-ghost btn-sm",
-            aria: {current: ("page" if controller_path.start_with?("author/"))} %>
-    </li>
-  </ul>
+<%# Pills on the rail, per the Design: the current section is filled, the rest
+    are quiet until hovered. `pill-on`/`pill-off` are Design utilities so the
+    active state follows the theme's accent rather than a hard-coded colour. %>
+<% signed_in = current_user.present? %>
+<% return unless signed_in %>
+
+<nav aria-label="<%= t("foundation_domain.navigation.label") %>" class="flex items-center gap-1">
+  <% student = controller_path == "cases" || controller_path.start_with?("threads") %>
+  <% authoring = controller_path.start_with?("author/") %>
+
+  <%= link_to t("nav.my_cases"), cases_path,
+        class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs #{student ? "pill-on" : "pill-off"}",
+        aria: {current: ("page" if student)} %>
+
+  <%= link_to t("nav.authoring"), author_cases_path,
+        class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs #{authoring ? "pill-on" : "pill-off"}",
+        aria: {current: ("page" if authoring)} %>
 </nav>

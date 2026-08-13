@@ -293,8 +293,16 @@ en:
   flash:
     dismiss: Dismiss
   home:
-    heading: It works.
-    lede: This app was generated on the Foundation baseline — hardened, observable, accessible, and ready for its real features.
+    create_account: Create an account
+    for_instructors: For instructors
+    for_instructors_body: Write the cast, decide who knows what, and watch where a cohort gets stuck.
+    for_students: For students
+    for_students_body: Interview the people inside the case and build the picture yourself.
+    get_started: Get started
+    join_note: Once you are signed in, enter the case code your instructor posted with the assignment.
+    lede: You will not be handed the case. The people inside it each know part of it. Interview them, collect what they will give you, and build the picture yourself.
+    sign_in_heading: Sign in to your cases
+    tagline: Case interviews you have to actually conduct
   mailers:
     rodauth:
       greeting: Hello %{name},
@@ -319,6 +327,7 @@ en:
     skip_to_content: Skip to main content
     theme:
       label: Choose theme
+      short: Theme
       ledger: Ledger
       bureau: Bureau
       dusk: Dusk

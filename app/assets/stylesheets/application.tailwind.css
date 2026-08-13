@@ -356,6 +356,22 @@
   letter-spacing: 0.09em;
 }
 
+/* Rail navigation pills, from the Design. The active section is filled with
+   the theme's pill colours; the rest sit quiet against the rail until hovered.
+   Both sides read from theme tokens, so contrast holds in all four themes. */
+@utility pill-on {
+  background: var(--t-pillbg);
+  color: var(--t-pillink);
+}
+
+@utility pill-off {
+  color: var(--t-railmute);
+
+  &:hover {
+    color: var(--color-neutral-content);
+  }
+}
+
 @utility scroll-y {
   overflow-y: auto;
   scrollbar-width: thin;

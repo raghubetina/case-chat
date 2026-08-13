@@ -1,4 +1,5 @@
 <% content_for :title, @contact.full_name %>
+<% content_for :full_bleed, true %>
 <%= turbo_stream_from @conversation %>
 
 <div class="flex h-[calc(100dvh-57px)] flex-col">
@@ -58,8 +59,10 @@
            class="scroll-y flex flex-1 flex-col gap-6 px-4 py-6"
            data-controller="autoscroll" data-autoscroll-target="container">
         <div id="transcript" class="flex flex-col gap-6">
+          <%# Removed by the send response; otherwise "nothing yet" sits above
+              the conversation that just started. %>
           <% if @messages.empty? %>
-            <p class="text-sm text-mute"><%= t("threads.empty", name: @contact.full_name) %></p>
+            <p id="thread_empty" class="text-sm text-mute"><%= t("threads.empty", name: @contact.full_name) %></p>
           <% end %>
           <%= render partial: "threads/message",
                 collection: @messages, as: :message, locals: {streaming: false} %>
