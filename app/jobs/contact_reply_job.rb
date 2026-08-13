@@ -9,8 +9,9 @@ class ContactReplyJob < ApplicationJob
 
   # A model can emit deltas faster than a browser needs them. Coalescing into
   # small time slices keeps the text visibly live while cutting broadcasts by
-  # an order of magnitude.
-  FLUSH_INTERVAL = 0.08
+  # an order of magnitude. Now that each flush goes straight out instead of
+  # through the queue, this interval is what the reader actually sees.
+  FLUSH_INTERVAL = 0.05
 
   def perform(conversation_id)
     conversation = Conversation.includes(:enrollment, contact: :case_study).find_by(id: conversation_id)
@@ -46,8 +47,15 @@ class ContactReplyJob < ApplicationJob
 
   # Appending a text node rather than replacing the bubble keeps each broadcast
   # proportional to the new text, not to the reply so far.
+  #
+  # Broadcast now, not `_later`. We are already inside a background job, so the
+  # `_later` variant only adds a second queue hop per delta — and Solid Queue's
+  # worker polls at 0.1s, so 80ms slices piled up and arrived in bursts, which
+  # is what made a live reply look like it landed in paragraphs. Worse, with
+  # five worker threads those per-delta jobs could be picked up concurrently,
+  # so nothing guaranteed the tokens arrived in the order they were generated.
   def broadcast_delta(conversation, text)
-    Turbo::StreamsChannel.broadcast_append_later_to(
+    Turbo::StreamsChannel.broadcast_append_to(
       conversation,
       target: ActionView::RecordIdentifier.dom_id(conversation, :pending_body),
       partial: "threads/delta",

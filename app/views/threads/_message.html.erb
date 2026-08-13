@@ -4,7 +4,7 @@
     <%= initials_for(speaker) %>
   </div>
 
-  <div class="flex min-w-0 flex-col gap-2">
+  <div class="flex min-w-0 grow flex-col gap-2">
     <div class="flex items-baseline gap-2">
       <span class="text-sm font-semibold"><%= speaker %></span>
       <time class="text-sm text-faint" datetime="<%= message.sent_at&.iso8601 %>">

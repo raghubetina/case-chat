@@ -1,12 +1,27 @@
+<%# The bubble a reply streams into, replaced by threads/_message the moment the
+    reply is complete.
+
+    Its column and its <p> must carry the same classes as that partial, or the
+    swap moves the text: gap-1 vs gap-2 shifts it 4px, and a <p> without
+    whitespace-pre-wrap collapses every paragraph break while streaming and
+    then springs open when the real message lands. %>
 <div id="<%= dom_id(conversation, :pending) %>" class="flex gap-3">
   <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
     <%= initials_for(conversation.contact.full_name) %>
   </div>
-  <div class="flex min-w-0 flex-col gap-1">
+
+  <div class="flex min-w-0 grow flex-col gap-2">
     <div class="flex items-baseline gap-2">
       <span class="text-sm font-semibold"><%= conversation.contact.full_name %></span>
       <span class="kick text-xs text-accent"><%= t("threads.replying") %></span>
     </div>
-    <p class="caret max-w-prose text-base" id="<%= dom_id(conversation, :pending_body) %>"></p>
+
+    <%# Deltas land in the hidden buffer; the controller reveals them at a
+        steady rate. The API sends text in a few large frames, so appending
+        straight to the visible node makes a reply arrive in slabs. %>
+    <p class="caret max-w-prose whitespace-pre-wrap break-words text-base" data-controller="typewriter">
+      <span data-typewriter-target="shown"></span>
+      <span data-typewriter-target="buffer" hidden id="<%= dom_id(conversation, :pending_body) %>"></span>
+    </p>
   </div>
 </div>
