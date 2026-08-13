@@ -45,8 +45,7 @@ if the fix is reusable, carry it back to `firstdraft/foundation-rails-core` for 
   `WaitForTurboBeforeClick` together; the trio closes Turbo's form-redirect busy-state gap.
 - **Native presentation is a three-part application seam.** Keep the layout's `data-hotwire-native-app` marker and
   `hotwire-native-hidden`/`hotwire-native-toolbar` hooks, the CSS overrides, and the named native system-test
-  driver together. DaisyUI-specific overrides remain necessary only until ADR 0006 removes DaisyUI. This app
-  owns `shared/_main_navigation`, the ordinary web fallback, and the retained toolbar.
+  driver together. This app owns `shared/_main_navigation`, the ordinary web fallback, and the retained toolbar.
 - **Flash messages render into the existing live regions** (`shared/_flash`): inject content into
   `#flash_notices` / `#flash_alerts`, never insert a new `role="status"` region at announce time
   (late regions aren't announced by screen readers).
@@ -76,11 +75,9 @@ The inherited Core did not supply auth, email delivery, uploads, jobs dashboards
 Case Chat now owns the capabilities its accepted decisions require: use `rodauth-rails` as the single account
 stack per ADR 0002 and Active Storage for case documents. Do not introduce a second authentication stack or
 speculative capabilities outside the prototype scope. Authentication and authorization are not implemented yet;
-every generated domain controller is currently unguarded CRUD.
+the obsolete generated CRUD surface has been removed until authorized product flows replace it.
 
 ## Launch checklist (before inviting real users)
-- [ ] Remove or authenticate and authorize every generated domain route, especially the current full CRUD routes
-  for users and transcripts; do not deploy the generated scaffold as-is.
 - [ ] Verify Rodauth and the author, learner, cohort, transcript, and document authorization boundaries from ADR
   0002 and the target domain model.
 - [ ] Replace the PLACEHOLDER copy on `/privacy` and `/terms`.

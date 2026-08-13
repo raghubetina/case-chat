@@ -24,7 +24,4 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
-
-  # The Compiler emits App-Schema-derived routes after Core's reserved routes.
-  draw :foundation_domain
 end

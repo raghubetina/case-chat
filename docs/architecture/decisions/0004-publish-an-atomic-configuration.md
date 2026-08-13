@@ -1,7 +1,7 @@
 # 0004 — Publish an atomic configuration snapshot
 
 **Decision status:** accepted<br>
-**Implementation:** planned<br>
+**Implementation:** lifecycle semantics verified; concurrent authoring integration planned<br>
 **Date:** 2026-08-13<br>
 **Last verified:** 2026-08-13
 
@@ -37,18 +37,27 @@ history, diff UI, rollback mechanism, or per-message prompt migration.
 - An attachment referenced by a published configuration is immutable. Replacing
   a file creates a new `CaseDocument` record that can enter the next publication;
   it cannot silently change what an active publication or conversation exposes.
-- Publishing records `CaseDocument#attachment_locked_at` for every referenced
-  attachment in the same transaction. Referenced stakeholders, bundles, and
-  documents cannot be hard-deleted; authors omit them from later publications.
+- Publishing snapshots and locks only initially available documents and
+  documents in included configured bundles; it does not compute referral-graph
+  reachability. It records
+  `CaseDocument#attachment_locked_at` and a durable publication lock in the same
+  transaction. Unused draft documents remain editable. Referenced stakeholders,
+  bundles, and documents cannot be hard-deleted; explicit publication-inclusion
+  flags let authors omit stakeholders and bundles from later publications.
+- The publish command holds the parent case lock. Concurrent coherence depends
+  on future authoring mutation commands acquiring that same lock; that
+  integration remains planned.
 
 ## Confirmation
 
-Tests must prove failed publication leaves the prior snapshot untouched, draft
-edits do not change an existing conversation, and reset uses the newly published
-configuration. Attachment tests must prove replacing a draft document does not
-change the file referenced by an active publication or conversation, and that a
-locked attachment cannot be replaced, purged, or destroyed. Bundle tests must
-prove editing membership does not alter an existing release.
+Lifecycle semantics verified 2026-08-13 by `CasePublishTest`, `AttemptLifecycleTest`,
+`ConversationSnapshotTest`, `CaseDocumentLockTest`, and `GraphEffectsTest`.
+They cover failed publication rollback, coherent snapshots, reset to the latest
+publication, later-publication exclusion, conversation isolation and assignment
+exclusion, configured-document locks, immutable attachments, pinned bundle
+membership, and idempotent validated effects. `DomainBoundariesTest` covers
+cross-case graph rejection, immutable runtime identity, and deletion
+restrictions. Concurrent authoring integration is not yet verified.
 
 ## Revisit when
 

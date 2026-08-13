@@ -3,6 +3,7 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
 require "n_plus_one_control/minitest"
+require_relative "support/domain_test_data"
 require_relative "support/webmock_network_policy"
 
 # No test may touch the network. The Dev Container's browser is the one remote
