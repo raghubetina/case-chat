@@ -1,4 +1,4 @@
-<% existing_names = Contact.where(case_study_id: case_study.id).pluck(:full_name).to_set %>
+<% existing_names = Contact.where(case_study_id: case_study.id).pluck(:full_name).map(&:downcase).to_set %>
 <div id="<%= dom_id(case_draft, :proposal) %>" class="flex flex-col gap-6">
   <% if case_draft.drafting? %>
     <div class="flex items-center gap-4 rounded-lg border border-line bg-surface p-6">
@@ -65,7 +65,7 @@
                   <% if contact.in_starting_directory %>
                     <span class="kick rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.in_starting") %></span>
                   <% end %>
-                  <% if existing_names.include?(contact.full_name) %>
+                  <% if existing_names.include?(contact.full_name.downcase) %>
                     <span class="kick rounded-md bg-wash px-2 py-1 text-xs text-error"><%= t("author.imports.will_overwrite") %></span>
                   <% end %>
                 </span>
@@ -112,7 +112,7 @@
         </div>
       <% end %>
 
-      <% if existing_names.intersect?(draft.contacts.map(&:full_name).to_set) %>
+      <% if existing_names.intersect?(draft.contacts.map { |contact| contact.full_name.downcase }.to_set) %>
         <p class="rounded-lg border border-error bg-wash p-4 text-sm text-mute">
           <%= t("author.imports.overwrite_warning") %>
         </p>

@@ -45,6 +45,38 @@ class CaseDrafterTest < ActiveSupport::TestCase
       %(a provider that renders the boolean as "false" must not put everyone in the starting directory)
   end
 
+  test "collapses names that differ only in case, because the database does" do
+    rows = [
+      {"full_name" => "Dana Whitfield", "role_title" => "CFO", "system_prompt" => "first"},
+      {"full_name" => "dana whitfield", "role_title" => "Host", "system_prompt" => "second"}
+    ]
+
+    draft = CaseDrafter::Parser.call(payload("contacts" => rows))
+
+    assert_equal 1, draft.contacts.size,
+      "keeping both produces a draft that can be reviewed but never accepted"
+  end
+
+  test "collapses referrals and share rules that would import as one row" do
+    draft = CaseDrafter::Parser.call(
+      payload(
+        "referrals" => [
+          {"from_name" => "June", "to_name" => "Marco", "condition" => "when asked about staffing"},
+          {"from_name" => "June", "to_name" => "Marco", "condition" => "when asked about costs"}
+        ],
+        "share_rules" => [
+          {"contact_name" => "June", "file_name" => "brief.pdf", "condition" => "when asked"},
+          {"contact_name" => "June", "file_name" => "brief.pdf", "condition" => "when pressed"}
+        ]
+      ),
+      file_names: Set["brief.pdf"]
+    )
+
+    assert_equal 1, draft.referrals.size, "the pair is the fact; two rows import as one"
+    assert_equal "when asked about staffing", draft.referrals.first.condition
+    assert_equal 1, draft.share_rules.size
+  end
+
   test "collapses duplicate names at review time rather than silently at import" do
     rows = [
       {"full_name" => "June", "role_title" => "GM", "system_prompt" => "first"},

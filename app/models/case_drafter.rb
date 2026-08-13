@@ -61,7 +61,7 @@ module CaseDrafter
     }
   end
 
-  def self.deserialize(payload) = Parser.call(payload)
+  def self.deserialize(payload, file_names: nil) = Parser.call(payload, file_names: file_names)
 
   ADAPTERS = {
     "anthropic" => -> { Anthropic.new },

@@ -31,7 +31,7 @@ module Author
         end
 
         case_draft = CaseDraft.start!(@case_study, hint: params[:hint])
-        CaseDraftJob.perform_later(case_draft.id)
+        CaseDraftJob.perform_later(case_draft.id, case_draft.request_token)
         redirect_to new_author_case_import_path(@case_study), notice: t("author.imports.started")
       end
 

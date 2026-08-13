@@ -49,8 +49,14 @@ class CaseImport
   # Keyed by name because that is what the draft's referrals and share rules
   # refer to; re-importing updates the person rather than duplicating them.
   def build_contacts
+    # Matched case-insensitively because that is how the database keys them: an
+    # exact-match lookup would miss "dana whitfield", build a second person, and
+    # fail the whole accept on a uniqueness rule the author cannot see.
+    existing = Contact.where(case_study_id: @case_study.id).index_by { |contact| contact.full_name.downcase }
+
     @draft.contacts.each_with_object({}) do |drafted, map|
-      contact = Contact.find_or_initialize_by(case_study: @case_study, full_name: drafted.full_name)
+      contact = existing[drafted.full_name.downcase] ||
+        Contact.new(case_study: @case_study, full_name: drafted.full_name)
       contact.assign_attributes(
         role_title: drafted.role_title,
         description: drafted.description,

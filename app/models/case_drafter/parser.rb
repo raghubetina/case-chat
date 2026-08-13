@@ -27,12 +27,18 @@ module CaseDrafter
         background: clamp(payload["background"], TEXT_LIMIT).presence,
         assignment: clamp(payload["assignment"], TEXT_LIMIT).presence,
         contacts: contacts,
-        # A referral naming someone who is not in the cast cannot be built.
-        referrals: rows(payload["referrals"]).filter_map { |row| referral(row, names) },
+        # A referral naming someone who is not in the cast cannot be built, and
+        # the pair is the fact: two referrals between the same two people are
+        # one row once imported, so only the first is reviewed.
+        referrals: rows(payload["referrals"])
+          .filter_map { |row| referral(row, names) }
+          .uniq { |referral| [referral.from_name.downcase, referral.to_name.downcase] },
         # Nor can a share rule naming a file this case does not have. Dropping
         # it here rather than at import means the author reviews what will
         # actually exist, not a rule that will be silently discarded.
-        share_rules: rows(payload["share_rules"]).filter_map { |row| share_rule(row, names, file_names) },
+        share_rules: rows(payload["share_rules"])
+          .filter_map { |row| share_rule(row, names, file_names) }
+          .uniq { |rule| [rule.contact_name.downcase, rule.file_name] },
         notes: rows(payload["notes"], of: String).map { |note| clamp(note, TEXT_LIMIT) }.compact_blank
       )
     end
@@ -40,10 +46,14 @@ module CaseDrafter
     # Two rows with the same name would show as two people on the review screen
     # and collapse into one on import, with the last row quietly winning. The
     # first one wins here instead, and visibly.
+    #
+    # Case-insensitively, because that is how the database keys a cast: leaving
+    # "Dana Whitfield" and "dana whitfield" both in the proposal produces a
+    # draft that can be reviewed but never accepted.
     def self.drafted_contacts(value)
       rows(value)
         .filter_map { |row| contact(row) }
-        .uniq(&:full_name)
+        .uniq { |contact| contact.full_name.downcase }
     end
 
     def self.rows(value, of: Hash)

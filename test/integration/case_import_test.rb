@@ -91,6 +91,34 @@ class CaseImportTest < ActionDispatch::IntegrationTest
       "an imported cast whose referrals were applied should leave nobody stranded"
   end
 
+  # A provider can name the same person twice with different capitalization.
+  # The database keys a cast case-insensitively, so a proposal that kept both
+  # could be reviewed but never accepted.
+  test "a cast named inconsistently is still acceptable" do
+    draft_now
+    Contact.create!(
+      case_study: @case_study, full_name: @drafted.contacts.first.full_name.downcase,
+      role_title: "Written by hand", system_prompt: "You were here first."
+    )
+
+    assert_nothing_raised { post author_case_import_path(@case_study, accept: 1) }
+
+    assert_redirected_to edit_author_case_path(@case_study)
+    assert_equal 1, Contact.where(case_study_id: @case_study.id)
+      .where("lower(full_name) = ?", @drafted.contacts.first.full_name.downcase).count
+  end
+
+  test "a share rule whose file was deleted after drafting is not reviewed as real" do
+    draft_now
+    before = CaseDraft.find_by!(case_study_id: @case_study.id).draft.share_rules.size
+    Document.where(case_study_id: @case_study.id).find_each(&:destroy!)
+
+    after = CaseDraft.find_by!(case_study_id: @case_study.id).draft.share_rules
+
+    assert_operator before, :>, 0, "the fake draft should propose at least one share rule"
+    assert_empty after, "a rule the import would silently discard must not be shown as real"
+  end
+
   test "the review screen shows what accepting will actually write" do
     draft_now
     get new_author_case_import_path(@case_study)
@@ -118,22 +146,25 @@ class CaseImportTest < ActionDispatch::IntegrationTest
       "reviewing must not have changed anything yet"
   end
 
-  test "a rolled-back accept leaves the proposal acceptable rather than losing it" do
+  test "a failed accept leaves both the cast and the proposal untouched" do
     draft_now
-    # A same-name-different-case contact: the import looks for an exact name,
-    # does not find it, and builds a second person the case-insensitive
-    # uniqueness rule then rejects — mid-transaction.
-    Contact.create!(
-      case_study: @case_study, full_name: @drafted.contacts.first.full_name.downcase,
-      role_title: "Already here", system_prompt: "You were here first."
-    )
+    record = CaseDraft.find_by!(case_study_id: @case_study.id)
 
+    # An accept that raises must leave nothing half-applied: no contacts, and a
+    # proposal the author can still accept once the cause is fixed. (What stops
+    # two *simultaneous* accepts from each building the cast is the unique
+    # index, tested below, not this.)
     assert_raises(ActiveRecord::RecordInvalid) do
-      post author_case_import_path(@case_study, accept: 1)
+      ApplicationRecord.transaction(requires_new: true) do
+        CaseImport.new(@case_study, record.draft, case_draft: record).apply!
+        raise ActiveRecord::RecordInvalid, Contact.new
+      end
     end
 
-    assert CaseDraft.exists?(case_study_id: @case_study.id),
+    assert CaseDraft.exists?(id: record.id),
       "a proposal consumed by a rolled-back accept would be lost for nothing"
+    assert_equal 0, Contact.where(case_study_id: @case_study.id)
+      .where(full_name: @drafted.contacts.map(&:full_name)).count
   end
 
   # What actually stops two simultaneous accepts from each building the cast:
@@ -258,7 +289,7 @@ class CaseImportTest < ActionDispatch::IntegrationTest
     assert_equal "drafting", record.status
 
     # Re-raised so the failure is reported and the job can be retried.
-    assert_raises(IOError) { CaseDraftJob.perform_now(record.id) }
+    assert_raises(IOError) { CaseDraftJob.perform_now(record.id, record.request_token) }
 
     assert_equal "failed", record.reload.status,
       "a row left in drafting is an author watching a spinner that will never resolve"
@@ -269,8 +300,39 @@ class CaseImportTest < ActionDispatch::IntegrationTest
     record = CaseDraft.find_by!(case_study_id: @case_study.id)
     CaseDrafter.current = BrokenDrafter.new
 
-    assert_nothing_raised { CaseDraftJob.perform_now(record.id) }
+    assert_nothing_raised { CaseDraftJob.perform_now(record.id, record.request_token) }
     assert_equal "ready", record.reload.status
+  end
+
+  # Drafting takes about two minutes, so an author can ask again while the
+  # first request is still running.
+  test "a superseded draft does not overwrite the answer to the newer request" do
+    post author_case_import_path(@case_study), params: {hint: "focus on pricing"}
+    stale = CaseDraft.find_by!(case_study_id: @case_study.id)
+    stale_token = stale.request_token
+
+    # The author asks again; the first job is still in flight.
+    post author_case_import_path(@case_study), params: {hint: "focus on operations"}
+    current = CaseDraft.find_by!(case_study_id: @case_study.id)
+
+    assert_not_equal stale_token, current.request_token
+    assert_nothing_raised { CaseDraftJob.perform_now(stale.id, stale_token) }
+
+    assert_equal "drafting", current.reload.status,
+      "the older job must not land its answer on the newer request"
+    assert_equal "focus on operations", current.hint
+  end
+
+  test "a superseded draft that fails does not mark the newer request failed" do
+    CaseDrafter.current = RefusingDrafter.new
+    post author_case_import_path(@case_study)
+    stale = CaseDraft.find_by!(case_study_id: @case_study.id)
+    stale_token = stale.request_token
+    post author_case_import_path(@case_study)
+
+    CaseDraftJob.perform_now(stale.id, stale_token)
+
+    assert_equal "drafting", CaseDraft.find_by!(case_study_id: @case_study.id).status
   end
 
   test "someone who does not own the case cannot draft into it" do
