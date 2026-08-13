@@ -18,7 +18,7 @@ module Threads
       authorize! message, to: :create?
 
       if message.save
-        ContactReplyJob.perform_later(conversation.id)
+        ContactReplyJob.perform_later(conversation.id, message.id)
         respond_to do |format|
           format.turbo_stream { render_sent(conversation, message) }
           format.html { redirect_to thread_path(conversation) }
@@ -47,7 +47,7 @@ module Threads
         turbo_stream.append("transcript", partial: "threads/message",
           locals: {message: rendered, streaming: false}),
         turbo_stream.append("transcript", partial: "threads/pending",
-          locals: {conversation: conversation}),
+          locals: {question: rendered, contact: conversation.contact}),
         turbo_stream.replace("composer", partial: "threads/composer",
           locals: {conversation: conversation})
       ]

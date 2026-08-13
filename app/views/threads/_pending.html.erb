@@ -1,18 +1,24 @@
 <%# The bubble a reply streams into, replaced by threads/_message the moment the
     reply is complete.
 
-    Its column and its <p> must carry the same classes as that partial, or the
-    swap moves the text: gap-1 vs gap-2 shifts it 4px, and a <p> without
+    Keyed on the question it answers, not on the conversation. A student who
+    asks again before the contact has replied would otherwise put a second
+    element with the same id on the page: getElementById returns the first, so
+    both replies streamed into one paragraph and the other bubble was stranded
+    there for the rest of the visit.
+
+    Its column and its <p> must carry the same classes as threads/_message, or
+    the swap moves the text: gap-1 vs gap-2 shifts it 4px, and a <p> without
     whitespace-pre-wrap collapses every paragraph break while streaming and
     then springs open when the real message lands. %>
-<div id="<%= dom_id(conversation, :pending) %>" class="flex gap-3">
+<div id="<%= dom_id(question, :pending) %>" class="flex gap-3">
   <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
-    <%= initials_for(conversation.contact.full_name) %>
+    <%= initials_for(contact.full_name) %>
   </div>
 
   <div class="flex min-w-0 grow flex-col gap-2">
     <div class="flex items-baseline gap-2">
-      <span class="text-sm font-semibold"><%= conversation.contact.full_name %></span>
+      <span class="text-sm font-semibold"><%= contact.full_name %></span>
       <span class="kick text-xs text-accent"><%= t("threads.replying") %></span>
     </div>
 
@@ -21,6 +27,6 @@
         text frames ~13ms apart and Anthropic sends 12 of ~104 characters
         ~704ms apart. See Responder::OpenAi. %>
     <p class="max-w-prose whitespace-pre-wrap break-words text-base"
-       id="<%= dom_id(conversation, :pending_body) %>"></p>
+       id="<%= dom_id(question, :pending_body) %>"></p>
   </div>
 </div>

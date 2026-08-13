@@ -1,5 +1,8 @@
-<div id="<%= dom_id(conversation, :pending) %>" class="flex gap-3">
-  <div class="flex min-w-0 flex-col gap-1">
+<%# Replaces the pending bubble for the question that could not be answered, so
+    the failure sits where the reader was waiting rather than at the end of the
+    transcript. %>
+<div id="<%= dom_id(question, :pending) %>" class="flex gap-3">
+  <div class="flex min-w-0 grow flex-col gap-2">
     <p class="max-w-prose text-base text-mute"><%= t("threads.reply_failed") %></p>
   </div>
 </div>

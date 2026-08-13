@@ -36,7 +36,8 @@ class ThreadStreamingTest < ActionDispatch::IntegrationTest
   private
 
   def streaming
-    ApplicationController.render(partial: "threads/pending", locals: {conversation: @conversation})
+    ApplicationController.render(partial: "threads/pending",
+      locals: {question: @message, contact: @conversation.contact})
   end
 
   # from_contact, so the partial never reaches for current_user.
