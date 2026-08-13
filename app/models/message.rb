@@ -26,7 +26,10 @@ class Message < ApplicationRecord
   belongs_to :introduced_contact, class_name: "Contact", optional: true
   has_many :document_shares, class_name: "DocumentShare", dependent: :destroy
 
-  validates :body, presence: true
+  # A student must say something; a contact may answer by handing over a
+  # document or making an introduction, and the cards on the message are then
+  # the whole reply.
+  validates :body, presence: true, unless: :from_contact?
   validates :sent_at, presence: true
   validates :from_contact, inclusion: {in: [true, false]}
 end

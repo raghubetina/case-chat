@@ -244,6 +244,7 @@ en:
     start_thread: Start thread
     viewing_past_run: "You are reading run %{number}, which is closed."
   threads:
+    no_answer: (no answer)
     conversation_with: "Conversation with %{name}"
     back_to_case: Case overview
     case_section: Case

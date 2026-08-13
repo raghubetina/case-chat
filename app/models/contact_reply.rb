@@ -47,10 +47,21 @@ class ContactReply
 
   def persist_message(reply)
     conversation.messages.create!(
-      body: reply.text.presence || "(no answer)",
+      body: body_for(reply),
       sent_at: Time.current,
       from_contact: true
     )
+  end
+
+  # A contact's turn can be an act rather than words. Models routinely hand over
+  # a document with no accompanying text, and printing "(no answer)" above the
+  # file card tells the student the reply failed when they just got what they
+  # asked for. Only a turn that carried nothing at all gets that.
+  def body_for(reply)
+    return reply.text if reply.text.present?
+    return "" if reply.introduced_contact_ids.any? || reply.shared_document_ids.any?
+
+    I18n.t("threads.no_answer")
   end
 
   # A contact may only introduce someone the author actually gave them, and a

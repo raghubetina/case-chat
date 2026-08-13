@@ -137,4 +137,47 @@ class ContactReplyTest < ActiveSupport::TestCase
       ContactReply.new(@conversation).generate!
     end
   end
+
+  # Models routinely hand over a document with no accompanying text.
+  test "a contact who answers by handing over a document is not made to say (no answer)" do
+    document = build_document(case_study: @case_study)
+    ShareRule.create!(contact: @dana, document: document, condition: "When the student asks for it.")
+    ask "Send me the file."
+
+    message = ContactReply.new(@conversation, responder: wordless(shared_document_ids: [document.id])).generate!
+
+    assert_predicate message.body, :blank?,
+      '"(no answer)" above a file card tells a student the reply failed when it did not'
+    assert_equal [document.id], DocumentShare.where(message_id: message.id).pluck(:document_id)
+  end
+
+  test "a wordless introduction is the same" do
+    Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "When asked.")
+    ask "Who else?"
+
+    message = ContactReply.new(@conversation, responder: wordless(introduced_contact_ids: [@priya.id])).generate!
+
+    assert_predicate message.body, :blank?
+    assert_equal @priya, message.introduced_contact
+  end
+
+  test "a turn that carried nothing at all still says so" do
+    ask "Anything?"
+
+    message = ContactReply.new(@conversation, responder: wordless).generate!
+
+    assert_equal I18n.t("threads.no_answer"), message.body
+  end
+
+  private
+
+  def wordless(introduced_contact_ids: [], shared_document_ids: [])
+    Class.new {
+      def initialize(reply) = @reply = reply
+
+      def reply(briefing:, history:, on_delta: nil) = @reply
+    }.new(Responder::Reply.new(
+      text: "", introduced_contact_ids: introduced_contact_ids, shared_document_ids: shared_document_ids
+    ))
+  end
 end
