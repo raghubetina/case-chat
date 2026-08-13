@@ -58,7 +58,7 @@ class BaselinePagesTest < ApplicationSystemTestCase
 
     assert_title "#{I18n.t("pages.privacy.heading")} · #{I18n.t("app_name")}"
     assert_selector "a[href='#main-content']", text: I18n.t("nav.skip_to_content"), visible: :all
-    assert_selector ".navbar-start", visible: true
+    assert_selector ".app-header-start", visible: true
     assert_link I18n.t("app_name"), href: root_path, visible: true
     assert_selector "main#main-content[tabindex='-1']"
   end

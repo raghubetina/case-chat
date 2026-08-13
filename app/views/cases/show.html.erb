@@ -71,7 +71,7 @@
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <% @contacts.each do |contact| %>
         <% conversation = @threads_by_contact[contact.id] %>
-        <article class="@container flex flex-col gap-4 rounded-lg border border-line bg-surface p-4">
+        <article id="<%= dom_id(contact) %>" class="@container flex flex-col gap-4 rounded-lg border border-line bg-surface p-4">
           <div class="flex items-start gap-3">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[15px] font-semibold tracking-normal text-accent">
               <%= initials_for(contact.full_name) %>

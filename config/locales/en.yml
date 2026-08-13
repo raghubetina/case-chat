@@ -151,6 +151,39 @@ en:
       remove_confirm: Remove this document? Any share rule pointing at it goes too.
       removed: Document removed.
       title: Documents
+    imports:
+      accept: Create the cast
+      accept_note: You can edit every prompt afterwards, and nothing is visible to students until you publish.
+      accepted:
+        one: Created 1 contact from the draft. Read every system prompt before publishing.
+        other: "Created %{count} contacts from the draft. Read every system prompt before publishing."
+      accepted_with_orphans: "Created %{count} contacts, but nobody can reach %{names}. Add a referral before publishing."
+      draft: Draft a case from these documents
+      failed: The draft could not be produced.
+      failed_note: Nothing was created. Check that the files are readable and try again.
+      hint: Anything the draft should know
+      hint_note: Optional. Say which parts of the material students should have to earn, or who should be hard to reach.
+      hint_placeholder: The expediter should be reachable only through the chef, and only after he admits he does not know what happens at eight o'clock.
+      no_documents: Upload at least one file before drafting a case from it.
+      nothing_to_accept: There is no draft to accept. Draft one first.
+      no_referrals: The draft proposes no referrals, so anyone outside the starting directory would be unreachable.
+      not_read: Not a readable file — listed by name only
+      notes: Check these
+      proposed: Proposed draft
+      proposed_note: Nothing is created until you accept it.
+      proposed_referrals: Proposed referrals
+      overwrite_warning: Some of these people already exist in this case. Accepting replaces their role, description, and system prompt with the drafted version. Their conversations stay attached to the rewritten person.
+      proposed_shares: Proposed documents to share
+      read_prompt: "Read %{name}'s system prompt — this is what they know and withhold"
+      redraft: Draft again
+      share_summary: "%{contact} — %{condition}"
+      started: Reading your documents. The draft will appear here when it is ready.
+      title: Draft from documents
+      what_was_read: What will be read
+      working: Reading your documents
+      working_note: This takes a couple of minutes on a full case. You can leave this page and come back.
+      will_overwrite: Replaces an existing contact
+      will_read: Will be read
     referrals:
       add: Add referral
       added: Referral added.
@@ -211,6 +244,8 @@ en:
     start_thread: Start thread
     viewing_past_run: "You are reading run %{number}, which is closed."
   threads:
+    no_answer: (no answer)
+    conversation_with: "Conversation with %{name}"
     back_to_case: Case overview
     case_section: Case
     compose_label: Message %{name}
@@ -258,8 +293,16 @@ en:
   flash:
     dismiss: Dismiss
   home:
-    heading: It works.
-    lede: This app was generated on the Foundation baseline — hardened, observable, accessible, and ready for its real features.
+    create_account: Create an account
+    for_instructors: For instructors
+    for_instructors_body: Write the cast, decide who knows what, and watch where a cohort gets stuck.
+    for_students: For students
+    for_students_body: Interview the people inside the case and build the picture yourself.
+    get_started: Get started
+    join_note: Once you are signed in, enter the case code your instructor posted with the assignment.
+    lede: You will not be handed the case. The people inside it each know part of it. Interview them, collect what they will give you, and build the picture yourself.
+    sign_in_heading: Sign in to your cases
+    tagline: Case interviews you have to actually conduct
   mailers:
     rodauth:
       greeting: Hello %{name},
@@ -284,6 +327,7 @@ en:
     skip_to_content: Skip to main content
     theme:
       label: Choose theme
+      short: Theme
       ledger: Ledger
       bureau: Bureau
       dusk: Dusk

@@ -1,4 +1,5 @@
 <% content_for :title, @contact.full_name %>
+<% content_for :full_bleed, true %>
 <%= turbo_stream_from @conversation %>
 
 <div class="flex h-[calc(100dvh-57px)] flex-col">
@@ -36,13 +37,14 @@
       </div>
     </nav>
 
-    <main class="flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface">
+    <section aria-label="<%= t("threads.conversation_with", name: @contact.full_name) %>"
+      class="flex min-h-0 min-w-0 flex-col overflow-hidden bg-surface">
       <div class="flex h-[57px] shrink-0 items-center gap-3 border-b border-line px-4">
         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
           <%= initials_for(@contact.full_name) %>
         </div>
         <div class="flex min-w-0 flex-col">
-          <span class="truncate font-head text-lg font-semibold leading-tight"><%= @contact.full_name %></span>
+          <h1 class="truncate font-head text-lg font-semibold leading-tight"><%= @contact.full_name %></h1>
           <span class="truncate text-sm text-mute"><%= @contact.role_title %></span>
         </div>
         <% unless @enrollment.current? %>
@@ -57,8 +59,10 @@
            class="scroll-y flex flex-1 flex-col gap-6 px-4 py-6"
            data-controller="autoscroll" data-autoscroll-target="container">
         <div id="transcript" class="flex flex-col gap-6">
+          <%# Removed by the send response; otherwise "nothing yet" sits above
+              the conversation that just started. %>
           <% if @messages.empty? %>
-            <p class="text-sm text-mute"><%= t("threads.empty", name: @contact.full_name) %></p>
+            <p id="thread_empty" class="text-sm text-mute"><%= t("threads.empty", name: @contact.full_name) %></p>
           <% end %>
           <%= render partial: "threads/message",
                 collection: @messages, as: :message, locals: {streaming: false} %>
@@ -66,6 +70,6 @@
       </div>
 
       <%= render "threads/composer", conversation: @conversation %>
-    </main>
+    </section>
   </div>
 </div>

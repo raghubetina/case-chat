@@ -1,6 +1,12 @@
 <div id="composer" class="composer border-t border-line px-4 py-3">
   <% if conversation.enrollment.current? %>
-    <%= form_with url: thread_messages_path(conversation), method: :post, id: "composer_form",
+<%# scope: :message is load-bearing. Without it form_with emits name="body",
+        while the controller reads params[:message][:body] — so every send 400s
+        and Turbo discards the response, which looks exactly like nothing
+        happening. The system test below types and clicks Send for real; an
+        integration test that hand-builds the params cannot catch this. %>
+    <%= form_with url: thread_messages_path(conversation), method: :post, scope: :message,
+          id: "composer_form",
           data: {controller: "composer", action: "turbo:submit-end->composer#clear"} do |form| %>
       <div class="flex items-end gap-2 rounded-lg border border-line bg-surface p-2" style-focus-within="border-color:var(--color-accent)">
         <%= form.text_area :body,

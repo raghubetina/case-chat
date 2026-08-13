@@ -1,10 +1,41 @@
-<% content_for :title, t("home.heading") %>
+<% content_for :title, t("home.tagline") %>
+<% content_for :full_bleed, true %>
 
-<section class="hero bg-base-200 rounded-box mt-8">
-  <div class="hero-content text-center py-16">
-    <div class="max-w-md">
-      <h1 class="text-4xl font-bold"><%= t("home.heading") %></h1>
-      <p class="py-6 text-base-content/70"><%= t("home.lede") %></p>
+<%# The Design's sign-in screen: the case on the left in the rail's colours,
+    the way in on the right. Signed-in visitors never see this — the controller
+    sends them to their cases. %>
+<div class="grid min-h-[calc(100dvh-41px)] md:grid-cols-2">
+  <section class="flex flex-col justify-between gap-8 bg-rail p-6 text-railink md:p-8 lg:p-12">
+    <span class="kick text-xs text-railmute"><%= t("app_name") %></span>
+
+    <div class="flex flex-col gap-4">
+      <h1 class="font-head text-xl font-semibold"><%= t("home.tagline") %></h1>
+      <p class="max-w-prose text-base text-railmute"><%= t("home.lede") %></p>
     </div>
-  </div>
-</section>
+
+    <dl class="grid grid-cols-2 gap-4 text-sm">
+      <div class="flex flex-col gap-1">
+        <dt class="kick text-xs text-railmute"><%= t("home.for_students") %></dt>
+        <dd><%= t("home.for_students_body") %></dd>
+      </div>
+      <div class="flex flex-col gap-1">
+        <dt class="kick text-xs text-railmute"><%= t("home.for_instructors") %></dt>
+        <dd><%= t("home.for_instructors_body") %></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="flex items-center justify-center p-6 lg:p-12">
+    <div class="flex w-full max-w-[400px] flex-col gap-6 rounded-lg border border-line bg-surface p-8">
+      <div class="flex flex-col gap-2">
+        <span class="kick text-xs text-accent"><%= t("home.get_started") %></span>
+        <h2 class="font-head text-lg font-semibold"><%= t("home.sign_in_heading") %></h2>
+      </div>
+
+      <%= link_to t("nav.sign_in"), rodauth.login_path, class: "btn btn-primary h-12 w-full" %>
+      <%= link_to t("home.create_account"), rodauth.create_account_path, class: "btn btn-outline h-12 w-full" %>
+
+      <p class="text-sm text-mute"><%= t("home.join_note") %></p>
+    </div>
+  </section>
+</div>

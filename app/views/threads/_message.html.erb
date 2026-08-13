@@ -12,7 +12,9 @@
       </time>
     </div>
 
-    <p class="max-w-prose whitespace-pre-wrap break-words text-base"><%= message.body %></p>
+    <% if message.body.present? %>
+      <p class="max-w-prose whitespace-pre-wrap break-words text-base"><%= message.body %></p>
+    <% end %>
 
     <%# A contact card: someone the student has just earned access to. %>
     <% if message.introduced_contact %>

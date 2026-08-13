@@ -15,8 +15,8 @@ IDENTITY_REPLACEMENTS = {
   "config/application.rb" => [["CaseChat", TARGET_MODULE]],
   "config/database.yml" => [["case_chat", TARGET_SLUG]],
   "config/locales/en.yml" => [["\"Case Chat\"", TARGET_NAME]],
-  "render.yaml" => [["name: case_chat", "name: #{TARGET_SLUG}"]],
-  "README.md" => [["# case_chat", "# #{TARGET_SLUG}"]]
+  "render.yaml" => [["case-chat", TARGET_SLUG]],
+  "README.md" => [["# Case Chat", "# #{TARGET_NAME}"]]
 }.freeze
 
 def run!(*command, chdir:, env: {})
@@ -64,9 +64,13 @@ Dir.mktmpdir("foundation-instantiation-") do |temporary_root|
   raise "display name was not instantiated" unless locales.dig("en", "app_name") == TARGET_NAME
 
   blueprint = YAML.safe_load_file(File.join(target_root, "render.yaml"))
-  render_service = blueprint.fetch("services").first
-  raise "Render service was not instantiated" unless render_service.fetch("name") == TARGET_SLUG
-  raise "Foundation must not force the disposable-demo plan" if render_service.key?("plan")
+  web_service = blueprint.fetch("services").find { |service| service["type"] == "web" }
+  raise "Render web service was not instantiated" unless web_service.fetch("name") == TARGET_SLUG
+
+  # Web, worker, Key Value, database, and env group all hang off one stem, so
+  # any surviving mention is an identity the Compiler could not lower.
+  leftovers = File.read(File.join(target_root, "render.yaml")).scan(/case[-_]chat/i).uniq
+  raise "render.yaml still names the source app: #{leftovers.inspect}" if leftovers.any?
 
   rails = File.join(target_root, "bin/rails")
   # The smoke owns this disposable database. Never let a caller's Rails-level

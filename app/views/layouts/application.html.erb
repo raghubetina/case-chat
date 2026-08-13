@@ -33,29 +33,34 @@
   <body class="min-h-screen bg-base-100" data-hotwire-native-app="<%= hotwire_native_app? %>">
     <%= link_to t("nav.skip_to_content"), "#main-content", class: "sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-base-100 focus:p-3" %>
 
-    <header class="navbar bg-base-100 border-b border-base-300">
-      <div class="navbar-start hotwire-native-hidden">
-        <%= link_to t("app_name"), root_path, class: "btn btn-ghost text-lg" %>
-      </div>
-      <div class="navbar-center hotwire-native-hidden">
+    <%# The Design's rail: a dark bar carrying pill navigation, not a light
+        daisyUI navbar. Colours come from the theme's --color-rail family, so it
+        restyles with the rest of the app rather than being hard-coded dark. %>
+    <header id="app-header" class="app-header sticky top-0 z-20 flex items-center gap-4 overflow-x-auto border-b border-railline bg-rail px-4 py-2">
+      <div class="app-header-start flex shrink-0 items-center gap-1 hotwire-native-hidden">
+        <%= link_to t("app_name"), root_path,
+              class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
+        <span class="mx-1 h-4 w-px bg-railline"></span>
         <%= render "shared/main_navigation" %>
       </div>
-      <div class="navbar-end hotwire-native-toolbar">
+
+      <div class="app-header-end ml-auto flex shrink-0 items-center gap-2 hotwire-native-toolbar">
         <% if current_user %>
-          <%= button_to t("nav.sign_out"), rodauth.logout_path, method: :post, class: "btn btn-ghost btn-sm", form: {data: {turbo: false}} %>
+          <%= button_to t("nav.sign_out"), rodauth.logout_path, method: :post,
+                class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs pill-off",
+                form: {data: {turbo: false}} %>
         <% else %>
-          <%= link_to t("nav.sign_in"), rodauth.login_path, class: "btn btn-ghost btn-sm" %>
+          <%= link_to t("nav.sign_in"), rodauth.login_path,
+                class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs pill-off" %>
         <% end %>
+
         <%# The single sanctioned theme knob: pick one of the four Design themes,
             or "auto" to follow the OS preference (chicago by day, dusk by night). %>
         <div class="dropdown dropdown-end" data-controller="theme">
-          <button type="button" class="btn btn-ghost btn-circle" aria-haspopup="menu" aria-label="<%= t("nav.theme.label") %>">
-            <svg class="size-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="9" />
-              <path stroke-linecap="round" d="M12 3a9 9 0 0 1 0 18" fill="currentColor" stroke="none" />
-            </svg>
+          <button type="button" class="kick rounded-md px-2 py-1 text-xs pill-off" aria-haspopup="menu" aria-label="<%= t("nav.theme.label") %>">
+            <%= t("nav.theme.short") %>
           </button>
-          <ul role="menu" aria-label="<%= t("nav.theme.label") %>" class="dropdown-content menu z-50 mt-1 w-44 rounded-box border border-base-300 bg-base-100 p-1 shadow">
+          <ul role="menu" aria-label="<%= t("nav.theme.label") %>" class="dropdown-content menu z-50 mt-1 w-44 rounded-box border border-line bg-surface p-1 shadow">
             <% %w[ledger bureau dusk chicago auto].each do |name| %>
               <li>
                 <button type="button" role="menuitemradio" aria-checked="false"
@@ -71,7 +76,10 @@
 
     <%= render "shared/flash" %>
 
-    <main id="main-content" class="container mx-auto px-4" tabindex="-1">
+    <%# Most pages are a centred column. The thread is not: it is a full-height
+        two-pane workspace, and the container's max-width and padding squeeze it
+        into a narrow off-centre strip. A view opts out with content_for. %>
+    <main id="main-content" class="<%= content_for?(:full_bleed) ? "" : "container mx-auto px-4" %>" tabindex="-1">
       <%= yield %>
     </main>
   </body>

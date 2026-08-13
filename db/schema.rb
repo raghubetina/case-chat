@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,6 +46,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "case_drafts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "case_study_id", null: false
+    t.datetime "created_at", null: false
+    t.text "hint"
+    t.jsonb "payload"
+    t.uuid "request_token"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["case_study_id"], name: "index_case_drafts_on_case_study_id", unique: true
+  end
+
   create_table "case_studies", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.text "assignment"
     t.uuid "author_id", null: false
@@ -70,7 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
     t.string "role_title", null: false
     t.text "system_prompt", null: false
     t.datetime "updated_at", null: false
-    t.index ["case_study_id"], name: "index_contacts_on_case_study_id"
+    t.index "case_study_id, lower((full_name)::text)", name: "index_contacts_on_case_study_id_and_lower_full_name", unique: true
   end
 
   create_table "conversations", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -145,7 +156,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
     t.uuid "referring_contact_id", null: false
     t.datetime "updated_at", null: false
     t.index ["referred_contact_id"], name: "index_referrals_on_referred_contact_id"
-    t.index ["referring_contact_id"], name: "index_referrals_on_referring_contact_id"
+    t.index ["referring_contact_id", "referred_contact_id"], name: "idx_on_referring_contact_id_referred_contact_id_0890d13c31", unique: true
   end
 
   create_table "share_rules", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -342,6 +353,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_230000) do
   add_foreign_key "account_password_hashes", "users", column: "id", on_delete: :cascade
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "case_drafts", "case_studies"
   add_foreign_key "case_studies", "users", column: "author_id", on_delete: :restrict
   add_foreign_key "contacts", "case_studies", on_delete: :cascade
   add_foreign_key "conversations", "contacts", on_delete: :cascade
