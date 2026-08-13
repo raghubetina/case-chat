@@ -1,43 +1,51 @@
 # Case Chat
 
-Case Chat is a handed-off First Draft Rails application. It retains useful Foundation guarantees—security,
-observability, accessibility, localization, and operational checks—but its domain code and product decisions
-are now owned and evolved here.
+Case Chat is a prototype for replacing the up-front business-school case PDF
+with a research experience. Learners receive a background and assignment,
+interview AI-simulated stakeholders, collect documents, and write their brief
+outside the application. Authors create and test those cases, publish them to
+cohorts, and review transcripts and simple participation metrics.
 
-What that buys, concretely: enforced CSP with real nonces and a closed Permissions Policy · a generous,
-configurable perimeter rate limit plus Rails' endpoint-level primitive · key-dormant Rollbar and Skylight ·
-safe-migration, strict-loading, query-count, pagination, and schema-lint guardrails · axe-audited system tests
-in light *and* dark themes · generated ERB copy through `t()` with missing-translation and hard-coded-copy
-checks · branded error pages · PWA manifest · a production-smoked, one-Blueprint Render deploy.
+The central product question is deliberately narrow: **is researching a case
+through stakeholder conversations more interesting and educationally useful
+than receiving every fact at once?** The prototype should answer that question
+before it grows into a general case-management platform.
 
-[`FOUNDATION.md`](FOUNDATION.md) records provenance, ownership, and the handoff boundary.
+## Current status
 
-The inherited application shell still includes a Hotwire Native presentation marker and a complete browser
-fallback. Those are application-owned choices now, not protected generated seams.
+The repository began as a First Draft Rails shell and is now one fully owned
+application. Its infrastructure is being adapted for this product, but much of
+the generated domain scaffold still reflects the original design sketch and is
+not the target model.
+
+Do not deploy the current generated scaffold: its domain CRUD routes are not
+yet protected by the authentication and authorization required for Case Chat.
+
+Start with [`docs/README.md`](docs/README.md). It distinguishes accepted
+decisions from implemented behavior and links to the product brief, canonical
+domain model, architecture decisions, and research notes.
+
+[`FOUNDATION.md`](FOUNDATION.md) records the shell's provenance and handoff
+boundary.
 
 ## Quick start
+
+```sh
+bin/setup
+bin/dev
+bin/ci
+bin/production-smoke
 ```
-bin/setup   # deps + db + boot check
-bin/dev     # serve on :3000
-bin/ci      # application tests, lint, audits, and reproducibility checks
-bin/production-smoke # production image + fresh Postgres + all three Solid adapters
-```
-CI runs both gates; the production smoke is separate so ordinary local/test work does not require Docker.
-Agents: read `AGENTS.md`. Deploying: read `DEPLOY.md`.
 
-## Provenance
-- **Core (L1) — the starting operational and interface guarantees.**
-- **Capabilities (L2) — the selected starting implementations for concerns such as auth, email, and uploads.**
-  They become ordinary application code once generated.
-- **Domain (L3) — the generated starting model and screens.** They are ordinary application code after handoff.
+- `bin/dev` serves the application on port 3000.
+- `bin/ci` runs application tests, lint, audits, and reproducibility checks.
+- `bin/production-smoke` exercises the production artifact against fresh
+  PostgreSQL.
 
-After handoff, the owner's additions and changes are **Unique**. Unique is post-handoff provenance, not a fourth
-layer or a protected directory.
+Agents should read [`AGENTS.md`](AGENTS.md) and then the documentation reading
+order. Deployment guidance lives in [`DEPLOY.md`](DEPLOY.md).
 
-## Iteration contract
-
-- Change generated decisions when Case Chat needs something different and prove the replacement behavior.
-- Update the relevant application documentation in the same change.
-- Carry broadly reusable Foundation fixes upstream separately; this app never waits for that work.
-
-Released under the [MIT License](LICENSE).
+The application source is released under the [MIT License](LICENSE). Supplied
+teaching-case material under `db/seeds/files/` is excluded; the
+[`vesta` seed README](db/seeds/files/vesta/README.md) records its source and
+permitted project use.

@@ -4,6 +4,20 @@ This app began from **Rails Foundation Core** (`firstdraft/foundation-rails-core
 boundary and is now one fully owned Rails application. Keep the useful operational and accessibility guarantees,
 but replace template seams and generated domain code when the product needs a different decision.
 
+## Start here
+- Read `docs/README.md`, then follow its short reading order before changing product behavior or the domain model.
+- An accepted decision is not proof of implementation. Documentation records both statuses explicitly; verify code
+  and tests before describing a planned capability as working.
+- Update the relevant product, domain, or decision document in the same change that alters its behavior. Keep this
+  always-loaded file lean and put area-specific rationale under `docs/`.
+
+## Delivery workflow
+- Keep changes small and stack each branch and worktree on the previous accepted chunk.
+- Follow the Minitest strategy and baseline audit in `docs/engineering/testing.md`.
+- Before each PR, run the relevant focused checks and `bin/ci`, then run local Claude Review at maximum effort.
+  Address valid findings and request re-review until each finding is fixed or explicitly rejected on its merits.
+- Open each PR against the preceding stack branch. Do not merge without the user's authorization.
+
 ## How to run things
 - **Setup:** `bin/setup` (idempotent; add `--skip-server` to not boot). Dev server: `bin/dev`.
 - **Tests:** `bin/rails test` · system tests: `bin/rails test:system` (headless Chrome).
@@ -30,9 +44,9 @@ if the fix is reusable, carry it back to `firstdraft/foundation-rails-core` for 
   `data-turbo-not-loaded`, application.js's submit/load markers, and
   `WaitForTurboBeforeClick` together; the trio closes Turbo's form-redirect busy-state gap.
 - **Native presentation is a three-part application seam.** Keep the layout's `data-hotwire-native-app` marker and
-  `hotwire-native-hidden`/`hotwire-native-toolbar` hooks, the unlayered CSS rules that override DaisyUI's
-  layered navbar declarations, and the named native system-test driver together. This app owns
-  `shared/_main_navigation`, the ordinary web fallback, and the retained toolbar.
+  `hotwire-native-hidden`/`hotwire-native-toolbar` hooks, the CSS overrides, and the named native system-test
+  driver together. DaisyUI-specific overrides remain necessary only until ADR 0006 removes DaisyUI. This app
+  owns `shared/_main_navigation`, the ordinary web fallback, and the retained toolbar.
 - **Flash messages render into the existing live regions** (`shared/_flash`): inject content into
   `#flash_notices` / `#flash_alerts`, never insert a new `role="status"` region at announce time
   (late regions aren't announced by screen readers).
@@ -54,21 +68,21 @@ if the fix is reusable, carry it back to `firstdraft/foundation-rails-core` for 
   per-path throttles before raising the ceiling.
 
 ## Testing rules
-- **See it fail first.** Before trusting a green test, watch it fail for the expected reason (break
-  the code or the assertion momentarily). A test that can't go red proves nothing.
-- **Verb-first, one behavior per test** ("test rejects duplicate emails", not "test validations").
-- **Happy path + negative path + boundary** for every feature-bearing change.
-- **Don't test your dependencies.** Gems test their own features; test *your* configuration's
-  contracts and *your* behavior.
-- **No network in tests** — webmock enforces it. Stub external HTTP explicitly.
+Follow `docs/engineering/testing.md`. Preserve WebMock's network block and the
+axe and Turbo system-test guards described above.
 
 ## Product capabilities
-Authentication, uploads, background work, and streamed AI conversations are application features now, not
-future Compiler capabilities. Implement each once, from the product's documented decisions, and remove obsolete
-generated code rather than preserving compatibility with the schema-independent template. Authentication and
-authorization are not implemented yet; every generated domain controller is currently unguarded CRUD.
+The inherited Core did not supply auth, email delivery, uploads, jobs dashboards, Web Push, or native clients.
+Case Chat now owns the capabilities its accepted decisions require: use `rodauth-rails` as the single account
+stack per ADR 0002 and Active Storage for case documents. Do not introduce a second authentication stack or
+speculative capabilities outside the prototype scope. Authentication and authorization are not implemented yet;
+every generated domain controller is currently unguarded CRUD.
 
 ## Launch checklist (before inviting real users)
+- [ ] Remove or authenticate and authorize every generated domain route, especially the current full CRUD routes
+  for users and transcripts; do not deploy the generated scaffold as-is.
+- [ ] Verify Rodauth and the author, learner, cohort, transcript, and document authorization boundaries from ADR
+  0002 and the target domain model.
 - [ ] Replace the PLACEHOLDER copy on `/privacy` and `/terms`.
 - [ ] If the Designer declares public domains, apply its generated domain policy before mapping traffic.
 - [ ] Set `ROLLBAR_ACCESS_TOKEN` (errors) and `SKYLIGHT_AUTHENTICATION` (APM) if wanted; both are key-dormant.
