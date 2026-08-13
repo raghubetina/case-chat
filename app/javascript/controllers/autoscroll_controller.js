@@ -9,22 +9,37 @@ export default class extends Controller {
   connect() {
     this.pinned = true
     this.element.addEventListener("scroll", this.track)
-    this.observer = new MutationObserver(() => this.scroll())
+    this.observer = new MutationObserver(() => this.schedule())
     this.observer.observe(this.element, { childList: true, subtree: true, characterData: true })
-    this.scroll()
+    this.schedule()
   }
 
   disconnect() {
     this.element.removeEventListener("scroll", this.track)
     this.observer?.disconnect()
+    if (this.frame) cancelAnimationFrame(this.frame)
   }
 
   track = () => {
+    // Ignore the scroll events our own scrolling emits, or a reader who has
+    // moved up gets re-pinned by the next character that arrives.
+    if (this.scrolling) return
     const distance = this.element.scrollHeight - this.element.scrollTop - this.element.clientHeight
     this.pinned = distance < 80
   }
 
-  scroll() {
-    if (this.pinned) this.element.scrollTop = this.element.scrollHeight
+  // A streaming reply mutates the DOM many times a second, and each mutation
+  // used to write scrollTop immediately. Writing it once per frame instead
+  // keeps the scroll from fighting the layout it just triggered.
+  schedule() {
+    if (this.frame) return
+    this.frame = requestAnimationFrame(() => {
+      this.frame = null
+      if (!this.pinned) return
+
+      this.scrolling = true
+      this.element.scrollTop = this.element.scrollHeight
+      requestAnimationFrame(() => { this.scrolling = false })
+    })
   }
 }
