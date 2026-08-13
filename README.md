@@ -1,52 +1,61 @@
-# case_chat
+# Case Chat
 
-The **schema-independent Rails Foundation Core reference**: the baseline every First Draft Compiled app starts from —
-hardened, observable, accessible, and i18n-ready **before its first feature**. It is deliberately
-schema-agnostic: no account model, no mailer, no domain code. The Compiler adds universal Core rules,
-selected Capabilities, and the App-Schema-derived Domain; after handoff, the owner has one ordinary Rails app
-and may edit every file.
+A business-school case is usually a handout. Every student reads the same pages, and the work is
+analysis. Case Chat makes it an investigation: an instructor writes a **cast**, each person holding
+part of what the case knows, and students have to find them and ask.
 
-What that buys, concretely: enforced CSP with real nonces and a closed Permissions Policy · a generous,
-configurable perimeter rate limit plus Rails' endpoint-level primitive · key-dormant Rollbar and Skylight ·
-safe-migration, strict-loading, query-count, pagination, and schema-lint guardrails · axe-audited system tests
-in light *and* dark themes · generated ERB copy through `t()` with missing-translation and hard-coded-copy
-checks · branded error pages · PWA manifest · a production-smoked, one-Blueprint Render deploy.
+Nobody volunteers everything. A contact answers what they would plausibly answer, withholds what they
+would plausibly withhold, and — when a student asks the right thing — introduces someone else or hands
+over a document. Reaching the person who knows is the assignment, not a step before it.
 
-[`FOUNDATION.md`](FOUNDATION.md) records provenance, ownership, and the handoff boundary.
+## The shape of it
 
-Core also supplies the shared application-shell seam used by generated Domain navigation and an inert
-Hotwire Native presentation marker. It does not ship a native client: selected native Capabilities consume
-that seam while ordinary browsers retain the complete web fallback.
+- A **case** has a cast of **contacts**, a starting **directory** of two or three people a student can
+  approach first, and **documents**.
+- A **referral** is one contact's willingness to introduce another, on a condition the author writes:
+  *"Only after admitting you do not know what happens at eight o'clock on a Friday."* That structure is
+  what makes reachability checkable — the authoring side refuses to publish a case in which somebody
+  can never be met.
+- A **share rule** is a contact's willingness to hand over a document, on the same kind of condition.
+- Students **join by code**, interview whoever they can reach, and earn the rest.
 
-## Quick start
+Referrals and shares are not prose hints. The model is given exactly the introductions and documents
+that contact is allowed to offer, as tools, with the ids narrowed to that set — so a contact cannot
+invent a colleague or leak an exhibit it was never given.
+
+## Running it
+
 ```
-bin/setup   # deps + db + boot check
-bin/dev     # serve on :3000
-bin/ci      # application tests, lint, audits, and reproducibility checks
-bin/production-smoke # production image + fresh Postgres + all three Solid adapters
+bin/setup            # deps, database, boot check
+bin/dev              # serve on :3000
+bin/rails db:seed    # the Vesta case: 5 contacts, 5 referrals, 7 documents
+bin/ci               # tests, lint, audits, reproducibility
+bin/production-smoke # production image against fresh Postgres
 ```
-CI runs both gates; the production smoke is separate so ordinary local/test work does not require Docker.
-Agents: read `AGENTS.md`. Deploying: read `DEPLOY.md`.
 
-## Foundation composition
-- **Core (L1) — this repo plus universal Compiler rules.** Guarantees that *every* app gets.
-- **Capabilities (L2) — selected from App Schema + Plan.** Auth (`has-account-entity`), email (`sends-email`),
-  uploads (`has-attachments`), … Each is a *function of the App Schema + Plan*, so none can live in a
-  schema-less template: the Compiler generates them per-app, and their reference implementations
-  live in `firstdraft/photogram-golden`.
-- **Domain (L3) — emitted per app.** Models, migrations, routes, screens, policies, tests, and fixture/seed data
-  derived from the App Schema + Plan. Never stored in this schema-less reference.
+Seeding prints a join code and two sign-ins — an author and a student — so the whole loop is walkable
+immediately.
 
-After handoff, the owner's additions and changes are **Unique**. Unique is post-handoff provenance, not a fourth
-layer or a protected directory.
+`RESPONDER` selects the provider (`anthropic` or `openai`) for both contact replies and document
+drafting; tests always use a fake, and no test may touch the network. Put keys in `.env`.
 
-## Iteration contract
-- This template is **versioned and consumed at tags**; consumers never track `main`.
-- Any change that adds or removes baseline behavior **updates the decision doc in the same
-  change**; each tag's CHANGELOG entry names the decision-doc version it implements.
-- Operational rationale needed to maintain a generated app travels with that app. Strategic Compiler and
-  product decisions remain in `firstdraft/firstdraft`.
-- After handoff, consumers own every file. Fix defects in the application immediately; carry reusable fixes
-  upstream here and re-tag them for future applications.
+## Worth knowing before you change things
+
+- **A reply streams.** `ContactReplyJob` writes nothing until the reply is complete — a half-written row
+  would be visible in the author's cohort view and would survive a crash as a permanent fragment. The
+  live text goes over Action Cable into a pending bubble that the real message replaces.
+- **Drafting a case from documents runs in a job**, because it takes about two minutes on real material
+  against a 15-second request deadline. The proposal lives in `case_drafts` until an author accepts it.
+- **Drafting and accepting are separate on purpose.** A drafted system prompt is a guess about what a
+  person withholds, and withholding is the whole design, so the review screen shows every prompt and
+  nothing is created until someone has read them.
+- **Provider seams are one file each.** `Responder::Anthropic`/`OpenAI` answer as a contact;
+  `CaseDrafter::Anthropic`/`OpenAI` read documents. Both have a `Fake`. Request shapes that only a real
+  provider validates are pinned by tests — two of them were found as live 400s.
+- **The signed-in app is axe-audited in all four themes** by `test/system/authenticated_pages_test.rb`.
+  New pages go in its lists, and a token change that breaks contrast fails there.
+
+Agents: read `AGENTS.md`. Deploying: read `DEPLOY.md`. Provenance and the handoff boundary:
+[`FOUNDATION.md`](FOUNDATION.md).
 
 Released under the [MIT License](LICENSE).

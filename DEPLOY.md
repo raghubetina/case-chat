@@ -1,14 +1,11 @@
 # Deploying to Render
 
-The repo ships `render.yaml`: one Docker web service in Render's `ohio` region (AWS us-east-2),
-with an external Neon Postgres database created in the same AWS region. Cache, Queue, and Cable share that
-database.
+The repo ships `render.yaml`: four resources in Render's `ohio` region (AWS us-east-2), described below.
 
-Foundation deliberately omits the Blueprint `plan` field. Render currently creates a new service on paid
-`starter` when that field is absent, and retains the current instance type for an existing service. That is the
-safe default for an application whose data or delivery obligations may become durable. A future Compiler may
-add `plan: free` only when the App Schema explicitly declares `Project.data_posture == disposable_demo`; low
-traffic alone is not enough to opt an application into sleeping and best-effort background work.
+Plans are pinned deliberately. The Foundation blueprint omits `plan` so that Render picks a default, which
+suits an app whose obligations may become durable but whose shape is unknown. This app's shape is known: a
+contact's reply streams for 10-60 seconds and a case draft takes about two minutes, so the work cannot share
+a process with request threads, and token streaming is too chatty for a database-backed pub/sub.
 
 Ohio is the default because the initial apps and maintainers are centered around Chicago. If an application's
 users are elsewhere, choose a nearer supported region before first deploy and change Render and Neon together.
@@ -21,7 +18,7 @@ Four resources, one region:
 | Resource | Why it is separate |
 |---|---|
 | `case-chat` (web, standard) | Serves requests and holds Action Cable connections. Runs migrations on boot. |
-| `case-chat-worker` (worker, standard) | Runs reply jobs. A contact's answer streams for 10-60 seconds; in-Puma jobs would hold that time inside the web process and starve request threads. |
+| `case-chat-worker` (worker, standard) | Runs reply and drafting jobs. A contact's answer streams for 10-60 seconds and a case draft takes about two minutes; in-Puma jobs would hold that time inside the web process and starve request threads, and drafting inline would exceed the request deadline outright. |
 | `case-chat-db` (Postgres, basic-1gb) | Domain data, plus Solid Cache and Solid Queue, whose access patterns suit it. |
 | `case-chat-cable` (Key Value, starter) | Action Cable only. Token streaming is many broadcasts per second per thread; Solid Cable polls Postgres, so each subscriber is a recurring query and each token a write. |
 
@@ -42,6 +39,10 @@ runs rather than silently dropping every broadcast.
 
 These are `sync: false` in the blueprint and must be set by hand:
 
+- `RESPONDER` — `anthropic` or `openai`. It selects both the voice of every contact
+  and the drafter that reads uploaded documents. An unrecognized value fails
+  loudly on first use rather than falling back, because the fallback used to be
+  a canned cast an author could accept believing a model had read their case.
 - `ANTHROPIC_API_KEY` and/or `OPENAI_API_KEY` — whichever `RESPONDER` names.
 - `APPLICATION_HOST` — used for mailer links and Active Storage URLs.
 - `RESEND_API_KEY` and `MAIL_FROM` — transactional mail stays dormant until both are set.

@@ -16,7 +16,7 @@ IDENTITY_REPLACEMENTS = {
   "config/database.yml" => [["case_chat", TARGET_SLUG]],
   "config/locales/en.yml" => [["\"Case Chat\"", TARGET_NAME]],
   "render.yaml" => [["case-chat", TARGET_SLUG]],
-  "README.md" => [["# case_chat", "# #{TARGET_SLUG}"]]
+  "README.md" => [["# Case Chat", "# #{TARGET_NAME}"]]
 }.freeze
 
 def run!(*command, chdir:, env: {})
