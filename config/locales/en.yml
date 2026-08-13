@@ -206,6 +206,16 @@ en:
       what: Which document
       when: When to share
       when_placeholder: Once the student has asked to see the numbers.
+    shell:
+      cast: Cast
+      cohort: Cohort
+      files: Case files
+      import: Import
+      search_prompt: Search the cast, their prompts, and the case files.
+      setup: Setup
+      sidebar_label: Case, cast and files
+      unreachable: Unreachable
+      your_cases: Your cases
   cases:
     assignment: Assignment
     collected_note: Files people have shared with you in conversation.
@@ -273,6 +283,7 @@ en:
     search_label: Search this case
     search_placeholder: "Search %{title}"
     search_prompt: Search your conversations and the files you hold.
+    search_submit: Search
     search_summary:
       one: 1 result for "%{query}"
       other: "%{count} results for \"%{query}\""

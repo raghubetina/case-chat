@@ -1,161 +1,170 @@
 <% content_for :title, @contact.full_name %>
 
-<div class="mx-auto flex max-w-[1120px] flex-col gap-8 py-10">
-  <header class="flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
-        <%= initials_for(@contact.full_name) %>
-      </div>
-      <h1 class="font-head text-lg font-semibold"><%= @contact.full_name %></h1>
-      <% if @contact.in_starting_directory? %>
-        <span class="kick rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.in_starting") %></span>
-      <% elsif @introducers.any? %>
-        <span class="kick rounded-md border border-line px-2 py-1 text-xs text-mute">
-          <%= t("author.contacts.introduced_by_names", names: @introducers.map(&:full_name).to_sentence) %>
-        </span>
-      <% else %>
-        <span class="kick rounded-md border border-error px-2 py-1 text-xs text-error"><%= t("author.cases.unreachable") %></span>
-      <% end %>
+<%= render layout: "shared/shell", locals: author_shell do %>
+  <%# The cast editor's header carries the person and how a student reaches
+      them — the one fact that decides whether this contact exists at all. %>
+  <div class="flex h-[57px] shrink-0 items-center gap-3 border-b border-line px-4">
+    <button type="button" data-action="drawer#open" data-drawer-target="toggle"
+            aria-label="<%= t("shell.open_menu") %>" aria-expanded="false" aria-controls="workspace-sidebar"
+            class="-ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-mute hover:bg-wash md:hidden">
+      <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+    </button>
+
+    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line bg-wash font-mono text-[11px] font-semibold tracking-normal text-accent">
+      <%= initials_for(@contact.full_name) %>
     </div>
-    <%= link_to t("author.contacts.back"), edit_author_case_path(@case_study), class: "btn btn-outline btn-sm" %>
-  </header>
 
-  <% unless @contact.in_starting_directory? || @introducers.any? %>
-    <div class="rounded-lg border border-error bg-surface p-4 text-sm text-mute">
-      <%= t("author.contacts.orphan_warning", name: @contact.full_name) %>
-    </div>
-  <% end %>
+    <h1 class="truncate font-head text-lg font-semibold leading-tight"><%= @contact.full_name %></h1>
 
-  <div class="flex max-w-col flex-col gap-8">
-    <%= form_with model: @contact, url: author_case_contact_path(@case_study, @contact), method: :patch, class: "flex flex-col gap-6" do |form| %>
-      <% if @contact.errors.any? %>
-        <div class="alert alert-error" role="alert">
-          <ul class="list-disc pl-5">
-            <% @contact.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
-          </ul>
-        </div>
-      <% end %>
+    <% if @contact.in_starting_directory? %>
+      <span class="kick shrink-0 rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.in_starting") %></span>
+    <% elsif @introducers.any? %>
+      <span class="kick hidden shrink-0 rounded-md border border-line px-2 py-1 text-xs text-mute sm:inline">
+        <%= t("author.contacts.introduced_by_names", names: @introducers.map(&:full_name).to_sentence) %>
+      </span>
+    <% else %>
+      <span class="kick shrink-0 rounded-md border border-error px-2 py-1 text-xs text-error"><%= t("author.cases.unreachable") %></span>
+    <% end %>
+  </div>
 
-      <span class="kick text-xs text-accent"><%= t("author.contacts.identity") %></span>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div class="flex flex-col gap-2">
-          <%= form.label :full_name, t("author.contacts.fields.full_name"), class: "kick text-xs text-mute" %>
-          <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
-        </div>
-        <div class="flex flex-col gap-2">
-          <%= form.label :role_title, t("author.contacts.fields.role_title"), class: "kick text-xs text-mute" %>
-          <%= form.text_field :role_title, required: true, class: "input input-bordered w-full" %>
-        </div>
+  <div class="scroll-y flex flex-1 flex-col gap-8 p-6 lg:p-8">
+    <% unless @contact.in_starting_directory? || @introducers.any? %>
+      <div class="rounded-lg border border-error bg-surface p-4 text-sm text-mute">
+        <%= t("author.contacts.orphan_warning", name: @contact.full_name) %>
       </div>
-
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center justify-between gap-4">
-          <%= form.label :description, t("author.contacts.fields.description"), class: "kick text-xs text-mute" %>
-          <span class="kick text-xs text-faint"><%= t("author.contacts.shown_in_directory") %></span>
-        </div>
-        <%= form.text_area :description, rows: 3, class: "textarea textarea-bordered w-full font-mono text-sm" %>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center justify-between gap-4">
-          <%= form.label :system_prompt, t("author.contacts.fields.system_prompt"), class: "kick text-xs text-accent" %>
-          <span class="kick text-xs text-faint"><%= t("author.contacts.never_shown") %></span>
-        </div>
-        <%= form.text_area :system_prompt, rows: 14, required: true, class: "textarea textarea-bordered w-full font-mono text-sm" %>
-        <%# Referral instructions are generated from the rows below. Writing
-            them here as well is how the two drift apart. %>
-        <p class="max-w-prose text-sm text-mute"><%= t("author.contacts.system_prompt_note") %></p>
-      </div>
-
-      <label class="label cursor-pointer justify-start gap-3">
-        <%= form.check_box :in_starting_directory, class: "checkbox" %>
-        <span class="label-text"><%= t("author.contacts.fields.in_starting_directory") %></span>
-      </label>
-
-      <div><%= form.submit t("author.contacts.save"), class: "btn btn-primary" %></div>
     <% end %>
 
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 class="kick text-xs text-accent"><%= t("author.referrals.heading") %></h2>
-        <span class="text-sm text-mute"><%= t("author.referrals.note") %></span>
-      </div>
-
-      <div class="flex flex-col">
-        <% @referrals.each do |referral| %>
-          <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
-            <span class="flex w-[170px] shrink-0 flex-col">
-              <span class="text-base font-medium"><%= referral.referred_contact.full_name %></span>
-              <span class="text-base text-mute"><%= referral.referred_contact.role_title %></span>
-            </span>
-            <span class="min-w-[220px] flex-1 text-sm text-mute"><%= referral.condition %></span>
-            <%= button_to t("author.referrals.remove"),
-                  author_contact_referral_path(@contact, referral), method: :delete,
-                  class: "btn btn-ghost btn-sm shrink-0" %>
+    <div class="flex max-w-col flex-col gap-8">
+      <%= form_with model: @contact, url: author_case_contact_path(@case_study, @contact), method: :patch, class: "flex flex-col gap-6" do |form| %>
+        <% if @contact.errors.any? %>
+          <div class="alert alert-error" role="alert">
+            <ul class="list-disc pl-5">
+              <% @contact.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+            </ul>
           </div>
         <% end %>
-        <% if @referrals.empty? %>
-          <p class="border-t border-line py-3 text-sm text-faint"><%= t("author.referrals.empty") %></p>
-        <% end %>
-      </div>
 
-      <% available = @candidates.reject { |c| @referred_ids.include?(c.id) } %>
-      <% if available.any? %>
-        <%= form_with url: author_contact_referrals_path(@contact), method: :post, class: "flex flex-wrap items-end gap-3 border-t border-line pt-3" do |form| %>
+        <span class="kick text-xs text-accent"><%= t("author.contacts.identity") %></span>
+        <div class="grid gap-4 sm:grid-cols-2">
           <div class="flex flex-col gap-2">
-            <%= form.label "referral[referred_contact_id]", t("author.referrals.who"), class: "kick text-xs text-mute" %>
-            <%= form.select "referral[referred_contact_id]",
-                  available.map { |c| ["#{c.full_name} — #{c.role_title}", c.id] },
-                  {}, {class: "select select-bordered", required: true} %>
+            <%= form.label :full_name, t("author.contacts.fields.full_name"), class: "kick text-xs text-mute" %>
+            <%= form.text_field :full_name, required: true, class: "input input-bordered w-full" %>
           </div>
-          <div class="flex min-w-[280px] flex-1 flex-col gap-2">
-            <%= form.label "referral[condition]", t("author.referrals.when"), class: "kick text-xs text-mute" %>
-            <%= form.text_field "referral[condition]", required: true,
-                  placeholder: t("author.referrals.when_placeholder"), class: "input input-bordered w-full" %>
-          </div>
-          <%= form.submit t("author.referrals.add"), class: "btn btn-outline" %>
-        <% end %>
-      <% end %>
-    </section>
-
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 class="kick text-xs text-accent"><%= t("author.share_rules.heading") %></h2>
-        <span class="text-sm text-mute"><%= t("author.share_rules.note") %></span>
-      </div>
-
-      <div class="flex flex-col">
-        <% @share_rules.each do |rule| %>
-          <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
-            <span class="w-[170px] shrink-0 truncate text-base font-medium"><%= rule.document.file_name %></span>
-            <span class="min-w-[220px] flex-1 text-sm text-mute"><%= rule.condition %></span>
-            <%= button_to t("author.share_rules.remove"),
-                  author_contact_share_rule_path(@contact, rule), method: :delete,
-                  class: "btn btn-ghost btn-sm shrink-0" %>
-          </div>
-        <% end %>
-        <% if @share_rules.empty? %>
-          <p class="border-t border-line py-3 text-sm text-faint"><%= t("author.share_rules.empty") %></p>
-        <% end %>
-      </div>
-
-      <% held_ids = @share_rules.map(&:document_id).to_set %>
-      <% offerable = @documents.reject { |d| held_ids.include?(d.id) } %>
-      <% if offerable.any? %>
-        <%= form_with url: author_contact_share_rules_path(@contact), method: :post, class: "flex flex-wrap items-end gap-3 border-t border-line pt-3" do |form| %>
           <div class="flex flex-col gap-2">
-            <%= form.label "share_rule[document_id]", t("author.share_rules.what"), class: "kick text-xs text-mute" %>
-            <%= form.select "share_rule[document_id]", offerable.map { |d| [d.file_name, d.id] },
-                  {}, {class: "select select-bordered", required: true} %>
+            <%= form.label :role_title, t("author.contacts.fields.role_title"), class: "kick text-xs text-mute" %>
+            <%= form.text_field :role_title, required: true, class: "input input-bordered w-full" %>
           </div>
-          <div class="flex min-w-[280px] flex-1 flex-col gap-2">
-            <%= form.label "share_rule[condition]", t("author.share_rules.when"), class: "kick text-xs text-mute" %>
-            <%= form.text_field "share_rule[condition]", required: true,
-                  placeholder: t("author.share_rules.when_placeholder"), class: "input input-bordered w-full" %>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between gap-4">
+            <%= form.label :description, t("author.contacts.fields.description"), class: "kick text-xs text-mute" %>
+            <span class="kick text-xs text-faint"><%= t("author.contacts.shown_in_directory") %></span>
           </div>
-          <%= form.submit t("author.share_rules.add"), class: "btn btn-outline" %>
-        <% end %>
+          <%= form.text_area :description, rows: 3, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between gap-4">
+            <%= form.label :system_prompt, t("author.contacts.fields.system_prompt"), class: "kick text-xs text-accent" %>
+            <span class="kick text-xs text-faint"><%= t("author.contacts.never_shown") %></span>
+          </div>
+          <%= form.text_area :system_prompt, rows: 14, required: true, class: "textarea textarea-bordered w-full font-mono text-sm" %>
+          <%# Referral instructions are generated from the rows below. Writing
+              them here as well is how the two drift apart. %>
+          <p class="max-w-prose text-sm text-mute"><%= t("author.contacts.system_prompt_note") %></p>
+        </div>
+
+        <label class="label cursor-pointer justify-start gap-3">
+          <%= form.check_box :in_starting_directory, class: "checkbox" %>
+          <span class="label-text"><%= t("author.contacts.fields.in_starting_directory") %></span>
+        </label>
+
+        <div><%= form.submit t("author.contacts.save"), class: "btn btn-primary" %></div>
       <% end %>
-    </section>
+
+      <section class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 class="kick text-xs text-accent"><%= t("author.referrals.heading") %></h2>
+          <span class="text-sm text-mute"><%= t("author.referrals.note") %></span>
+        </div>
+
+        <div class="flex flex-col">
+          <% @referrals.each do |referral| %>
+            <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
+              <span class="flex w-[170px] shrink-0 flex-col">
+                <span class="text-base font-medium"><%= referral.referred_contact.full_name %></span>
+                <span class="text-base text-mute"><%= referral.referred_contact.role_title %></span>
+              </span>
+              <span class="min-w-[220px] flex-1 text-sm text-mute"><%= referral.condition %></span>
+              <%= button_to t("author.referrals.remove"),
+                    author_contact_referral_path(@contact, referral), method: :delete,
+                    class: "btn btn-ghost btn-sm shrink-0" %>
+            </div>
+          <% end %>
+          <% if @referrals.empty? %>
+            <p class="border-t border-line py-3 text-sm text-faint"><%= t("author.referrals.empty") %></p>
+          <% end %>
+        </div>
+
+        <% available = @candidates.reject { |c| @referred_ids.include?(c.id) } %>
+        <% if available.any? %>
+          <%= form_with url: author_contact_referrals_path(@contact), method: :post, class: "flex flex-wrap items-end gap-3 border-t border-line pt-3" do |form| %>
+            <div class="flex flex-col gap-2">
+              <%= form.label "referral[referred_contact_id]", t("author.referrals.who"), class: "kick text-xs text-mute" %>
+              <%= form.select "referral[referred_contact_id]",
+                    available.map { |c| ["#{c.full_name} — #{c.role_title}", c.id] },
+                    {}, {class: "select select-bordered", required: true} %>
+            </div>
+            <div class="flex min-w-[280px] flex-1 flex-col gap-2">
+              <%= form.label "referral[condition]", t("author.referrals.when"), class: "kick text-xs text-mute" %>
+              <%= form.text_field "referral[condition]", required: true,
+                    placeholder: t("author.referrals.when_placeholder"), class: "input input-bordered w-full" %>
+            </div>
+            <%= form.submit t("author.referrals.add"), class: "btn btn-outline" %>
+          <% end %>
+        <% end %>
+      </section>
+
+      <section class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 class="kick text-xs text-accent"><%= t("author.share_rules.heading") %></h2>
+          <span class="text-sm text-mute"><%= t("author.share_rules.note") %></span>
+        </div>
+
+        <div class="flex flex-col">
+          <% @share_rules.each do |rule| %>
+            <div class="flex flex-wrap items-start gap-4 border-t border-line py-3">
+              <span class="w-[170px] shrink-0 truncate text-base font-medium"><%= rule.document.file_name %></span>
+              <span class="min-w-[220px] flex-1 text-sm text-mute"><%= rule.condition %></span>
+              <%= button_to t("author.share_rules.remove"),
+                    author_contact_share_rule_path(@contact, rule), method: :delete,
+                    class: "btn btn-ghost btn-sm shrink-0" %>
+            </div>
+          <% end %>
+          <% if @share_rules.empty? %>
+            <p class="border-t border-line py-3 text-sm text-faint"><%= t("author.share_rules.empty") %></p>
+          <% end %>
+        </div>
+
+        <% held_ids = @share_rules.map(&:document_id).to_set %>
+        <% offerable = @documents.reject { |d| held_ids.include?(d.id) } %>
+        <% if offerable.any? %>
+          <%= form_with url: author_contact_share_rules_path(@contact), method: :post, class: "flex flex-wrap items-end gap-3 border-t border-line pt-3" do |form| %>
+            <div class="flex flex-col gap-2">
+              <%= form.label "share_rule[document_id]", t("author.share_rules.what"), class: "kick text-xs text-mute" %>
+              <%= form.select "share_rule[document_id]", offerable.map { |d| [d.file_name, d.id] },
+                    {}, {class: "select select-bordered", required: true} %>
+            </div>
+            <div class="flex min-w-[280px] flex-1 flex-col gap-2">
+              <%= form.label "share_rule[condition]", t("author.share_rules.when"), class: "kick text-xs text-mute" %>
+              <%= form.text_field "share_rule[condition]", required: true,
+                    placeholder: t("author.share_rules.when_placeholder"), class: "input input-bordered w-full" %>
+            </div>
+            <%= form.submit t("author.share_rules.add"), class: "btn btn-outline" %>
+          <% end %>
+        <% end %>
+      </section>
+    </div>
   </div>
-</div>
+<% end %>

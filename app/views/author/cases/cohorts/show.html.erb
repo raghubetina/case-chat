@@ -1,94 +1,92 @@
 <% content_for :title, t("author.cohort.title") %>
 
-<div class="mx-auto flex max-w-[1120px] flex-col gap-8 py-10">
-  <header class="flex flex-wrap items-end justify-between gap-4">
-    <div class="flex flex-col gap-2">
-      <span class="kick text-xs text-accent"><%= @case_study.title %></span>
-      <h1 class="font-head text-xl font-semibold"><%= t("author.cohort.title") %></h1>
-    </div>
-    <%= link_to t("author.contacts.back"), edit_author_case_path(@case_study), class: "btn btn-outline btn-sm" %>
-  </header>
+<%= render layout: "shared/shell", locals: author_shell do %>
+  <%= render "shared/pane_header", title: t("author.cohort.title") %>
 
-  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
-      <span class="kick text-xs text-mute"><%= t("author.cohort.started") %></span>
-      <span class="font-head text-xl font-semibold">
-        <%= @report.started_count %> <span class="text-lg text-faint">/ <%= @report.enrolled_count %></span>
-      </span>
-    </div>
-    <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
-      <span class="kick text-xs text-mute"><%= t("author.cohort.median_contacts") %></span>
-      <span class="font-head text-xl font-semibold">
-        <%= @report.median_contacts_met %> <span class="text-lg text-faint">/ <%= @report.contact_count %></span>
-      </span>
-    </div>
-    <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
-      <span class="kick text-xs text-mute"><%= t("author.cohort.median_messages") %></span>
-      <span class="font-head text-xl font-semibold"><%= @report.median_messages_sent %></span>
-    </div>
-    <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
-      <span class="kick text-xs text-mute"><%= t("author.cohort.median_documents") %></span>
-      <span class="font-head text-xl font-semibold">
-        <%= @report.median_documents_earned %> <span class="text-lg text-mute">/ <%= @report.document_count %></span>
-      </span>
+  <div class="scroll-y flex-1 p-6 lg:p-8">
+    <div class="mx-auto flex w-full max-w-[1120px] flex-col gap-8">
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+          <span class="kick text-xs text-mute"><%= t("author.cohort.started") %></span>
+          <span class="font-head text-xl font-semibold">
+            <%= @report.started_count %> <span class="text-lg text-faint">/ <%= @report.enrolled_count %></span>
+          </span>
+        </div>
+        <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+          <span class="kick text-xs text-mute"><%= t("author.cohort.median_contacts") %></span>
+          <span class="font-head text-xl font-semibold">
+            <%= @report.median_contacts_met %> <span class="text-lg text-faint">/ <%= @report.contact_count %></span>
+          </span>
+        </div>
+        <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+          <span class="kick text-xs text-mute"><%= t("author.cohort.median_messages") %></span>
+          <span class="font-head text-xl font-semibold"><%= @report.median_messages_sent %></span>
+        </div>
+        <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+          <span class="kick text-xs text-mute"><%= t("author.cohort.median_documents") %></span>
+          <span class="font-head text-xl font-semibold">
+            <%= @report.median_documents_earned %> <span class="text-lg text-mute">/ <%= @report.document_count %></span>
+          </span>
+        </div>
+      </div>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-head text-lg font-semibold"><%= t("author.cohort.reach") %></h2>
+        <p class="max-w-prose text-sm text-mute"><%= t("author.cohort.reach_note") %></p>
+
+        <div class="flex flex-col gap-3">
+          <% @report.reach.each do |row| %>
+            <div class="flex items-center gap-4">
+              <span class="w-[170px] shrink-0 truncate text-sm"><%= row.contact.full_name %></span>
+              <span class="h-3 flex-1 rounded-md bg-wash">
+                <span class="block h-3 rounded-md bg-accent" style="width: <%= (row.share * 100).round %>%"></span>
+              </span>
+              <span class="w-[44px] shrink-0 text-right text-sm text-mute"><%= (row.share * 100).round %>%</span>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="flex flex-col gap-4">
+        <h2 class="font-head text-lg font-semibold"><%= t("author.cohort.students") %></h2>
+
+        <div class="overflow-x-auto rounded-lg border border-line bg-surface">
+          <table class="w-full border-collapse text-sm">
+            <caption class="sr-only"><%= t("author.cohort.table_caption") %></caption>
+            <thead>
+              <tr class="border-b border-line">
+                <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.student") %></th>
+                <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.contacts") %></th>
+                <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.messages") %></th>
+                <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.documents") %></th>
+                <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.runs") %></th>
+                <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.last_active") %></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @report.students.each do |student| %>
+                <tr class="border-b border-line last:border-0">
+                  <td class="px-4 py-3 font-medium"><%= student.user.full_name %></td>
+                  <td class="px-4 py-3"><%= student.contacts_met %> / <%= @report.contact_count %></td>
+                  <td class="px-4 py-3"><%= student.messages_sent %></td>
+                  <td class="px-4 py-3"><%= student.documents_earned %></td>
+                  <td class="px-4 py-3"><%= student.run_count %></td>
+                  <td class="px-4 py-3 text-mute">
+                    <%= student.last_active_at ? time_ago_in_words(student.last_active_at) : t("author.cohort.not_started") %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <% if @report.students.empty? %>
+          <div class="rounded-lg border border-dashed border-line bg-surface px-6 py-12 text-center">
+            <p class="text-lg font-semibold"><%= t("author.cohort.empty_heading") %></p>
+            <p class="mt-2 text-sm/6 text-mute"><%= t("author.cohort.empty_body", code: @case_study.join_code) %></p>
+          </div>
+        <% end %>
+      </section>
     </div>
   </div>
-
-  <section class="flex flex-col gap-4">
-    <h2 class="font-head text-lg font-semibold"><%= t("author.cohort.reach") %></h2>
-    <p class="max-w-prose text-sm text-mute"><%= t("author.cohort.reach_note") %></p>
-
-    <div class="flex flex-col gap-3">
-      <% @report.reach.each do |row| %>
-        <div class="flex items-center gap-4">
-          <span class="w-[170px] shrink-0 truncate text-sm"><%= row.contact.full_name %></span>
-          <span class="h-3 flex-1 rounded-md bg-wash">
-            <span class="block h-3 rounded-md bg-accent" style="width: <%= (row.share * 100).round %>%"></span>
-          </span>
-          <span class="w-[44px] shrink-0 text-right text-sm text-mute"><%= (row.share * 100).round %>%</span>
-        </div>
-      <% end %>
-    </div>
-  </section>
-
-  <section class="flex flex-col gap-4">
-    <h2 class="font-head text-lg font-semibold"><%= t("author.cohort.students") %></h2>
-
-    <div class="overflow-x-auto rounded-lg border border-line bg-surface">
-      <table class="w-full border-collapse text-sm">
-        <caption class="sr-only"><%= t("author.cohort.table_caption") %></caption>
-        <thead>
-          <tr class="border-b border-line">
-            <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.student") %></th>
-            <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.contacts") %></th>
-            <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.messages") %></th>
-            <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.documents") %></th>
-            <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.runs") %></th>
-            <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.cohort.last_active") %></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @report.students.each do |student| %>
-            <tr class="border-b border-line last:border-0">
-              <td class="px-4 py-3 font-medium"><%= student.user.full_name %></td>
-              <td class="px-4 py-3"><%= student.contacts_met %> / <%= @report.contact_count %></td>
-              <td class="px-4 py-3"><%= student.messages_sent %></td>
-              <td class="px-4 py-3"><%= student.documents_earned %></td>
-              <td class="px-4 py-3"><%= student.run_count %></td>
-              <td class="px-4 py-3 text-mute">
-                <%= student.last_active_at ? time_ago_in_words(student.last_active_at) : t("author.cohort.not_started") %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-
-    <% if @report.students.empty? %>
-      <div class="rounded-lg border border-dashed border-line bg-surface px-6 py-12 text-center">
-        <p class="text-lg font-semibold"><%= t("author.cohort.empty_heading") %></p>
-        <p class="mt-2 text-sm/6 text-mute"><%= t("author.cohort.empty_body", code: @case_study.join_code) %></p>
-      </div>
-    <% end %>
-  </section>
-</div>
+<% end %>

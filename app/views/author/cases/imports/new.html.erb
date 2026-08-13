@@ -1,49 +1,47 @@
 <% content_for :title, t("author.imports.title") %>
 
-<div class="mx-auto flex max-w-[1000px] flex-col gap-8 py-10">
-  <header class="flex flex-wrap items-end justify-between gap-4">
-    <div class="flex flex-col gap-2">
-      <span class="kick text-xs text-accent"><%= @case_study.title %></span>
-      <h1 class="font-head text-xl font-semibold"><%= t("author.imports.title") %></h1>
-    </div>
-    <%= link_to t("author.contacts.back"), edit_author_case_path(@case_study), class: "btn btn-outline btn-sm" %>
-  </header>
+<%= render layout: "shared/shell", locals: author_shell do %>
+  <%= render "shared/pane_header", title: t("author.imports.title") %>
 
-  <section class="flex flex-col gap-3">
-    <h2 class="font-head text-lg font-semibold"><%= t("author.imports.what_was_read") %></h2>
-    <div class="grid gap-4 sm:grid-cols-3">
-      <% @documents.each do |document| %>
-        <div class="flex items-center gap-3 rounded-lg border border-line bg-surface p-3">
-          <span class="kick flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line text-xs text-accent">
-            <%= document.extension_label || t("threads.file") %>
-          </span>
-          <span class="flex min-w-0 flex-col">
-            <span class="truncate text-sm font-medium"><%= document.file_name %></span>
-            <span class="text-sm text-faint">
-              <%= CaseDrafter.readable?(document) ? t("author.imports.will_read") : t("author.imports.not_read") %>
-            </span>
-          </span>
+  <div class="scroll-y flex-1 p-6 lg:p-8">
+    <div class="mx-auto flex w-full max-w-[1000px] flex-col gap-8">
+      <section class="flex flex-col gap-3">
+        <h2 class="font-head text-lg font-semibold"><%= t("author.imports.what_was_read") %></h2>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <% @documents.each do |document| %>
+            <div class="flex items-center gap-3 rounded-lg border border-line bg-surface p-3">
+              <span class="kick flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line text-xs text-accent">
+                <%= document.extension_label || t("threads.file") %>
+              </span>
+              <span class="flex min-w-0 flex-col">
+                <span class="truncate text-sm font-medium"><%= document.file_name %></span>
+                <span class="text-sm text-faint">
+                  <%= CaseDrafter.readable?(document) ? t("author.imports.will_read") : t("author.imports.not_read") %>
+                </span>
+              </span>
+            </div>
+          <% end %>
         </div>
+        <%= link_to t("author.documents.add"), author_case_documents_path(@case_study),
+              class: "link link-hover self-start text-sm font-medium text-accent" %>
+      </section>
+
+      <%= form_with url: author_case_import_path(@case_study), method: :post, class: "flex flex-col gap-4 rounded-lg border border-line bg-surface p-6" do |form| %>
+        <div class="flex flex-col gap-2">
+          <%= form.label :hint, t("author.imports.hint"), class: "kick text-xs text-mute" %>
+          <%= form.text_area :hint, rows: 3, value: params[:hint] || @case_draft&.hint,
+                placeholder: t("author.imports.hint_placeholder"),
+                class: "textarea textarea-bordered w-full" %>
+          <p class="max-w-prose text-sm text-mute"><%= t("author.imports.hint_note") %></p>
+        </div>
+        <div><%= form.submit @case_draft ? t("author.imports.redraft") : t("author.imports.draft"), class: "btn btn-primary" %></div>
+      <% end %>
+
+      <% if @case_draft %>
+        <%= turbo_stream_from @case_draft %>
+        <%= render "author/cases/imports/proposal",
+              case_study: @case_study, case_draft: @case_draft, draft: @case_draft.draft %>
       <% end %>
     </div>
-    <%= link_to t("author.documents.add"), author_case_documents_path(@case_study),
-          class: "link link-hover self-start text-sm font-medium text-accent" %>
-  </section>
-
-  <%= form_with url: author_case_import_path(@case_study), method: :post, class: "flex flex-col gap-4 rounded-lg border border-line bg-surface p-6" do |form| %>
-    <div class="flex flex-col gap-2">
-      <%= form.label :hint, t("author.imports.hint"), class: "kick text-xs text-mute" %>
-      <%= form.text_area :hint, rows: 3, value: params[:hint] || @case_draft&.hint,
-            placeholder: t("author.imports.hint_placeholder"),
-            class: "textarea textarea-bordered w-full" %>
-      <p class="max-w-prose text-sm text-mute"><%= t("author.imports.hint_note") %></p>
-    </div>
-    <div><%= form.submit @case_draft ? t("author.imports.redraft") : t("author.imports.draft"), class: "btn btn-primary" %></div>
-  <% end %>
-
-  <% if @case_draft %>
-    <%= turbo_stream_from @case_draft %>
-    <%= render "author/cases/imports/proposal",
-          case_study: @case_study, case_draft: @case_draft, draft: @case_draft.draft %>
-  <% end %>
-</div>
+  </div>
+<% end %>

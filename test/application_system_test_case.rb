@@ -54,6 +54,15 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     end
   end
 
+  # WaitForTurboBeforeClick guards the click, but `within` resolves its scope
+  # node first and that lookup is unguarded. A Turbo render between the two
+  # detaches the scope, and Selenium reports "Node with given id does not belong
+  # to the document" rather than retrying. Guard the scope the same way.
+  def within(...)
+    wait_for_turbo
+    super
+  end
+
   # capybara_accessibility_audit runs as soon as a wrapped action returns. Axe
   # can therefore be injected into a document that Turbo is about to replace.
   # Wait before every audit and retry only the one known axe injection race;

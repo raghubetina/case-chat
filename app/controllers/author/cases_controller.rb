@@ -25,6 +25,27 @@ module Author
       load_authoring_state
     end
 
+    # Authoring search is over the material the author writes: who is in the
+    # cast, what they are told to be, and the files they can hand over.
+    def search
+      @case_study = authored_case!
+      @query = params[:q].to_s.strip
+      return if @query.blank?
+
+      like = "%#{Contact.sanitize_sql_like(@query)}%"
+      @contact_hits = Contact
+        .where(case_study_id: @case_study.id)
+        .where("full_name ILIKE :q OR role_title ILIKE :q OR description ILIKE :q OR system_prompt ILIKE :q", q: like)
+        .order(:full_name)
+        .limit(20)
+
+      @document_hits = Document
+        .where(case_study_id: @case_study.id)
+        .where("file_name ILIKE :q OR description ILIKE :q", q: like)
+        .order(:file_name)
+        .limit(20)
+    end
+
     def update
       @case_study = authored_case!
 

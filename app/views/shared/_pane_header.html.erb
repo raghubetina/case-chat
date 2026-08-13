@@ -13,4 +13,10 @@
   <% if local_assigns[:aside].present? %>
     <span class="ml-auto hidden text-base text-mute sm:block"><%= aside %></span>
   <% end %>
+
+  <%# Pane-level actions (publish, preview) live in the header rather than at
+      the bottom of a long form, so they stay reachable while you scroll. %>
+  <% if local_assigns[:actions].present? %>
+    <div class="ml-auto flex shrink-0 items-center gap-2"><%= actions %></div>
+  <% end %>
 </div>

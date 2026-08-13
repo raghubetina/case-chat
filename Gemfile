@@ -139,9 +139,6 @@ group :test do
   # that Active Record works.
   gem "shoulda-matchers"
 
-  # The `should` class macro that lets a matcher be a one-line declaration.
-  gem "shoulda-context"
-
   # Every system-test page visit gets an axe-core WCAG audit.
   gem "capybara_accessibility_audit"
 

@@ -15,9 +15,15 @@
     <%= form_with url: search_url, method: :get,
           class: "flex w-full flex-1 items-center gap-2 rounded-md border border-railline px-3 py-2",
           style: "background:color-mix(in srgb, var(--color-railink) 14%, transparent); border-color:color-mix(in srgb, var(--color-railink) 45%, transparent)" do |form| %>
-      <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="shrink-0 text-railink">
-        <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
-      </svg>
+      <%# The Design's magnifier, made the actual submit control. Enter alone
+          would leave the form unreachable to anyone driving the page by switch
+          or voice, and a decorative icon beside a field that needs a submit is
+          a button drawn but not wired. %>
+      <button type="submit" aria-label="<%= t("shell.search_submit") %>" class="shrink-0 text-railink">
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+        </svg>
+      </button>
       <%= form.search_field :q, value: params[:q],
             "aria-label": t("shell.search_label"),
             placeholder: t("shell.search_placeholder", title: search_scope),

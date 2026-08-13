@@ -29,4 +29,12 @@ module ShellHelper
       search_scope: @case_study.title
     }
   end
+
+  def author_shell
+    {
+      sidebar: "author/shared/sidebar",
+      search_url: search_author_case_path(@case_study),
+      search_scope: @case_study.title
+    }
+  end
 end

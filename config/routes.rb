@@ -55,7 +55,10 @@ Rails.application.routes.draw do
   # Authoring: building the case and its cast.
   namespace :author do
     resources :cases, only: %i[index new create edit update] do
-      member { post :publish }
+      member do
+        post :publish
+        get :search
+      end
       resource :cohort, only: :show, module: :cases
       resources :documents, only: %i[index new create destroy], module: :cases
       resource :import, only: %i[new create], module: :cases

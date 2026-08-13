@@ -131,9 +131,10 @@ class StudentLoopTest < ApplicationSystemTestCase
     click_on I18n.t("threads.send")
     assert_text "Tell me about the takeout economics."
 
-    field = find_field(I18n.t("shell.search_label"))
-    field.fill_in(with: "takeout")
-    field.send_keys(:enter)
+    # Fill and submit as two independent queries: holding an element across
+    # the navigation it triggers detaches the node mid-query.
+    fill_in I18n.t("shell.search_label"), with: "takeout"
+    click_on I18n.t("shell.search_submit")
 
     assert_current_path(/\/search\?/)
     # The sidebar stops being a map and becomes the result list.

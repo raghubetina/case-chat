@@ -33,7 +33,8 @@ class AuthenticatedPagesTest < ApplicationSystemTestCase
       author_case_documents_path(@case_study),
       new_author_case_import_path(@case_study),
       new_author_case_contact_path(@case_study),
-      author_case_cohort_path(@case_study)
+      author_case_cohort_path(@case_study),
+      search_author_case_path(@case_study, q: "takeout")
     ]
   end
 

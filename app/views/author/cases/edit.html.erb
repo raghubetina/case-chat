@@ -1,25 +1,19 @@
 <% content_for :title, t("author.cases.setup") %>
 
-<div class="mx-auto flex max-w-[1120px] flex-col gap-8 py-10">
-  <header class="flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <h1 class="font-head text-lg font-semibold"><%= t("author.cases.setup") %></h1>
-      <% if @case_study.published? %>
-        <span class="kick rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.published_badge") %></span>
-      <% else %>
-        <span class="kick rounded-md border border-line px-2 py-1 text-xs text-mute"><%= t("author.cases.draft_badge") %></span>
-      <% end %>
-    </div>
-    <div class="flex items-center gap-2">
-      <%= link_to t("author.imports.title"), new_author_case_import_path(@case_study), class: "btn btn-outline btn-sm" %>
-      <%= link_to t("author.documents.title"), author_case_documents_path(@case_study), class: "btn btn-outline btn-sm" %>
-      <%= link_to t("author.cohort.title"), author_case_cohort_path(@case_study), class: "btn btn-outline btn-sm" %>
-      <%= link_to t("author.cases.preview"), case_path(@case_study), class: "btn btn-outline btn-sm" %>
-      <%= button_to t("author.cases.publish"), publish_author_case_path(@case_study), class: "btn btn-primary btn-sm" %>
-    </div>
-  </header>
+<%= render layout: "shared/shell", locals: author_shell do %>
+  <% status = capture do %>
+    <% if @case_study.published? %>
+      <span class="kick rounded-md bg-soft px-2 py-1 text-xs text-accent"><%= t("author.cases.published_badge") %></span>
+    <% else %>
+      <span class="kick rounded-md border border-line px-2 py-1 text-xs text-mute"><%= t("author.cases.draft_badge") %></span>
+    <% end %>
+    <%= link_to t("author.cases.preview"), case_path(@case_study), class: "btn btn-outline btn-sm hidden sm:inline-flex" %>
+    <%= button_to t("author.cases.publish"), publish_author_case_path(@case_study), class: "btn btn-primary btn-sm" %>
+  <% end %>
 
-  <div class="grid gap-8 xl:grid-cols-[1fr_288px]">
+  <%= render "shared/pane_header", title: t("author.cases.setup"), actions: status %>
+
+  <div class="scroll-y grid flex-1 content-start gap-8 p-6 xl:grid-cols-[1fr_288px] lg:p-8">
     <div class="flex max-w-col flex-col gap-8">
       <%= form_with model: @case_study, url: author_case_path(@case_study), method: :patch, class: "flex flex-col gap-6" do |form| %>
         <% if @case_study.errors.any? %>
@@ -143,4 +137,4 @@
       </div>
     </aside>
   </div>
-</div>
+<% end %>

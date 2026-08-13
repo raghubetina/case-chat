@@ -3,7 +3,6 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
 require "n_plus_one_control/minitest"
-require "shoulda-context"
 require "shoulda-matchers"
 require_relative "support/webmock_network_policy"
 
@@ -41,6 +40,25 @@ end
 module ActiveSupport
   class TestCase
     include AuthenticationTestHelper
+
+    # `should <matcher>` as a one-line test.
+    #
+    # thoughtbot ships this as shoulda-context, but that gem also overrides
+    # Rails' TestUnitReporter#format_rerun_snippet with a version calling
+    # `executable`, which Rails 8.1 no longer defines — so the reporter raises
+    # while printing any failure, and a red suite becomes unreadable. Six lines
+    # we own beat a stale monkey-patch on the thing that reports our failures.
+    def self.should(matcher)
+      test(matcher.description) do
+        assert matcher.matches?(subject), -> { matcher.failure_message }
+      end
+    end
+
+    # Matchers describe the class under test, which is the one this test is named
+    # for. Override in a test case whose subject needs more than a bare instance.
+    def subject
+      self.class.name.delete_suffix("Test").constantize.new
+    end
 
     # Prevent one test's requests from rate-limiting another. Both limiters key
     # on the client IP, and every test is 127.0.0.1, so without this the
