@@ -27,7 +27,11 @@ require_relative "domain_test_helper"
 class IntroductionTest < ActiveSupport::TestCase
   include DomainTestHelper
 
-  test "records meeting a contact once per enrollment" do
+  should belong_to(:enrollment)
+  should belong_to(:contact)
+  should belong_to(:introducing_contact).class_name("Contact").optional
+
+  test "records meeting a contact once per run" do
     contact = build_contact
     enrollment = build_enrollment(case_study: contact.case_study)
     Introduction.create!(enrollment: enrollment, contact: contact)
@@ -37,7 +41,9 @@ class IntroductionTest < ActiveSupport::TestCase
     assert duplicate.errors.of_kind?(:contact_id, :taken)
   end
 
-  test "allows re-meeting the same contact in a fresh enrollment" do
+  # Restarting a case has to put the directory back to the people you begin
+  # with, which means meeting someone again has to be allowed.
+  test "allows re-meeting the same contact in a fresh run" do
     contact = build_contact
     student = build_user
     first_run = build_enrollment(case_study: contact.case_study, user: student)

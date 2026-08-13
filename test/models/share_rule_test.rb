@@ -25,13 +25,10 @@ require_relative "domain_test_helper"
 class ShareRuleTest < ActiveSupport::TestCase
   include DomainTestHelper
 
-  test "rejects a rule without a condition" do
-    contact = build_contact
-    rule = ShareRule.new(contact: contact, document: build_document(case_study: contact.case_study))
+  should belong_to(:contact)
+  should belong_to(:document)
 
-    assert_not rule.valid?
-    assert rule.errors.of_kind?(:condition, :blank)
-  end
+  should validate_presence_of(:condition)
 
   test "rejects a second rule for the same contact and document" do
     contact = build_contact
@@ -43,6 +40,8 @@ class ShareRuleTest < ActiveSupport::TestCase
     assert duplicate.errors.of_kind?(:document_id, :taken)
   end
 
+  # The reason share rules are a join rather than a column on Document: two
+  # people can hold the same file and hand it over for different reasons.
   test "allows two contacts to share one document under different conditions" do
     case_study = build_case_study
     document = build_document(case_study: case_study)

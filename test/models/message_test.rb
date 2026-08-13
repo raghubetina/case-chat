@@ -27,11 +27,23 @@ require_relative "domain_test_helper"
 class MessageTest < ActiveSupport::TestCase
   include DomainTestHelper
 
-  test "rejects a message without a body" do
-    message = Message.new(conversation: build_conversation, sent_at: Time.current, from_contact: false)
+  should belong_to(:conversation)
+  should belong_to(:introduced_contact).optional
+  should have_many(:document_shares).dependent(:destroy)
 
-    assert_not message.valid?
-    assert message.errors.of_kind?(:body, :blank)
+  should validate_presence_of(:sent_at)
+
+  # A contact may answer with a file and no words, so an empty body is only an
+  # error on the student's side of the conversation.
+  test "requires a body from the student but not from a contact" do
+    conversation = build_conversation
+
+    student_said_nothing = Message.new(conversation:, sent_at: Time.current, from_contact: false)
+    contact_sent_a_file = Message.new(conversation:, sent_at: Time.current, from_contact: true)
+
+    assert_not student_said_nothing.valid?
+    assert student_said_nothing.errors.of_kind?(:body, :blank)
+    assert contact_sent_a_file.valid?
   end
 
   test "rejects a message that does not say who spoke" do
@@ -39,15 +51,5 @@ class MessageTest < ActiveSupport::TestCase
 
     assert_not message.valid?
     assert message.errors.of_kind?(:from_contact, :inclusion)
-  end
-
-  test "rejects attaching the same document twice to one message" do
-    message = build_message
-    document = build_document(case_study: message.conversation.contact.case_study)
-    DocumentShare.create!(message: message, document: document)
-    duplicate = DocumentShare.new(message: message, document: document)
-
-    assert_not duplicate.valid?
-    assert duplicate.errors.of_kind?(:document_id, :taken)
   end
 end

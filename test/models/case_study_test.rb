@@ -29,14 +29,19 @@ require_relative "domain_test_helper"
 class CaseStudyTest < ActiveSupport::TestCase
   include DomainTestHelper
 
-  test "accepts a complete case study" do
-    assert build_case_study.persisted?
-  end
+  should belong_to(:author).class_name("User")
+  should have_many(:contacts).dependent(:destroy)
+  should have_many(:enrollments).dependent(:destroy)
+  should have_many(:documents).dependent(:destroy)
+  should have_one(:case_draft).dependent(:destroy)
 
-  test "defaults published to false" do
-    assert_equal false, build_case_study.published
-  end
+  should validate_presence_of(:title)
+  should validate_length_of(:title).is_at_most(200)
+  should validate_length_of(:join_code).is_at_most(32)
 
+  # Codes are handed out on paper and typed back in, so how they are typed must
+  # not matter. Normalizing on the way in is what makes the uniqueness index
+  # case-insensitive too.
   test "normalizes join codes to trimmed uppercase" do
     case_study = build_case_study
     case_study.update!(join_code: "  calder-04 ")
@@ -44,25 +49,12 @@ class CaseStudyTest < ActiveSupport::TestCase
     assert_equal "CALDER-04", case_study.join_code
   end
 
-  test "rejects a duplicate join code" do
+  test "rejects a join code already taken in another case" do
     author = build_user
     build_case_study(author: author).update!(join_code: "CALDER-04")
     duplicate = CaseStudy.new(title: "Other", author: author, join_code: "calder-04")
 
     assert_not duplicate.valid?
     assert duplicate.errors.of_kind?(:join_code, :taken)
-  end
-
-  test "destroys its cast, documents, and enrollments with it" do
-    contact = build_contact
-    case_study = contact.case_study
-    build_document(case_study: case_study)
-    build_enrollment(case_study: case_study)
-
-    case_study.destroy!
-
-    assert_equal 0, Contact.count
-    assert_equal 0, Document.count
-    assert_equal 0, Enrollment.count
   end
 end

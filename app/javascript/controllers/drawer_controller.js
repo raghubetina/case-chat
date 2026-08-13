@@ -16,12 +16,6 @@ export default class extends Controller {
     this.#reflect(false)
   }
 
-  // Following a link inside the drawer swaps the pane behind it; leaving the
-  // drawer covering the thing you just asked for is the classic mobile bug.
-  closeOnNavigate() {
-    if (this.element.dataset.drawer === "open") this.close()
-  }
-
   #reflect(open) {
     for (const toggle of this.toggleTargets) {
       toggle.setAttribute("aria-expanded", open ? "true" : "false")

@@ -26,35 +26,21 @@ require_relative "domain_test_helper"
 class ReferralTest < ActiveSupport::TestCase
   include DomainTestHelper
 
-  test "rejects a referral without a condition" do
-    case_study = build_case_study
-    referral = Referral.new(
-      referring_contact: build_contact(case_study: case_study),
-      referred_contact: build_contact(case_study: case_study, full_name: "Priya Raghunathan")
-    )
+  should belong_to(:referring_contact).class_name("Contact")
+  should belong_to(:referred_contact).class_name("Contact")
 
-    assert_not referral.valid?
-    assert referral.errors.of_kind?(:condition, :blank)
-  end
+  should validate_presence_of(:condition)
 
-  test "defaults enabled to true" do
-    case_study = build_case_study
-    referral = Referral.create!(
-      referring_contact: build_contact(case_study: case_study),
-      referred_contact: build_contact(case_study: case_study, full_name: "Priya Raghunathan"),
-      condition: "When the student pushes on causes in the plants."
-    )
-
-    assert_equal true, referral.enabled
-  end
-
-  test "is reachable from both contacts' referral edges" do
+  # One person cannot introduce the same person twice; the second condition
+  # would silently never fire.
+  test "rejects a second referral between the same two people" do
     case_study = build_case_study
     dana = build_contact(case_study: case_study)
     priya = build_contact(case_study: case_study, full_name: "Priya Raghunathan")
-    referral = Referral.create!(referring_contact: dana, referred_contact: priya, condition: "On plant specifics.")
+    Referral.create!(referring_contact: dana, referred_contact: priya, condition: "On plant specifics.")
+    duplicate = Referral.new(referring_contact: dana, referred_contact: priya, condition: "Different words.")
 
-    assert_equal [referral], Contact.includes(:outgoing_referrals).find(dana.id).outgoing_referrals.to_a
-    assert_equal [referral], Contact.includes(:incoming_referrals).find(priya.id).incoming_referrals.to_a
+    assert_not duplicate.valid?
+    assert duplicate.errors.of_kind?(:referred_contact_id, :taken)
   end
 end

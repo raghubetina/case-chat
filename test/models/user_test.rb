@@ -20,24 +20,26 @@ require_relative "domain_test_helper"
 class UserTest < ActiveSupport::TestCase
   include DomainTestHelper
 
-  test "cannot be destroyed while cases name them as author" do
-    case_study = build_case_study
-    author = case_study.author
+  # A case without its author is unownable, so authoring blocks deletion while
+  # being a student does not.
+  should have_many(:authored_cases).class_name("CaseStudy")
+    .with_foreign_key("author_id").dependent(:restrict_with_error)
+  should have_many(:enrollments).dependent(:destroy)
 
-    assert_not author.destroy
-    assert author.errors.of_kind?(:base, :"restrict_dependent_destroy.has_many")
-    assert User.exists?(author.id)
+  should validate_presence_of(:full_name)
+  should validate_presence_of(:email)
+
+  test "normalizes email to trimmed lowercase" do
+    user = User.create!(full_name: "Jordan Lin", email: "  Jordan@Example.Test ", status: 2)
+
+    assert_equal "jordan@example.test", user.email
   end
 
-  test "destroys enrollments and their threads with it" do
-    conversation = build_conversation
-    student = conversation.enrollment.user
-    build_message(conversation: conversation)
+  test "rejects a duplicate email regardless of case" do
+    build_user.update!(email: "jordan@example.test")
+    duplicate = User.new(full_name: "Other", email: "JORDAN@example.test", status: 2)
 
-    student.destroy!
-
-    assert_equal 0, Enrollment.count
-    assert_equal 0, Conversation.count
-    assert_equal 0, Message.count
+    assert_not duplicate.valid?
+    assert duplicate.errors.of_kind?(:email, :taken)
   end
 end

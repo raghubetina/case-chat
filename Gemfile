@@ -133,6 +133,15 @@ group :development do
 end
 
 group :test do
+  # Declarations (validations, associations, dependent:) are Rails' behaviour,
+  # not ours. One matcher line states the declaration and goes red if it is
+  # removed, instead of a hand-rolled test per attribute that mostly re-proves
+  # that Active Record works.
+  gem "shoulda-matchers"
+
+  # The `should` class macro that lets a matcher be a one-line declaration.
+  gem "shoulda-context"
+
   # Every system-test page visit gets an axe-core WCAG audit.
   gem "capybara_accessibility_audit"
 

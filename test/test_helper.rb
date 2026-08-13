@@ -3,7 +3,16 @@ require_relative "../config/environment"
 require "rails/test_help"
 require "webmock/minitest"
 require "n_plus_one_control/minitest"
+require "shoulda-context"
+require "shoulda-matchers"
 require_relative "support/webmock_network_policy"
+
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :minitest
+    with.library :rails
+  end
+end
 
 # No test may touch the network. The Dev Container's browser is the one remote
 # exception, restricted to its configured host, HTTP, and Selenium's port.

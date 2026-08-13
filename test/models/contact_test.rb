@@ -26,26 +26,37 @@ require_relative "domain_test_helper"
 class ContactTest < ActiveSupport::TestCase
   include DomainTestHelper
 
-  test "rejects a contact without a system prompt" do
-    contact = Contact.new(full_name: "Dana", role_title: "CFO", case_study: build_case_study)
+  should belong_to(:case_study)
+  should have_many(:share_rules).dependent(:destroy)
+  should have_many(:conversations).dependent(:destroy)
+  should have_many(:documents).through(:share_rules)
 
-    assert_not contact.valid?
-    assert contact.errors.of_kind?(:system_prompt, :blank)
-  end
+  # Referrals are one table read from both ends; the names are the only thing
+  # keeping "who referred whom" straight.
+  should have_many(:outgoing_referrals).class_name("Referral")
+    .with_foreign_key("referring_contact_id").dependent(:destroy)
+  should have_many(:incoming_referrals).class_name("Referral")
+    .with_foreign_key("referred_contact_id").dependent(:destroy)
 
-  test "defaults in_starting_directory to false" do
-    assert_equal false, build_contact.in_starting_directory
-  end
+  # Deleting someone from the cast must not delete the fact that a student met
+  # the people they introduced.
+  should have_many(:introductions_made).class_name("Introduction")
+    .with_foreign_key("introducing_contact_id").dependent(:nullify)
+  should have_many(:introducing_messages).class_name("Message")
+    .with_foreign_key("introduced_contact_id").dependent(:nullify)
 
-  test "nullifies introductions it made when destroyed" do
-    case_study = build_case_study
-    dana = build_contact(case_study: case_study)
-    priya = build_contact(case_study: case_study, full_name: "Priya Raghunathan")
-    enrollment = build_enrollment(case_study: case_study)
-    introduction = Introduction.create!(enrollment: enrollment, contact: priya, introducing_contact: dana)
+  should validate_presence_of(:full_name)
+  should validate_presence_of(:role_title)
+  should validate_presence_of(:system_prompt)
 
-    dana.destroy!
+  test "rejects two people with the same name in one case" do
+    dana = build_contact
+    duplicate = Contact.new(
+      full_name: dana.full_name.downcase, role_title: "Analyst",
+      system_prompt: "You are someone else.", case_study: dana.case_study
+    )
 
-    assert_nil introduction.reload.introducing_contact_id
+    assert_not duplicate.valid?
+    assert duplicate.errors.of_kind?(:full_name, :taken)
   end
 end

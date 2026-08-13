@@ -7,13 +7,12 @@
     own header for these screens — the rail below IS the header. %>
 <% content_for :shell, true %>
 
-<div class="flex h-dvh flex-col" data-controller="drawer"
-     data-action="turbo:before-visit->drawer#closeOnNavigate">
+<div class="flex h-dvh flex-col" data-controller="drawer">
 
   <div role="search" class="flex shrink-0 items-center bg-rail py-2 pl-4 md:pl-0">
     <div class="hidden w-[272px] shrink-0 md:block"></div>
 
-    <%= form_with url: search_url, method: :get, data: {turbo_action: "advance"},
+    <%= form_with url: search_url, method: :get,
           class: "flex w-full flex-1 items-center gap-2 rounded-md border border-railline px-3 py-2",
           style: "background:color-mix(in srgb, var(--color-railink) 14%, transparent); border-color:color-mix(in srgb, var(--color-railink) 45%, transparent)" do |form| %>
       <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="shrink-0 text-railink">
