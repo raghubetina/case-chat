@@ -107,8 +107,11 @@ class AuthenticatedPagesTest < ApplicationSystemTestCase
 
   private
 
+  # Two homes for the theme picker: its own dropdown in the rail header on
+  # shell-less pages, and inside the account menu on workspace panes. Either
+  # way the theme controller's first button is the trigger.
   def pick_theme(name)
-    find("[data-controller='theme'] button[aria-label='#{I18n.t("nav.theme.label")}']").click
+    find("[data-controller='theme'] button", match: :first).click
     find("[data-theme-name-param='#{name}']").click
   end
 end

@@ -1,21 +1,29 @@
 module Author
   class CasesController < BaseController
+    # As on the student side, the switcher is the list. With cases you land in
+    # one; without any, this is the only authoring screen that has no shell.
     def index
-      @cases = authorized_scope(CaseStudy.all, as: :authored).order(:title)
+      first = authored_cases.first
+      redirect_to edit_author_case_path(first) if first
     end
 
+    # Drawn inside the shell of whichever case you were last in, the way the
+    # switcher implies — you are adding a case to a set, not leaving the app.
     def new
       authorize! CaseStudy, to: :new?
-      @case_study = CaseStudy.new(author: current_user, join_code: suggested_code)
+      @case_study = authored_cases.first
+      @new_case = CaseStudy.new(author: current_user, join_code: suggested_code)
     end
 
     def create
-      @case_study = CaseStudy.new(case_params.merge(author: current_user))
-      authorize! @case_study, to: :create?
+      @new_case = CaseStudy.new(case_params.merge(author: current_user))
+      authorize! @new_case, to: :create?
 
-      if @case_study.save
-        redirect_to edit_author_case_path(@case_study), notice: t("author.cases.created")
+      if @new_case.save
+        redirect_to edit_author_case_path(@new_case), notice: t("author.cases.created")
       else
+        # @case_study is the shell's case, not the one being created.
+        @case_study = authored_cases.first
         render :new, status: :unprocessable_content
       end
     end

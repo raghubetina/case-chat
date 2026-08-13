@@ -1,33 +1,13 @@
 <% content_for :title, t("author.cases.index_title") %>
 
-<div class="mx-auto flex max-w-[880px] flex-col gap-8 py-10">
-  <header class="flex flex-wrap items-end justify-between gap-4">
-    <div class="flex flex-col gap-2">
-      <span class="kick text-xs text-accent"><%= t("author.cases.author_label") %></span>
-      <h1 class="font-head text-xl font-semibold"><%= t("author.cases.index_title") %></h1>
-    </div>
-    <%= link_to t("author.cases.new"), new_author_case_path, class: "btn btn-primary" %>
-  </header>
-
-  <div class="flex flex-col">
-    <% @cases.each do |case_study| %>
-      <div class="flex flex-wrap items-center gap-3 border-b border-line py-3">
-        <span class="flex min-w-0 flex-1 flex-col">
-          <%= link_to case_study.title, edit_author_case_path(case_study),
-                class: "truncate text-base font-medium link link-hover" %>
-          <span class="truncate text-base text-mute"><%= case_study.course %></span>
-        </span>
-        <span class="kick shrink-0 rounded-md <%= case_study.published? ? "bg-soft text-accent" : "border border-line text-mute" %> px-2 py-1 text-xs">
-          <%= case_study.published? ? t("author.cases.published_badge") : t("author.cases.draft_badge") %>
-        </span>
-        <span class="kick shrink-0 font-mono text-xs text-faint"><%= case_study.join_code %></span>
-      </div>
-    <% end %>
-    <% if @cases.empty? %>
-      <div class="rounded-lg border border-dashed border-line bg-surface px-6 py-12 text-center">
-        <p class="text-lg font-semibold"><%= t("author.cases.empty_heading") %></p>
-        <p class="mt-2 text-sm/6 text-mute"><%= t("author.cases.empty_body") %></p>
-      </div>
-    <% end %>
+<%# Only reached with nothing authored — the controller redirects into the shell
+    otherwise. The sidebar's switcher is the list of cases. %>
+<div class="mx-auto flex max-w-[640px] flex-col gap-8 py-10">
+  <div class="flex flex-col gap-2">
+    <span class="kick text-xs text-accent"><%= t("author.cases.author_label") %></span>
+    <h1 class="font-head text-xl font-semibold"><%= t("author.cases.empty_heading") %></h1>
+    <p class="max-w-prose text-base text-mute"><%= t("author.cases.empty_body") %></p>
   </div>
+
+  <div><%= link_to t("author.cases.new"), new_author_case_path, class: "btn btn-primary" %></div>
 </div>

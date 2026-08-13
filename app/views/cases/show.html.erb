@@ -25,7 +25,7 @@
           <% end %>
 
           <div class="@max-[380px]:flex-col @max-[380px]:items-stretch mt-auto flex items-center justify-between gap-3 border-t border-line pt-3">
-            <span class="text-base text-faint"><%= message_summary(conversation) %></span>
+            <span class="text-base text-faint"><%= message_summary(conversation, @message_counts[conversation&.id].to_i) %></span>
             <% if conversation %>
               <%= link_to t("cases.resume"), thread_path(conversation), class: "btn btn-outline btn-sm" %>
             <% else %>

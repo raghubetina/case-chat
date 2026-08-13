@@ -1,0 +1,16 @@
+<%# The only way into a case. Rendered as a pane when the student already has
+    one, and as the whole page when this is their first. %>
+<div class="flex flex-col gap-3">
+  <span class="kick text-xs text-accent"><%= t("cases.join.heading") %></span>
+  <p class="max-w-prose text-base text-mute"><%= t("cases.join.note") %></p>
+</div>
+
+<%= form_with url: join_cases_path, method: :post, class: "flex flex-wrap items-end gap-3" do |form| %>
+  <div class="flex flex-col gap-2">
+    <%= form.label :join_code, t("cases.join.label"), class: "kick text-xs text-mute" %>
+    <%= form.text_field :join_code, required: true, placeholder: "CALDER-04",
+          autocomplete: "off", autocapitalize: "characters", autofocus: true,
+          class: "input input-bordered w-full font-mono" %>
+  </div>
+  <%= form.submit t("cases.join.action"), class: "btn btn-primary" %>
+<% end %>

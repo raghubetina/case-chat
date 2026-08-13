@@ -7,11 +7,20 @@ class CasesController < ApplicationController
   before_action :authenticate
   before_action :load_case, only: %i[show background assignment files collected search]
 
+  # There is no case list any more: the sidebar's switcher is the list. If you
+  # are in a case, this drops you into the one you were most recently given; if
+  # you are not, it is the only screen in the student app with no shell, because
+  # there is no case to draw one around.
   def index
-    @enrollments = authorized_scope(Enrollment.all)
-      .where(user_id: current_user.id)
-      .includes(:case_study)
-      .newest_first
+    newest = Enrollment.where(user_id: current_user.id).newest_first.first
+    redirect_to case_path(newest.case_study_id) if newest
+  end
+
+  # Joining is a pane when you already have a case to keep the shell around,
+  # and a bare page when this is your first.
+  def new_join
+    current = Enrollment.includes(case_study: :author).where(user_id: current_user.id).newest_first.first
+    load_workspace(current) if current
   end
 
   # The directory pane: everyone this run has met.
@@ -54,7 +63,7 @@ class CasesController < ApplicationController
     case_study = CaseStudy.find_by_join_code(params[:join_code])
 
     if case_study.nil?
-      redirect_to cases_path, alert: t("cases.join.unknown_code")
+      redirect_to new_join_cases_path, alert: t("cases.join.unknown_code")
       return
     end
 

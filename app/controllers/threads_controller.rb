@@ -7,8 +7,11 @@ class ThreadsController < ApplicationController
   before_action :authenticate
 
   def show
+    # ConversationPolicy#show? reaches for contact.case_study to decide whether
+    # you are the author, and `own?` short-circuits past it for the student —
+    # so leaving that path lazy only breaks for the author reading a thread.
     @conversation = Conversation
-      .includes(:contact, enrollment: {case_study: :author})
+      .includes({contact: :case_study}, {enrollment: {case_study: :author}})
       .find(params[:id])
     authorize! @conversation
 

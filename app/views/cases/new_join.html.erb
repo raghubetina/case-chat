@@ -1,0 +1,19 @@
+<% content_for :title, t("cases.join.heading") %>
+
+<% if @case_study %>
+  <%= render layout: "shared/shell", locals: student_shell do %>
+    <%= render "shared/pane_header", title: t("cases.join.heading") %>
+
+    <div class="scroll-y flex-1 px-4 py-6">
+      <div class="mx-auto flex w-full max-w-col flex-col gap-6">
+        <%= render "cases/join_form" %>
+      </div>
+    </div>
+  <% end %>
+<% else %>
+  <%# First case: there is no shell to put this in yet. %>
+  <div class="mx-auto flex max-w-[640px] flex-col gap-6 py-10">
+    <h1 class="font-head text-xl font-semibold"><%= t("cases.index.empty_heading") %></h1>
+    <%= render "cases/join_form" %>
+  </div>
+<% end %>

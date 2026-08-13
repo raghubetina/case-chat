@@ -17,10 +17,8 @@ module DirectoryHelper
     end
   end
 
-  def message_summary(conversation)
+  def message_summary(conversation, count)
     return t("threads.summary.not_contacted") if conversation.nil?
-
-    count = conversation.messages.size
     return t("threads.summary.new_contact") if count.zero?
 
     t("threads.summary.messages", count: count)

@@ -1,0 +1,25 @@
+<%= form_with model: @new_case, url: author_cases_path, class: "flex flex-col gap-6" do |form| %>
+  <% if @new_case.errors.any? %>
+    <div class="alert alert-error" role="alert">
+      <ul class="list-disc pl-5">
+        <% @new_case.errors.full_messages.each do |message| %><li><%= message %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="flex flex-col gap-2">
+    <%= form.label :title, t("author.cases.fields.title"), class: "kick text-xs text-mute" %>
+    <%= form.text_field :title, required: true, autofocus: true, class: "input input-bordered w-full" %>
+  </div>
+  <div class="flex flex-col gap-2">
+    <%= form.label :course, t("author.cases.fields.course"), class: "kick text-xs text-mute" %>
+    <%= form.text_field :course, class: "input input-bordered w-full" %>
+  </div>
+  <div class="flex flex-col gap-2">
+    <%= form.label :join_code, t("author.cases.fields.join_code"), class: "kick text-xs text-mute" %>
+    <%= form.text_field :join_code, class: "input input-bordered w-full font-mono" %>
+    <p class="text-sm text-mute"><%= t("author.cases.fields.join_code_note") %></p>
+  </div>
+
+  <div><%= form.submit t("author.cases.create"), class: "btn btn-primary" %></div>
+<% end %>

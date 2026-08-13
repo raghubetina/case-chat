@@ -37,7 +37,8 @@ class StudentLoopTest < ApplicationSystemTestCase
     fill_in "email", with: user.email
     fill_in "password", with: CaseSeeder::Vesta::PASSWORD
     find("form input[type=submit], form button[type=submit]").click
-    assert_text I18n.t("cases.index.heading")
+    # Signing in lands you in your case, not on a list of them.
+    assert_selector "#workspace-sidebar", text: @case_study.title
   end
 
   def open_thread_with(contact)
@@ -154,6 +155,8 @@ class StudentLoopTest < ApplicationSystemTestCase
   end
 
   test "the signed-out landing page offers a way in" do
+    # Sign out lives in the rail's account menu now, not the header.
+    find("[data-controller='theme'] button", match: :first).click
     click_on I18n.t("nav.sign_out")
     visit "/"
 
@@ -162,9 +165,10 @@ class StudentLoopTest < ApplicationSystemTestCase
     assert_no_text "It works."
   end
 
-  test "a signed-in visitor is sent to their cases rather than the landing page" do
+  test "a signed-in visitor is sent into their case rather than the landing page" do
     visit "/"
 
-    assert_current_path cases_path
+    # /cases holds no list any more; it forwards to the case you were last in.
+    assert_current_path case_path(@case_study)
   end
 end

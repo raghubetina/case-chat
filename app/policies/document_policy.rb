@@ -48,11 +48,4 @@ class DocumentPolicy < ApplicationPolicy
       ).select(:id)
     )
   end
-
-  # Parents you may attach new authoring records to.
-  relation_scope(:authored) do |relation|
-    next relation.none unless signed_in?
-
-    relation.where(case_study_id: CaseStudy.where(author_id: user.id).select(:id))
-  end
 end

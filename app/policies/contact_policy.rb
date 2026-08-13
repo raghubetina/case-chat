@@ -13,10 +13,6 @@ class ContactPolicy < ApplicationPolicy
 
   def destroy? = author_of?(record.case_study)
 
-  # The system prompt, and the fact of who a contact can refer to, are authoring
-  # surfaces. A student who could read them would be handed the case's map.
-  def read_system_prompt? = author_of?(record.case_study)
-
   relation_scope do |relation|
     next relation.none unless signed_in?
 
@@ -43,12 +39,5 @@ class ContactPolicy < ApplicationPolicy
       contact_id: record.id,
       enrollment_id: Enrollment.where(user_id: user.id, case_study_id: record.case_study_id).select(:id)
     )
-  end
-
-  # Parents you may attach new authoring records to.
-  relation_scope(:authored) do |relation|
-    next relation.none unless signed_in?
-
-    relation.where(case_study_id: CaseStudy.where(author_id: user.id).select(:id))
   end
 end

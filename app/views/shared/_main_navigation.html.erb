@@ -4,7 +4,7 @@
 <% signed_in = current_user.present? %>
 <% return unless signed_in %>
 
-<nav aria-label="<%= t("foundation_domain.navigation.label") %>" class="flex items-center gap-1">
+<nav aria-label="<%= t("nav.label") %>" class="flex items-center gap-1">
   <% student = controller_path == "cases" || controller_path.start_with?("threads") %>
   <% authoring = controller_path.start_with?("author/") %>
 

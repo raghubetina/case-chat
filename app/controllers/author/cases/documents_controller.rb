@@ -3,7 +3,8 @@ module Author
     class DocumentsController < Author::BaseController
       def index
         @case_study = authored_case!
-        @documents = Document.where(case_study_id: @case_study.id).order(given_at_start: :desc, file_name: :asc)
+        @documents = Document.where(case_study_id: @case_study.id)
+          .with_attached_file.order(given_at_start: :desc, file_name: :asc)
         @document = Document.new(case_study: @case_study)
       end
 
@@ -28,7 +29,7 @@ module Author
 
       def destroy
         @case_study = authored_case!
-        document = Document.where(case_study_id: @case_study.id).find(params[:id])
+        document = Document.includes(:case_study).where(case_study_id: @case_study.id).find(params[:id])
         authorize! document, to: :destroy?
         document.destroy!
 

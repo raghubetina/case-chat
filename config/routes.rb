@@ -30,7 +30,12 @@ Rails.application.routes.draw do
   # `show` is the directory; the rest are the other panes of the same shell, so
   # each one is a real URL you can link to, reload, and go back to.
   resources :cases, only: %i[index show] do
-    collection { post :join }
+    collection do
+      # Same path, two verbs: the form is a pane of the shell, submitting it
+      # enrolls you.
+      get "join", to: "cases#new_join", as: :new_join
+      post "join", to: "cases#join", as: :join
+    end
     member do
       post :restart
       get :background

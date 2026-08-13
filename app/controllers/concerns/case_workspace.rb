@@ -17,7 +17,19 @@ module CaseWorkspace
     @enrollment = enrollment
     @case_study = enrollment.case_study
     @directory = directory_for(enrollment)
-    @threads_by_contact = enrollment.conversations.includes(:messages).index_by(&:contact_id)
+    # Queried rather than reached through enrollment.conversations: that is an
+    # unloaded association, and reading it here is exactly the lazy load
+    # strict_loading exists to stop.
+    @threads_by_contact = Conversation.where(enrollment_id: enrollment.id).index_by(&:contact_id)
+
+    # Counted in one grouped query rather than by loading every message to call
+    # .size on it. Note strict_loading does NOT protect this: .size on an
+    # unloaded association issues a COUNT instead of loading the target, so
+    # dropping the eager-load here degrades silently into an N+1 of COUNTs.
+    @message_counts = Message
+      .where(conversation_id: enrollment.conversations.select(:id))
+      .group(:conversation_id)
+      .count
   end
 
   # The directory is what this run has earned: everyone in the starting
@@ -35,8 +47,11 @@ module CaseWorkspace
 
   # Handed to everyone at the start.
   def case_files
+    # with_attached_file: every row asks the document whether it is downloadable,
+    # which is a blob lookup each without it.
     @case_files ||= Document
       .where(case_study_id: @case_study.id, given_at_start: true)
+      .with_attached_file
       .order(file_name: :asc)
   end
 
@@ -46,7 +61,7 @@ module CaseWorkspace
     @collected_documents ||= DocumentShare
       .joins(:message)
       .where(messages: {conversation_id: @enrollment.conversations.select(:id)})
-      .includes(:document, message: {conversation: :contact})
+      .includes({document: {file_attachment: :blob}}, {message: {conversation: :contact}})
       .order("messages.sent_at DESC")
   end
 

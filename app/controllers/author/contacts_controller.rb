@@ -27,7 +27,9 @@ module Author
 
     def update
       @case_study = authored_case!
-      @contact = Contact.where(case_study_id: @case_study.id).find(params[:id])
+      # ContactPolicy#update? reads record.case_study, so leaving it lazy turns
+      # the cast editor's Save into a strict_loading 500.
+      @contact = Contact.includes(:case_study).where(case_study_id: @case_study.id).find(params[:id])
       authorize! @contact, to: :update?
 
       if @contact.update(contact_params)
@@ -40,7 +42,7 @@ module Author
 
     def destroy
       @case_study = authored_case!
-      contact = Contact.where(case_study_id: @case_study.id).find(params[:id])
+      contact = Contact.includes(:case_study).where(case_study_id: @case_study.id).find(params[:id])
       authorize! contact, to: :destroy?
       contact.destroy!
 

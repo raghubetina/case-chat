@@ -31,7 +31,8 @@ class StudentExperienceTest < ActionDispatch::IntegrationTest
       post join_cases_path, params: {join_code: "NOPE-99"}
     end
 
-    assert_redirected_to cases_path
+    # Back to the form you mistyped, not to a case list that no longer exists.
+    assert_redirected_to new_join_cases_path
   end
 
   test "the directory starts with only the people you begin with" do
