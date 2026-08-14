@@ -41,6 +41,19 @@ services:
       - fromGroup: case-chat-claude-runtime
       # Secrets set by hand in the dashboard; see the note on the group below.
       - fromGroup: case-chat
+      # DATABASE_URL and REDIS_URL sit on each service rather than in the group:
+      # fromDatabase and fromService resolve a connection string for a service,
+      # and Render rejects them inside an envVarGroup ("must have a key and
+      # value") because a group has no service to resolve them against.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: case-chat-claude-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: case-chat-claude-cable
+          type: keyvalue
+          property: connectionString
       - key: PORT
         value: "80"
       # Standard has room for a real cluster; each worker gets its own threads.
@@ -76,6 +89,19 @@ services:
     envVars:
       - fromGroup: case-chat-claude-runtime
       - fromGroup: case-chat
+      # DATABASE_URL and REDIS_URL sit on each service rather than in the group:
+      # fromDatabase and fromService resolve a connection string for a service,
+      # and Render rejects them inside an envVarGroup ("must have a key and
+      # value") because a group has no service to resolve them against.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: case-chat-claude-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: case-chat-claude-cable
+          type: keyvalue
+          property: connectionString
       # A reply job spends most of its life waiting on the model, so threads
       # are cheap here; this is IO-bound, not CPU-bound.
       - key: JOB_CONCURRENCY
@@ -100,15 +126,6 @@ envVarGroups:
       # URLs minted by one are rejected by the other.
       - key: SECRET_KEY_BASE
         generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: case-chat-claude-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: case-chat-claude-cable
-          type: keyvalue
-          property: connectionString
       # Which model answers as a stakeholder: anthropic | openai.
       #
       # openai because the reply has to read as live typing. Measured on one

@@ -53,14 +53,39 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     assert_equal "keyvalue", cable.fetch("type")
     assert_equal "noeviction", cable.fetch("maxmemoryPolicy"),
       "evicting pub/sub state would drop stream messages silently"
-    assert_equal "case-chat-claude-cable", @group_vars.fetch("REDIS_URL").dig("fromService", "name")
+    [@web, @worker].each do |service|
+      wired = service.fetch("envVars").find { |entry| entry["key"] == "REDIS_URL" }
+
+      assert_equal "case-chat-claude-cable", wired&.dig("fromService", "name"),
+        "#{service.fetch("name")} must resolve the Key Value instance"
+    end
   end
 
   test "the database is managed and wired to both services" do
     database = @blueprint.fetch("databases").first
 
     assert_equal "case-chat-claude-db", database.fetch("name")
-    assert_equal "case-chat-claude-db", @group_vars.fetch("DATABASE_URL").dig("fromDatabase", "name")
+
+    [@web, @worker].each do |service|
+      wired = service.fetch("envVars").find { |entry| entry["key"] == "DATABASE_URL" }
+
+      assert_equal "case-chat-claude-db", wired&.dig("fromDatabase", "name"),
+        "#{service.fetch("name")} must resolve the managed database"
+    end
+  end
+
+  # fromDatabase and fromService resolve a connection string for a service, and
+  # Render rejects them inside an envVarGroup — a group has no service to
+  # resolve against. The dashboard says only "must have a key and value", by
+  # index, which is a slow thing to learn while creating a blueprint.
+  test "no group entry resolves something only a service can resolve" do
+    @blueprint.fetch("envVarGroups").each do |group|
+      group.fetch("envVars").each do |entry|
+        assert entry.key?("value") || entry.key?("generateValue") || entry.key?("sync"),
+          "#{group.fetch("name")}/#{entry["key"]} must carry value, generateValue, or sync — " \
+          "fromDatabase and fromService only work on a service"
+      end
+    end
   end
 
   # Secrets live in the hand-managed `case_chat` group, so most are simply not
