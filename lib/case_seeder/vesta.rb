@@ -1,12 +1,11 @@
 module CaseSeeder
-  class Vesta
+  class Vesta < Base
     JOIN_CODE = "VESTA-01".freeze
-    PASSWORD = "case chat demo passphrase".freeze
 
-    # The real case package, if it is sitting next to the app. Seeding works
-    # without it — documents fall back to metadata only — so a fresh clone is
-    # not blocked on having the source material.
-    SOURCE_DIR = Rails.root.join("../seed_data/Restaurant take outs/Vesta by Claude")
+    # The student-safe files ship with the app. They used to be read from the
+    # case package sitting next to the repo, which worked on a laptop and
+    # seeded documents with no bytes behind them anywhere else.
+    SOURCE_DIR = SEED_FILES.join("vesta")
 
     def call
       author = upsert_user("Rachel Okonkwo", "rachel@example.test")
@@ -15,38 +14,14 @@ module CaseSeeder
       case_study = upsert_case(author)
       contacts = upsert_contacts(case_study)
       documents = upsert_documents(case_study)
-      wire_referrals(contacts)
-      wire_share_rules(contacts, documents)
+      wire_referrals(referral_graph(contacts))
+      wire_share_rules(share_rules(contacts, documents))
       Enrollment.find_or_create_by!(user: student, case_study: case_study)
 
       report(case_study, student)
     end
 
     private
-
-    def upsert_user(full_name, email, program: nil)
-      user = User.find_or_initialize_by(email: email)
-      user.assign_attributes(full_name: full_name, program: program, status: 2)
-      user.save!
-      ensure_password(user)
-      user
-    end
-
-    # Rodauth owns password hashes; seeding one directly keeps the demo
-    # accounts usable without walking the email verification flow.
-    def ensure_password(user)
-      exists = ActiveRecord::Base.connection.select_value(
-        ActiveRecord::Base.sanitize_sql(["SELECT 1 FROM account_password_hashes WHERE id = ?", user.id])
-      )
-      return if exists
-
-      hash = BCrypt::Password.create(PASSWORD)
-      ActiveRecord::Base.connection.execute(
-        ActiveRecord::Base.sanitize_sql(
-          ["INSERT INTO account_password_hashes (id, password_hash) VALUES (?, ?)", user.id, hash]
-        )
-      )
-    end
 
     def upsert_case(author)
       case_study = CaseStudy.find_or_initialize_by(join_code: JOIN_CODE)
@@ -242,7 +217,7 @@ module CaseSeeder
         tickets: ["data_kitchen_tickets.csv", "One row per ticket: fired and bumped times only. The printer stamps nothing in between.", true, "data_kitchen_tickets.csv"],
         checks: ["data_checks.csv", "One row per table: covers, check, tip, minutes at table.", true, "data_checks.csv"],
         forecast: ["data_takeout_forecast.csv", "The platform's projected order volume by half hour.", true, "data_takeout_forecast.csv"],
-        case_pdf: ["Vesta_case.pdf", "The case as handed out, five pages.", true, "Vesta case.pdf"],
+        case_pdf: ["Vesta_case.pdf", "The case as handed out, five pages.", true, "Vesta_case.pdf"],
         loyalty: ["exhibit_5_loyalty_returns.csv", "Two years of loyalty-programme returns for parties turned away at the door.", false, nil],
         platform_terms: ["platform_terms.pdf", "The delivery platform's merchant agreement: commission, quoted ready time, refund and ranking rules.", false, nil]
       }
@@ -250,76 +225,30 @@ module CaseSeeder
       specs.transform_values do |(file_name, description, given_at_start, source)|
         document = Document.find_or_initialize_by(case_study: case_study, file_name: file_name)
         document.assign_attributes(description: description, given_at_start: given_at_start)
-        attach_source(document, source) unless document.file.attached?
+        attach_source(document, SOURCE_DIR.join(source)) unless document.file.attached? || source.blank?
         document.save!
         document
-      end
-    end
-
-    def attach_source(document, source)
-      return if source.blank?
-
-      path = SOURCE_DIR.join(source)
-      return unless File.exist?(path)
-
-      document.file.attach(
-        io: File.open(path),
-        filename: document.file_name,
-        content_type: content_type_for(path)
-      )
-    end
-
-    def content_type_for(path)
-      case File.extname(path).downcase
-      when ".pdf" then "application/pdf"
-      when ".csv" then "text/csv"
-      when ".xlsx" then "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      when ".docx" then "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-      else "text/plain"
       end
     end
 
     # The referral graph is the case's own structure. Denny is reachable only
     # through Marco, and only after Marco concedes he does not know what his own
     # kitchen does — which is the case's central gap.
-    def wire_referrals(contacts)
+    def referral_graph(contacts)
       [
         [contacts[:june], contacts[:marco], "When the student asks what the kitchen actually does when a table and a bag are both waiting, or about capacity on the line."],
         [contacts[:june], contacts[:tessa], "When the student asks about the door, the quoted waits, or the parties who walk away."],
         [contacts[:june], contacts[:owen], "When the student asks about the platform's terms, the commission, or the forecast."],
         [contacts[:marco], contacts[:expediter], "Only after admitting you do not know what happens at eight o'clock on a Friday. This is the handoff the whole case turns on."],
         [contacts[:tessa], contacts[:expediter], "Only if the student asks who decides what the kitchen works on next."]
-      ].each do |from, to, condition|
-        referral = Referral.find_or_initialize_by(referring_contact: from, referred_contact: to)
-        referral.assign_attributes(condition: condition, enabled: true)
-        referral.save!
-      end
+      ]
     end
 
-    def wire_share_rules(contacts, documents)
+    def share_rules(contacts, documents)
       [
         [contacts[:june], documents[:loyalty], "Once the student asks what happens to the parties who are turned away, or raises the cost of losing them."],
         [contacts[:owen], documents[:platform_terms], "Once the student asks about the commission, the quoted ready time, or what happens to a late order."]
-      ].each do |contact, document, condition|
-        rule = ShareRule.find_or_initialize_by(contact: contact, document: document)
-        rule.assign_attributes(condition: condition)
-        rule.save!
-      end
+      ]
     end
-
-    # A seeder's whole job is to tell you what it made and how to sign in.
-    # standard:disable Rails/Output
-    def report(case_study, student)
-      puts "Seeded #{case_study.title}"
-      puts "  join code: #{case_study.join_code}"
-      puts "  author:    #{case_study.author.email}"
-      puts "  student:   #{student.email}"
-      puts "  password:  #{PASSWORD}"
-      puts "  cast:      #{case_study.contacts.count} (#{case_study.contacts.where(in_starting_directory: true).count} in the starting directory)"
-      puts "  referrals: #{Referral.where(referring_contact_id: case_study.contacts.select(:id)).count}"
-      attached = Document.where(case_study_id: case_study.id).count { |d| d.file.attached? }
-      puts "  documents: #{Document.where(case_study_id: case_study.id).count} (#{attached} with files)"
-    end
-    # standard:enable Rails/Output
   end
 end
