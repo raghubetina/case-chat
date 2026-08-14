@@ -1,6 +1,6 @@
 class ApplicationJob < ActiveJob::Base
-  # Solid Queue shares the primary database in the baseline, so jobs created in
-  # a transaction must not become visible before the records they reference.
+  # Solid Queue uses a separate database, so its writes cannot share the
+  # caller's transaction. Defer enqueues until referenced rows are committed.
   self.enqueue_after_transaction_commit = true
 
   # Automatically retry jobs that encountered a deadlock

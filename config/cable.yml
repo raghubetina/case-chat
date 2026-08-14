@@ -10,5 +10,9 @@ test:
 
 production:
   adapter: solid_cable
+  connects_to:
+    database:
+      writing: cable
   polling_interval: 0.1.seconds
   message_retention: 1.day
+  reconnect_attempts: [0, 1, 2, 5, 10, 30, 60, 120]

@@ -49,6 +49,9 @@ gem "rack-attack"
 group :production do
   # Hard request deadline so a wedged request cannot hold a Puma thread forever.
   gem "rack-timeout", require: "rack/timeout/base"
+
+  # Active Storage documents live outside ephemeral web and worker filesystems.
+  gem "aws-sdk-s3", "~> 1.0", require: false
 end
 
 # Reduces boot times through caching; required in config/boot.rb

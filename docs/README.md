@@ -18,7 +18,9 @@ domain, decisions and their rationale, and time-sensitive research.
 5. [`architecture/decisions/README.md`](architecture/decisions/README.md) — the
    accepted technical and product decisions.
 6. [`research/`](research/) — evidence that supports decisions and may need to
-   be refreshed.
+   be refreshed. Start UI work with
+   [`research/claude-design-audit.md`](research/claude-design-audit.md); it
+   records design intent, not implemented screens.
 
 For deployment and the inherited Rails shell, also read [`../DEPLOY.md`](../DEPLOY.md)
 and [`../FOUNDATION.md`](../FOUNDATION.md).

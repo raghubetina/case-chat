@@ -1,0 +1,13 @@
+production:
+  service: S3
+  public: false
+  access_key_id: <%= (ENV.fetch("OBJECT_STORAGE_ACCESS_KEY_ID").presence || raise(KeyError, "OBJECT_STORAGE_ACCESS_KEY_ID must not be blank")).to_json %>
+  secret_access_key: <%= (ENV.fetch("OBJECT_STORAGE_SECRET_ACCESS_KEY").presence || raise(KeyError, "OBJECT_STORAGE_SECRET_ACCESS_KEY must not be blank")).to_json %>
+  region: <%= (ENV.fetch("OBJECT_STORAGE_REGION").presence || raise(KeyError, "OBJECT_STORAGE_REGION must not be blank")).to_json %>
+  bucket: <%= (ENV.fetch("OBJECT_STORAGE_BUCKET").presence || raise(KeyError, "OBJECT_STORAGE_BUCKET must not be blank")).to_json %>
+<% unless ENV["OBJECT_STORAGE_ENDPOINT"].to_s.empty? %>
+  endpoint: <%= ENV.fetch("OBJECT_STORAGE_ENDPOINT").to_json %>
+  request_checksum_calculation: when_required
+  response_checksum_validation: when_required
+<% end %>
+  force_path_style: <%= ENV.fetch("OBJECT_STORAGE_FORCE_PATH_STYLE", "false") == "true" %>

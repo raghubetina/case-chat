@@ -30,8 +30,8 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Keep documents durable and available to both web and worker processes.
+  config.active_storage.service = :production
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
@@ -63,6 +63,9 @@ Rails.application.configure do
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = {database: {writing: :queue}}
+  config.solid_queue.preserve_finished_jobs = false
+  config.solid_queue.shutdown_timeout = 50.seconds
 
   # Production console opens in a rollback-everything sandbox unless --no-sandbox (fat-finger insurance).
   config.sandbox_by_default = true

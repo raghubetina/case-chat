@@ -23,9 +23,20 @@ class NativeLayoutSystemTest < ApplicationSystemTestCase
     visit "/"
 
     assert_selector 'body[data-hotwire-native-app="true"]'
-    assert_selector "header.navbar"
-    assert_no_selector ".navbar-start", visible: true
-    assert_no_selector ".navbar-center", visible: true
+    assert_selector "header.app-header"
+    assert_no_selector ".app-header__brand", visible: true
+    assert_no_selector ".app-header__nav", visible: true
     assert_selector "[data-controller='theme'][aria-label='#{I18n.t("nav.toggle_theme")}']"
+
+    right_edge_offset = page.evaluate_script(<<~JS)
+      (() => {
+        const headerElement = document.querySelector(".app-header");
+        const header = headerElement.getBoundingClientRect();
+        const toolbar = document.querySelector(".app-header__toolbar").getBoundingClientRect();
+        const padding = parseFloat(getComputedStyle(headerElement).paddingRight);
+        return Math.abs((header.right - padding) - toolbar.right);
+      })()
+    JS
+    assert_operator right_edge_offset, :<, 1
   end
 end

@@ -21,10 +21,7 @@ default: &default
     lock_timeout: 5s
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
-  # Puma threads PLUS the in-process Solid Queue threads (async mode) need headroom
-  # beyond the thread count, or jobs starve web requests for connections.
-  # DB_POOL overrides outright.
-  max_connections: <%= ENV.fetch("DB_POOL") { Integer(ENV.fetch("RAILS_MAX_THREADS", 3)) + 5 } %>
+  max_connections: <%= Integer(ENV.fetch("DB_POOL", ENV.fetch("RAILS_MAX_THREADS", "5")), 10) %>
   # Dev Containers/Codespaces run Postgres as a sibling service reached over TCP;
   # DB_HOST (set in .devcontainer/devcontainer.json) points at it. Unset elsewhere,
   # so local dev keeps the Unix socket and production keeps DATABASE_URL untouched.
@@ -102,6 +99,24 @@ test:
 # Production connects via DATABASE_URL alone (Render provides it). Partial YAML
 # keys merge UNDER the URL, so leftover username/password lines would leak into
 # any URL that omits them - keep this block URL-only.
+# Four logical databases can share one paid PostgreSQL instance. Separate
+# connections isolate schemas and migrations, not compute or failure domains.
 production:
-  <<: *default
-  url: <%= ENV["DATABASE_URL"] %>
+  primary:
+    <<: *default
+    url: <%= ENV["DATABASE_URL"] %>
+  cache:
+    <<: *default
+    url: <%= ENV["CACHE_DATABASE_URL"] %>
+    max_connections: <%= Integer(ENV.fetch("CACHE_DB_POOL", ENV.fetch("RAILS_MAX_THREADS", "5")), 10) %>
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    url: <%= ENV["QUEUE_DATABASE_URL"] %>
+    max_connections: <%= Integer(ENV.fetch("QUEUE_DB_POOL", "7"), 10) %>
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    url: <%= ENV["CABLE_DATABASE_URL"] %>
+    max_connections: <%= Integer(ENV.fetch("CABLE_DB_POOL", ENV.fetch("RAILS_MAX_THREADS", "5")), 10) %>
+    migrations_paths: db/cable_migrate

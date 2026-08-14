@@ -18,7 +18,7 @@
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%# Stamp the persisted theme before first paint (no flash of the wrong theme).
-        Untoggled = no stored value = follow the OS via daisyUI's --prefersdark.
+        Untoggled = no stored value = follow the OS via prefers-color-scheme.
         nonce: true keeps this inside the enforced CSP. %>
     <script nonce="<%= content_security_policy_nonce %>">
       const theme = localStorage.getItem("theme");
@@ -30,26 +30,26 @@
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
   </head>
 
-  <body class="min-h-screen bg-base-100" data-hotwire-native-app="<%= hotwire_native_app? %>">
-    <%= link_to t("nav.skip_to_content"), "#main-content", class: "sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-base-100 focus:p-3" %>
+  <body class="min-h-screen bg-surface" data-hotwire-native-app="<%= hotwire_native_app? %>">
+    <%= link_to t("nav.skip_to_content"), "#main-content", class: "sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-surface focus:p-3" %>
 
-    <header class="navbar bg-base-100 border-b border-base-300">
-      <div class="navbar-start hotwire-native-hidden">
-        <%= link_to t("app_name"), root_path, class: "btn btn-ghost text-lg" %>
+    <header class="app-header">
+      <div class="app-header__brand hotwire-native-hidden">
+        <%= link_to t("app_name"), root_path, class: "button button-ghost text-lg" %>
       </div>
-      <div class="navbar-center hotwire-native-hidden">
+      <div class="app-header__nav hotwire-native-hidden">
         <%= render "shared/main_navigation" %>
       </div>
-      <div class="navbar-end hotwire-native-toolbar">
+      <div class="app-header__toolbar hotwire-native-toolbar">
         <%# The single sanctioned theme knob:
             a two-state override; until first use the OS preference rules. %>
-        <label class="swap swap-rotate btn btn-ghost btn-circle" data-controller="theme" data-action="change->theme#toggle" aria-label="<%= t("nav.toggle_theme") %>">
-          <input type="checkbox" class="theme-controller" value="dark" data-theme-target="checkbox">
-          <svg class="swap-off size-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <label class="theme-toggle button button-ghost button-icon" data-controller="theme" data-action="change->theme#toggle" aria-label="<%= t("nav.toggle_theme") %>">
+          <input type="checkbox" class="theme-toggle__input" value="dark" data-theme-target="checkbox">
+          <svg class="theme-icon-light size-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="3.75" />
             <path stroke-linecap="round" d="M12 2.25v1.5m0 16.5v1.5M21.75 12h-1.5m-16.5 0h-1.5m16.64-6.89-1.06 1.06M6.17 17.83l-1.06 1.06m13.78 0-1.06-1.06M6.17 6.17 5.11 5.11" />
           </svg>
-          <svg class="swap-on size-6" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+          <svg class="theme-icon-dark size-6" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21.1 15.7A9.5 9.5 0 0 1 8.3 2.9 9.5 9.5 0 1 0 21.1 15.7Z" />
           </svg>
         </label>
