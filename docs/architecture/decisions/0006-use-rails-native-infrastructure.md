@@ -19,9 +19,13 @@ benefits more from fewer moving pieces than from speculative infrastructure.
   Rails Blocks may supply selected, source-owned UI patterns when useful.
 - Use Solid Queue for provider jobs, Solid Cache, and Solid Cable in separate
   logical PostgreSQL databases.
-- Store private case documents through Active Storage's S3 service. Configure
-  the bucket and credentials through the shared environment group; support a
-  custom endpoint and path-style URLs for S3-compatible providers.
+- Store prototype case documents through Active Storage's Cloudinary service,
+  under the `case-chat-codex` folder. Use authenticated delivery and signed
+  HTTPS URLs, with the single `CLOUDINARY_URL` in the shared environment group.
+  This is a prototype convenience, not equivalent to expiring private-object
+  URLs: the adapter ignores Rails' URL expiry and download-disposition options.
+- Disable Active Storage's default routes until a case-scoped, authorized
+  `CaseDocument` download controller owns delivery.
 - Run one Solid Queue service with an exact `ai` worker (five threads) and an
   exact `[mailers, default]` worker (two threads), configurable through
   `AI_JOB_THREADS` and `DEFAULT_JOB_THREADS`; do not let a wildcard worker
@@ -63,6 +67,11 @@ benefits more from fewer moving pieces than from speculative infrastructure.
   previously deployed worker in service.
 - Web and worker processes read the same durable documents instead of relying
   on either service's ephemeral local filesystem.
+- Unsigned Cloudinary delivery is blocked, but a copied signed delivery URL can
+  be reused. Revisit storage or proxy downloads through the application before
+  the prototype handles broadly distributed or sensitive materials.
+- The app exposes no generic Active Storage blob or direct-upload routes while
+  the authorized document controller and author upload flow remain unbuilt.
 - All services receive the same secrets. That is an intentional prototype
   convenience, not least-privilege isolation.
 - Rails Blocks is a source library, not a runtime design-system dependency.
@@ -70,16 +79,18 @@ benefits more from fewer moving pieces than from speculative infrastructure.
 ## Confirmation
 
 `DaisyuiRemovalTest`, `SolidAdapterTopologyTest`, `RenderBlueprintTest`,
-`DatabasePreparationTest`, `ProductionDatabaseTopologyTest`, and
-`ActiveStorageTopologyTest` cover removal of DaisyUI, separation of Solid
-adapter schemas, durable production document storage, the two exact worker
-queue assignments, bounded Cable reconnection, single-writer migration
-ownership including its no-override default, fail-loud logical-database
-separation, bounded rolling-deploy connection capacity, immediate cleanup of
-successful jobs without a scheduler, and absence of an in-Puma production
-worker. System coverage also checks the replacement shell's keyboard focus and
-intended alignment. These tests do not retest framework queue or S3 SDK
-behavior. CI checks `render.yaml` against Render's public JSON Schema;
+`DatabasePreparationTest`, `ProductionDatabaseTopologyTest`,
+`ActiveStorageTopologyTest`, and `ProductionCloudinaryConfigurationTest` cover
+removal of DaisyUI, separation of Solid adapter schemas, authenticated
+Cloudinary configuration, absence of generic Active Storage routes, the two
+exact worker queue assignments, bounded Cable reconnection, single-writer
+migration ownership including its no-override default, fail-loud
+logical-database separation, bounded rolling-deploy connection capacity,
+immediate cleanup of successful jobs without a scheduler, and absence of an
+in-Puma production worker. System coverage also checks the replacement shell's
+keyboard focus and intended alignment. These tests do not retest framework
+queue or Cloudinary network behavior. CI checks `render.yaml` against Render's
+public JSON Schema;
 `RenderBlueprintTest` covers app-specific cross-service references that static
 schema validation cannot. The official Render CLI remains an authenticated
 pre-launch check because its current semantic validator requires a workspace
@@ -88,12 +99,17 @@ and API credential.
 `bin/production-smoke` starts the worker gate against fresh, unprepared
 databases, proves that primary migrations alone cannot release it, lets the web
 prepare every database, and only then boots the web and worker. It also proves
-S3 adapter construction and both job lanes against PostgreSQL. The smoke
-deliberately does not call a remote object store.
+that production boot fails promptly without `CLOUDINARY_URL` while naming only
+the missing key, Cloudinary adapter construction, authenticated signing for PDF
+and raw files, and both job lanes against PostgreSQL. The smoke deliberately
+does not call the remote Cloudinary account. On 2026-08-14, the configured
+account separately passed disposable image, PDF, CSV, and DOCX upload/download
+byte comparisons and purge under `case-chat-codex`; repeat that canary before
+deploying a replacement or reconfigured account.
 
 ## Revisit when
 
 A measured requirement needs richer JavaScript bundling, Redis-specific data
 structures, more than five simultaneous provider streams, materially higher
-ordinary-job throughput, a non-S3 object-storage API, or tighter service-level
-secret isolation.
+ordinary-job throughput, revocable/expiring document URLs, stronger filename or
+download-disposition control, or tighter service-level secret isolation.

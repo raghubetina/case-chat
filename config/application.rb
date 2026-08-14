@@ -39,5 +39,9 @@ module CaseChat
     # Attachment processors belong to the schema-conditional upload layer.
     # Keep Rails' Active Storage substrate inert until that layer selects one.
     config.active_storage.variant_processor = :disabled
+
+    # Case-document downloads need parent-scoped authorization rather than
+    # generic signed-blob routes.
+    config.active_storage.draw_routes = false
   end
 end
