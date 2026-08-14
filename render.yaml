@@ -40,7 +40,7 @@ services:
     envVars:
       - fromGroup: case-chat-runtime
       # Secrets set by hand in the dashboard; see the note on the group below.
-      - fromGroup: case_chat
+      - fromGroup: case-chat
       - key: PORT
         value: "80"
       # Standard has room for a real cluster; each worker gets its own threads.
@@ -75,7 +75,7 @@ services:
     dockerCommand: ./bin/jobs
     envVars:
       - fromGroup: case-chat-runtime
-      - fromGroup: case_chat
+      - fromGroup: case-chat
       # A reply job spends most of its life waiting on the model, so threads
       # are cheap here; this is IO-bound, not CPU-bound.
       - key: JOB_CONCURRENCY
@@ -84,9 +84,8 @@ services:
         value: "12"
 
 # Two groups on purpose. This one is the blueprint's: wiring it can derive, and
-# values it generates. The other, `case_chat`, is managed by hand in the
-# dashboard and holds the secrets — RESPONDER, CLOUDINARY_URL, and the provider
-# keys. Nothing appears in both, because a key declared twice resolves to
+# values it generates. The other, `case-chat`, is managed by hand in the
+# dashboard and holds the secrets: CLOUDINARY_URL and the provider keys. Nothing appears in both, because a key declared twice resolves to
 # whichever group is listed last and that is not a thing to leave to ordering.
 envVarGroups:
   - name: case-chat-runtime
@@ -110,6 +109,15 @@ envVarGroups:
           name: case-chat-cable
           type: keyvalue
           property: connectionString
+      # Which model answers as a stakeholder: anthropic | openai.
+      #
+      # openai because the reply has to read as live typing. Measured on one
+      # prompt: OpenAI streams 252 text frames ~13ms apart, Anthropic 12 frames
+      # of ~104 characters ~704ms apart, which lands as visible slabs. Both
+      # adapters sit behind the same seam, so this is one value to flip — watch
+      # the [reply] cache_read lines before settling it.
+      - key: RESPONDER
+        value: openai
       # Host for mailer links.
       - key: APPLICATION_HOST
         sync: false

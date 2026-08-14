@@ -94,7 +94,7 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     [@web, @worker].each do |service|
       groups = service.fetch("envVars").filter_map { |entry| entry["fromGroup"] }
 
-      assert_includes groups, "case_chat",
+      assert_includes groups, "case-chat",
         "#{service.fetch("name")} would boot without the provider keys or CLOUDINARY_URL"
     end
   end
@@ -103,7 +103,7 @@ class RenderBlueprintTest < ActiveSupport::TestCase
   # not a thing to leave to ordering, so the blueprint declares none of them.
   test "the blueprint does not shadow the hand-managed group" do
     declared = @blueprint.fetch("envVarGroups").flat_map { |g| g.fetch("envVars").map { |e| e["key"] } }
-    hand_managed = %w[RESPONDER CLOUDINARY_URL ANTHROPIC_API_KEY OPENAI_API_KEY]
+    hand_managed = %w[CLOUDINARY_URL ANTHROPIC_API_KEY OPENAI_API_KEY]
 
     assert_empty declared & hand_managed,
       "these are set by hand in the dashboard; declaring them here makes the winner depend on group order"
