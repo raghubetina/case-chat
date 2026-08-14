@@ -24,4 +24,13 @@
   <div class="author-editor__panel">
     <%= render "form", case_record: @case, submit_label: t("author.cases.edit.submit") %>
   </div>
+
+  <section class="author-editor__next-step" aria-labelledby="stakeholder-workspace-heading">
+    <div>
+      <p class="author-eyebrow"><%= t("author.cases.edit.stakeholders_eyebrow") %></p>
+      <h2 id="stakeholder-workspace-heading"><%= t("author.cases.edit.stakeholders_heading") %></h2>
+      <p><%= t("author.cases.edit.stakeholders_lede") %></p>
+    </div>
+    <%= link_to t("author.cases.edit.manage_stakeholders"), author_case_stakeholders_path(@case), class: "button button-ghost author-editor__next-step-action" %>
+  </section>
 </section>

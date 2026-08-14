@@ -1,0 +1,144 @@
+<%= form_with model: [:author, case_record, stakeholder], class: "stakeholder-form" do |form| %>
+  <% if stakeholder.errors.any? %>
+    <div class="case-form-errors" role="alert" tabindex="-1">
+      <h2><%= t("author.stakeholders.form.errors_heading") %></h2>
+      <p><%= t("author.stakeholders.form.errors_lede") %></p>
+      <ul>
+        <% stakeholder.errors.each do |error| %>
+          <li><%= link_to error.full_message, "##{form.field_id(error.attribute)}" %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <fieldset class="stakeholder-form__section">
+    <legend><%= t("author.stakeholders.form.identity_legend") %></legend>
+
+    <div class="stakeholder-form__grid">
+      <div class="case-form__field">
+        <%= form.label :name, t("author.stakeholders.form.name_label"), class: "form-label" %>
+        <% name_error_id = form.field_id(:name, :error) %>
+        <%= form.text_field :name,
+              class: ["form-input", {"form-input-error": stakeholder.errors[:name].any?}],
+              maxlength: 120,
+              required: true,
+              autofocus: true,
+              aria: {
+                invalid: stakeholder.errors[:name].any? || nil,
+                describedby: [form.field_id(:name, :hint), (name_error_id if stakeholder.errors[:name].any?)].compact
+              } %>
+        <p id="<%= form.field_id(:name, :hint) %>" class="form-field-hint"><%= t("author.stakeholders.form.name_hint") %></p>
+        <% if stakeholder.errors[:name].any? %>
+          <p id="<%= name_error_id %>" class="form-error"><%= stakeholder.errors.full_messages_for(:name).to_sentence %></p>
+        <% end %>
+      </div>
+
+      <div class="case-form__field">
+        <%= form.label :role_title, t("author.stakeholders.form.role_title_label"), class: "form-label" %>
+        <% role_title_error_id = form.field_id(:role_title, :error) %>
+        <%= form.text_field :role_title,
+              class: ["form-input", {"form-input-error": stakeholder.errors[:role_title].any?}],
+              maxlength: 160,
+              required: true,
+              aria: {
+                invalid: stakeholder.errors[:role_title].any? || nil,
+                describedby: [form.field_id(:role_title, :hint), (role_title_error_id if stakeholder.errors[:role_title].any?)].compact
+              } %>
+        <p id="<%= form.field_id(:role_title, :hint) %>" class="form-field-hint"><%= t("author.stakeholders.form.role_title_hint") %></p>
+        <% if stakeholder.errors[:role_title].any? %>
+          <p id="<%= role_title_error_id %>" class="form-error"><%= stakeholder.errors.full_messages_for(:role_title).to_sentence %></p>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="case-form__field">
+      <%= form.label :description, t("author.stakeholders.form.description_label"), class: "form-label" %>
+      <%= form.text_area :description,
+            class: ["form-input", "stakeholder-form__textarea"],
+            rows: 5,
+            aria: {describedby: form.field_id(:description, :hint)} %>
+      <p id="<%= form.field_id(:description, :hint) %>" class="form-field-hint"><%= t("author.stakeholders.form.description_hint") %></p>
+    </div>
+  </fieldset>
+
+  <fieldset class="stakeholder-form__section">
+    <legend><%= t("author.stakeholders.form.knowledge_legend") %></legend>
+
+    <div class="case-form__field">
+      <%= form.label :instructions, t("author.stakeholders.form.instructions_label"), class: "form-label" %>
+      <%= form.text_area :instructions,
+            class: ["form-input", "stakeholder-form__textarea", "stakeholder-form__textarea--instructions"],
+            rows: 9,
+            aria: {describedby: form.field_id(:instructions, :hint)} %>
+      <p id="<%= form.field_id(:instructions, :hint) %>" class="form-field-hint"><%= t("author.stakeholders.form.instructions_hint") %></p>
+    </div>
+
+    <div class="stakeholder-choice-list">
+      <div class="stakeholder-choice">
+        <%= form.check_box :knows_case_background,
+              class: "stakeholder-choice__control",
+              aria: {describedby: form.field_id(:knows_case_background, :hint)} %>
+        <div>
+          <%= form.label :knows_case_background, t("author.stakeholders.form.knows_background_label"), class: "stakeholder-choice__label" %>
+          <p id="<%= form.field_id(:knows_case_background, :hint) %>"><%= t("author.stakeholders.form.knows_background_hint") %></p>
+        </div>
+      </div>
+
+      <div class="stakeholder-choice">
+        <%= form.check_box :available_at_start,
+              class: "stakeholder-choice__control",
+              aria: {describedby: form.field_id(:available_at_start, :hint)} %>
+        <div>
+          <%= form.label :available_at_start, t("author.stakeholders.form.available_label"), class: "stakeholder-choice__label" %>
+          <p id="<%= form.field_id(:available_at_start, :hint) %>"><%= t("author.stakeholders.form.available_hint") %></p>
+        </div>
+      </div>
+
+      <div class="stakeholder-choice">
+        <%= form.check_box :included_in_publication,
+              class: "stakeholder-choice__control",
+              aria: {describedby: form.field_id(:included_in_publication, :hint)} %>
+        <div>
+          <%= form.label :included_in_publication, t("author.stakeholders.form.included_label"), class: "stakeholder-choice__label" %>
+          <p id="<%= form.field_id(:included_in_publication, :hint) %>"><%= t("author.stakeholders.form.included_hint") %></p>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="stakeholder-form__section">
+    <legend><%= t("author.stakeholders.form.model_legend") %></legend>
+    <p class="stakeholder-form__section-lede"><%= t("author.stakeholders.form.model_lede") %></p>
+
+    <div class="stakeholder-form__grid">
+      <div class="case-form__field">
+        <%= form.label :provider, t("author.stakeholders.form.provider_label"), class: "form-label" %>
+        <%= form.select :provider,
+              [
+                [t("author.stakeholders.form.provider_none"), ""],
+                [t("author.stakeholders.providers.openai"), "openai"],
+                [t("author.stakeholders.providers.anthropic"), "anthropic"]
+              ],
+              {},
+              class: "form-select",
+              aria: {describedby: form.field_id(:provider, :hint)} %>
+        <p id="<%= form.field_id(:provider, :hint) %>" class="form-field-hint"><%= t("author.stakeholders.form.provider_hint") %></p>
+      </div>
+
+      <div class="case-form__field">
+        <%= form.label :model_id, t("author.stakeholders.form.model_id_label"), class: "form-label" %>
+        <%= form.text_field :model_id,
+              class: "form-input",
+              autocomplete: "off",
+              spellcheck: false,
+              aria: {describedby: form.field_id(:model_id, :hint)} %>
+        <p id="<%= form.field_id(:model_id, :hint) %>" class="form-field-hint"><%= t("author.stakeholders.form.model_id_hint") %></p>
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="case-form__actions">
+    <%= form.submit submit_label, class: "button button-primary" %>
+    <%= link_to t("author.stakeholders.form.cancel"), author_case_stakeholders_path(case_record), class: "button button-ghost" %>
+  </div>
+<% end %>

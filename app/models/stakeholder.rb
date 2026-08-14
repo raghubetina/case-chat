@@ -27,6 +27,18 @@
 #  fk_rails_...  (case_id => cases.id) ON DELETE => restrict
 #
 class Stakeholder < ApplicationRecord
+  DRAFT_EDITABLE_ATTRIBUTES = %i[
+    name
+    role_title
+    description
+    instructions
+    knows_case_background
+    available_at_start
+    included_in_publication
+    provider
+    model_id
+  ].freeze
+
   belongs_to :case
 
   has_many :outgoing_referrals, class_name: "Referral", foreign_key: :source_stakeholder_id,
@@ -45,6 +57,7 @@ class Stakeholder < ApplicationRecord
   validates :available_at_start, :included_in_publication, :knows_case_background,
     inclusion: {in: [true, false]}
   validate :provider_settings_is_an_object
+  normalizes :provider, :model_id, with: ->(value) { value.strip.presence }
   before_destroy :prevent_published_destroy, prepend: true
 
   private

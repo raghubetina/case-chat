@@ -1,7 +1,7 @@
 # 0004 — Publish an atomic configuration snapshot
 
 **Decision status:** accepted<br>
-**Implementation:** lifecycle and top-level case editing verified; child authoring integration planned<br>
+**Implementation:** lifecycle plus case and stakeholder editing verified; remaining child authoring integration planned<br>
 **Date:** 2026-08-13<br>
 **Last verified:** 2026-08-14
 
@@ -44,10 +44,11 @@ history, diff UI, rollback mechanism, or per-message prompt migration.
   transaction. Unused draft documents remain editable. Referenced stakeholders,
   bundles, and documents cannot be hard-deleted; explicit publication-inclusion
   flags let authors omit stakeholders and bundles from later publications.
-- The publish command holds the parent case lock. The top-level case draft
-  update now takes that lock, too. Concurrent coherence under stakeholder,
-  referral, document, or bundle edits depends on those future commands doing
-  the same; that child integration remains planned.
+- The publish command and the implemented case and stakeholder draft commands
+  hold the parent case lock. Stakeholder updates resolve their child row through
+  the case inside the lock and touch the case only after a successful save.
+  Concurrent coherence under referral, document, or bundle edits depends on
+  those future commands doing the same; that integration remains planned.
 
 ## Confirmation
 
@@ -59,8 +60,11 @@ exclusion, configured-document locks, immutable attachments, pinned bundle
 membership, and idempotent validated effects. `DomainBoundariesTest` covers
 cross-case graph rejection, immutable runtime identity, and deletion
 restrictions. `CaseDraftEditingTest` verifies that top-level case assignment and
-save happen within the parent lock, but it is deliberately not a two-connection
-database concurrency proof. Child authoring integration is not yet verified.
+save happen within the parent lock. `StakeholderDraftEditingTest` verifies the
+same parent-lock protocol for stakeholder creation and editing, including child
+resolution and parent-touch behavior. These service tests deliberately do not
+claim to be two-connection database concurrency proofs. Referral, document, and
+bundle authoring are not yet integrated with the lock protocol.
 
 ## Revisit when
 

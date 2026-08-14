@@ -1,7 +1,7 @@
 # Target domain model
 
 **Status:** accepted for the prototype<br>
-**Implementation:** verified for persistence, lifecycle, accounts, policies, and the first author case editor; child authoring and the remaining product UI are planned<br>
+**Implementation:** verified for persistence, lifecycle, accounts, policies, and case and stakeholder draft editors; remaining product UI is planned<br>
 **Last verified:** 2026-08-14
 
 This is the canonical model implemented by the current schema and lifecycle
@@ -94,6 +94,14 @@ the stakeholder first enters a published snapshot; it can still be edited or
 excluded from later publications, but cannot be hard-deleted after that point.
 Deleting an unpublished stakeholder also deletes its disposable author test
 drives; a published stakeholder and its runtime history remain protected.
+
+The author workspace implements paginated listing plus creation and editing of
+all of those fields except `provider_settings` and `publication_locked_at`.
+Provider and model may remain blank in a draft; the publish command, not the
+draft form, enforces a supported provider and configured model. The case ID,
+provider settings, and publication lock are server-owned and are not accepted
+from the form. Stakeholder deletion, referrals, document bundles, publishing,
+test drives, prompt composition, and provider calls are not part of this slice.
 
 `Referral` links a source stakeholder to a target stakeholder in the same case
 and contains author guidance about when an introduction is natural. Row
@@ -233,11 +241,13 @@ each boundary; generated foreign-key inputs must never be trusted merely because
 the referenced row exists.
 
 Publishing holds the parent `Case` row lock while reading and replacing the
-snapshot. The implemented top-level case draft update acquires that same lock.
-Future stakeholder, referral, document, and bundle mutation commands must do so
-as well, so an accepted publication cannot mix concurrent child states. Those
-child commands are not implemented yet; full concurrent authoring coherence is
-still an integration seam rather than a verified guarantee.
+snapshot. The implemented case and stakeholder draft commands acquire that same
+lock. Stakeholder updates resolve the child through its parent inside the lock;
+successful child writes touch the case so authored-case ordering reflects the
+change, while invalid writes change neither record. Future referral, document,
+and bundle mutation commands must follow the same protocol so an accepted
+publication cannot mix concurrent child states. Full concurrent authoring
+coherence remains partial until those commands use the boundary too.
 
 ## Deliberately deferred
 

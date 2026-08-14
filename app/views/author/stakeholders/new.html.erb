@@ -1,0 +1,14 @@
+<% content_for :title, t("author.stakeholders.new.title") %>
+
+<section class="author-editor stakeholder-editor">
+  <div class="author-editor__intro">
+    <%= link_to t("author.stakeholders.form.back"), author_case_stakeholders_path(@case), class: "author-back-link" %>
+    <p class="author-eyebrow"><%= t("author.stakeholders.new.eyebrow", case_title: @case.title) %></p>
+    <h1><%= t("author.stakeholders.new.heading") %></h1>
+    <p><%= t("author.stakeholders.new.lede") %></p>
+  </div>
+
+  <div class="author-editor__panel">
+    <%= render "form", case_record: @case, stakeholder: @stakeholder, submit_label: t("author.stakeholders.new.submit") %>
+  </div>
+</section>

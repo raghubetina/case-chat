@@ -1,7 +1,7 @@
 # Product brief
 
 **Status:** accepted<br>
-**Implementation:** partial; accounts and the first author case workspace are verified<br>
+**Implementation:** partial; accounts plus case and stakeholder drafting are verified<br>
 **Last verified:** 2026-08-14
 
 ## The experiment
@@ -43,11 +43,15 @@ prototype. The author can:
 - inspect transcripts and simple activity metrics by cohort and learner,
   including prior reset attempts.
 
-The first implemented author slice covers the authored-case list plus creation
-and editing of the title, background, and learner assignment. Editing those
-fields after publication leaves the current published snapshot untouched. The
-stakeholder, document, test-drive, publication, cohort, and transcript screens
-in the list above remain planned.
+The implemented author workspace covers the authored-case list; case creation
+and editing of the title, background, and learner assignment; and stakeholder
+listing, creation, and editing. An author can draft a stakeholder's identity,
+learner-visible description, private instructions, background knowledge,
+initial availability, publication inclusion, provider, and model. Those draft
+fields may be incomplete while the author experiments. Editing a case or
+stakeholder after publication leaves the current published snapshot untouched.
+Referrals, documents and sharing rules, test drives, publication controls,
+cohorts, transcripts, prompt composition, and model calls remain planned.
 
 Test-drive conversations are author tools. They are never enrollments and never
 appear in learner or cohort metrics. A new test drive pins the current draft so

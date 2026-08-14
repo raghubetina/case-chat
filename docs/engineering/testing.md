@@ -1,7 +1,7 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified for the current domain, infrastructure, account, policy, and author-case layers<br>
+**Implementation:** verified for the current domain, infrastructure, account, policy, case-authoring, and stakeholder-authoring layers<br>
 **Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
@@ -59,10 +59,21 @@ server-owned field rejection, and invalid-edit preservation.
 protocol without claiming to retest PostgreSQL's row-lock implementation.
 `AuthorCaseFlowTest` exercises creation and revision in a real browser and
 audits the author pages in both themes, including responsive wrapping for
-maximum-length unbroken author content at desktop and mobile widths. Future
-product request tests must still prove that each controller resolves submitted
-child IDs through its authorized parent and invokes the authenticated-controller
-guard.
+maximum-length unbroken author content at desktop and mobile widths.
+
+`AuthorStakeholdersTest` proves the stakeholder controller's authored-parent
+scope, pagination boundary, cross-case and foreign-record rejection,
+server-owned field rejection, and invalid-edit preservation.
+`StakeholderDraftEditingTest` covers the application-owned allowlist, parent
+case lock protocol, child resolution inside the lock, and parent timestamp
+semantics without claiming to retest PostgreSQL's lock implementation.
+`StakeholderPolicyTest` covers author and scope boundaries.
+`AuthorStakeholderFlowTest` exercises creation and editing in a real browser and
+audits the stakeholder pages in both themes. `FilterParameterLoggingTest` pins
+the configuration that keeps private stakeholder instructions out of logs.
+Future product request tests must still prove that each controller resolves
+submitted child IDs through its authorized parent and invokes the
+authenticated-controller guard.
 
 Native-presentation and PWA coverage will be kept, replaced, or removed with
 the UI decisions that determine whether those product surfaces remain. The
