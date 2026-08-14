@@ -31,6 +31,10 @@ gem "rodauth-i18n", "~> 0.11.0", require: false
 gem "sequel-activerecord_connection", "~> 2.0.1", require: false
 gem "pundit", "~> 2.5.2"
 
+# First-party AI clients stay behind app-owned provider adapters.
+gem "openai", "~> 0.78.0"
+gem "anthropic", "~> 1.62.0"
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 

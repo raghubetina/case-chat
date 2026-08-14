@@ -208,7 +208,13 @@ incomplete draft test drive intentionally renders empty elements so the author
 can observe the missing context. Learner publication separately blocks blank
 descriptions and private instructions. Authored values are XML-escaped once.
 Provider adapters do not consume this result yet, and no `ModelRun` persists it
-until that integration is built.
+until that integration is built. The provider boundary itself is now
+implemented: `AiProviders::OpenAiAdapter` and `AiProviders::AnthropicAdapter`
+translate an app-owned request into each official SDK's streaming API and
+return provider-neutral text, tool calls, usage, identifiers, and failures.
+Nothing invokes those adapters from a conversation yet, so this does not claim
+that a composed prompt or transcript reaches a provider or that a run is
+persisted.
 
 ### Introduction and DocumentRelease
 
@@ -221,8 +227,8 @@ per attempt. A closed attempt rejects new effects. An existing release resolves
 its bundle and document list from that snapshot, never from subsequently edited
 draft rows.
 
-Test-drive tool calls validate against the test drive's pinned draft snapshot
-and return persisted preview results in the transcript. They do not create
+Future test-drive tool execution must validate against the test drive's pinned
+draft snapshot and persist preview results in the transcript. It must not create
 `Introduction` or `DocumentRelease` records or change any learner's access.
 
 A generic `ToolCall` table is unnecessary initially. Raw provider payloads can
@@ -233,9 +239,10 @@ live on `ModelRun`; successful effects deserve explicit domain records.
 Belongs to an author and stakeholder and stores a `configuration_snapshot` of
 the current draft. It contains one or two conversations that share that
 stakeholder configuration and never touch learner access or cohort metrics.
-Tool effects render as previews only. A reset creates a fresh test drive from
-the latest draft; switching a model in the middle of a test conversation is
-intentionally unsupported.
+When tool execution is implemented, its test-drive effects will render as
+previews only. A reset creates a fresh test drive from the latest draft;
+switching a model in the middle of a test conversation is intentionally
+unsupported.
 
 A test drive snapshots attachment metadata for the current preview, but does
 not lock or retain historical draft blobs. Authors can keep replacing draft

@@ -1,7 +1,7 @@
 # 0005 — Compose stakeholder prompts in the application
 
 **Decision status:** accepted<br>
-**Implementation:** partial; author input and provider-neutral prompt composition verified, AI integration planned<br>
+**Implementation:** partial; author input and prompt composition verified, provider adapters available, orchestration planned<br>
 **Date:** 2026-08-13<br>
 **Last verified:** 2026-08-14
 
@@ -53,17 +53,18 @@ ignored when the required singular shape remains compatible; the composer
 validates the fields it actually consumes instead of claiming ownership of the
 whole case snapshot contract.
 
-Provider consumption is a later boundary. The future adapters will supply this
-rendered prompt as provider-level instructions, send the local transcript as
-messages, and expose `introduce_stakeholder` and `release_documents` as
-provider-native tools. The server will validate every requested effect against
-the attempt's pinned configuration before creating an `Introduction` or
-`DocumentRelease`.
+Provider consumption remains a later boundary. The implemented adapters accept
+a rendered prompt as provider-level instructions and translate local history
+plus provider-neutral tools, but nothing yet invokes them from a conversation.
+The future orchestration will expose `introduce_stakeholder` and
+`release_documents` as provider-native tools. The server will validate every
+requested effect against the attempt's pinned configuration before creating an
+`Introduction` or `DocumentRelease`.
 
 In an author test drive, the conversation uses the test drive's pinned draft
-configuration. Valid tool calls return persisted preview results so the author
-can evaluate the behavior, but they do not create attempt-scoped effects or
-change learner access.
+configuration. When provider tool execution is implemented, valid tool calls
+will return persisted preview results so the author can evaluate the behavior,
+but they must not create attempt-scoped effects or change learner access.
 
 See [`../../research/stakeholder-prompts.md`](../../research/stakeholder-prompts.md)
 for the prompt contract and evaluation cases.
@@ -102,11 +103,12 @@ test-drive fields render as intentional empty context elements. These tests do
 not prove that either provider follows the prompt or keeps private instructions
 secret.
 
-Before AI integration is considered verified, provider contract tests must
-cover prompt delivery, transcript and tool translation, and persistence. A
-small scripted evaluation must check prompt-leak resistance, character
-consistency, uncertainty, natural referrals, and test-drive previews without
-learner side effects.
+Provider adapter tests cover the generic prompt, transcript, and tool request
+boundary independently of this composer. Before AI integration is considered
+verified, orchestration tests must prove the composed prompt is passed through
+that boundary and persisted with the run. A small scripted evaluation must
+check prompt-leak resistance, character consistency, uncertainty, natural
+referrals, and test-drive previews without learner side effects.
 
 ## Revisit when
 

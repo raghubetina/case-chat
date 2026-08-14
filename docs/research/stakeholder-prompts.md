@@ -2,7 +2,7 @@
 
 **Research date:** 2026-08-14<br>
 **Decision:** one authored instruction field inside an application-composed prompt<br>
-**Implementation:** partial; v1 provider-neutral composition verified, provider use and tools planned
+**Implementation:** partial; v1 composition verified, conversation delivery and domain-tool execution planned
 
 ## Implemented boundary
 
@@ -33,7 +33,9 @@ published-case schema.
 
 Learner and test-drive conversation-start services already create the singular
 snapshot. The composer can therefore use the same immutable input for both
-contexts. No provider adapter consumes or persists its result yet.
+contexts. Provider adapters now accept a rendered system prompt, but no
+conversation orchestration passes this composer's result to them or persists
+it yet.
 
 ## Final field allowlist
 
@@ -154,18 +156,19 @@ list of prohibitions.
 
 This slice does not:
 
-- send the system prompt through OpenAI or Anthropic;
+- pass the system prompt from a conversation through the implemented OpenAI or
+  Anthropic adapter;
 - combine it with the persisted conversation transcript;
 - define or translate provider-native introduction and document-release tools;
 - validate or persist tool effects or test-drive previews;
 - store the rendered prompt and provider input on a `ModelRun`;
 - prove prompt secrecy, character consistency, or model behavior.
 
-The future provider adapters will consume the rendered prompt, local transcript,
-and separately composed tool definitions. Tool availability and sharing
-guidance do not belong in v1 until that behavior exists. The server must still
-validate every requested effect against the pinned configuration; neither the
-prompt nor a provider tool schema is an authorization boundary.
+The future conversation job will give a provider adapter the rendered prompt,
+local transcript, and separately composed tool definitions. Tool availability
+and sharing guidance do not belong in v1 until that behavior exists. The server
+must still validate every requested effect against the pinned configuration;
+neither the prompt nor a provider tool schema is an authorization boundary.
 
 ## Verification and evaluation
 

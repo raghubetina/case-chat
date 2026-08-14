@@ -81,8 +81,9 @@ transcripts, model calls, and provider prompt delivery remain planned.
 
 Test-drive conversations are author tools. They are never enrollments and never
 appear in learner or cohort metrics. A new test drive pins the current draft so
-the author can evaluate unpublished changes consistently; introductions and
-document releases appear as previews but do not alter learner access.
+the author can evaluate unpublished changes consistently. When domain tool
+execution is implemented, introductions and document releases will appear as
+previews but will not alter learner access.
 
 ## Accepted product boundaries
 

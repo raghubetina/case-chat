@@ -28,9 +28,12 @@ case fields and a ready configuration are saved and published together, invalid
 fields remain unsaved and visible, and a structurally incomplete valid draft is
 saved without being published. A provider-neutral, versioned prompt composer
 now renders the allowlisted interview instructions from a pinned conversation
-configuration, but no provider consumes that output yet. Referrals, document
-authoring, test drives, archive controls, cohorts, learner interviews, and
-provider integrations remain planned.
+configuration. First-party OpenAI and Anthropic streaming adapters now share a
+tested application contract for prompts, text history, tool calls, usage,
+provider IDs, cursors, and failures. Conversation jobs do not invoke them yet,
+so no provider call, transcript streaming, or `ModelRun` persistence is exposed
+in the product. Referrals, document authoring, test drives, archive controls,
+cohorts, learner interviews, and that orchestration remain planned.
 
 Start with [`docs/README.md`](docs/README.md). It distinguishes accepted
 decisions from implemented behavior and links to the product brief, canonical
