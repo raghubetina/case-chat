@@ -106,8 +106,14 @@ services:
       # are cheap here; this is IO-bound, not CPU-bound.
       - key: JOB_CONCURRENCY
         value: "1"
+      - key: JOB_THREADS
+        value: "5"
+      # Solid Queue refuses to boot if the pool cannot cover its threads, and it
+      # opens two beyond them — one for the dispatcher, one for the supervisor's
+      # heartbeat. Five threads therefore needs seven, and this is eight so the
+      # next thread added does not crash-loop the worker.
       - key: DB_POOL
-        value: "6"
+        value: "8"
 
 # Two groups on purpose. This one is the blueprint's: wiring it can derive, and
 # values it generates. The other, `case-chat`, is managed by hand in the

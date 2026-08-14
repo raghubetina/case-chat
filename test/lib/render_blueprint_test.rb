@@ -78,6 +78,18 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     end
   end
 
+  # Solid Queue counts its dispatcher and supervisor against the pool and exits
+  # rather than degrading, so a pool that merely matches the thread count is a
+  # crash loop on boot. It cost one deploy to learn.
+  test "the worker pool covers Solid Queue's threads and its two extras" do
+    env = env_for(@worker)
+    threads = Integer(env.fetch("JOB_THREADS"))
+    pool = Integer(env.fetch("DB_POOL"))
+
+    assert_operator pool, :>=, threads + 2,
+      "DB_POOL #{pool} cannot cover #{threads} job threads plus the dispatcher and supervisor"
+  end
+
   test "the database is managed and wired to both services" do
     database = @blueprint.fetch("databases").first
 
