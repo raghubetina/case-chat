@@ -10,12 +10,42 @@ class ErrorPagesTest < ActionDispatch::IntegrationTest
     assert_security_headers
   end
 
+  test "an unknown asset-prefixed route renders the branded 404 in the app layout" do
+    with_rendered_exceptions { get "/assets-missing" }
+
+    assert_response :not_found
+    assert_select "header.app-header", count: 1, text: /#{Regexp.escape(I18n.t("app_name"))}/
+    assert_select "h1", I18n.t("errors.not_found.heading")
+    assert_security_headers
+  end
+
   test "the error routes render with their status codes" do
+    get "/403"
+    assert_response :forbidden
+
     get "/422"
     assert_response :unprocessable_entity
 
     get "/500"
     assert_response :internal_server_error
+  end
+
+  test "an authorization denial renders the branded 403" do
+    with_routing do |routes|
+      routes.draw do
+        get "/denied", to: ->(_env) { raise Pundit::NotAuthorizedError }
+        match "/403", to: "errors#forbidden", via: :all
+        get "/manifest", to: "rails/pwa#manifest", as: :pwa_manifest
+        root "home#index"
+      end
+
+      with_rendered_exceptions { get "/denied" }
+
+      assert_response :forbidden
+      assert_select "header.app-header", count: 1, text: /#{Regexp.escape(I18n.t("app_name"))}/
+      assert_select "h1", I18n.t("errors.forbidden.heading")
+      assert_security_headers
+    end
   end
 
   test "the unprocessable error route returns JSON to an API caller" do

@@ -1,0 +1,20 @@
+<% content_for :title, t("auth.logout.heading") %>
+
+<section class="auth-layout" aria-labelledby="logout-heading">
+  <div class="auth-panel">
+    <header class="auth-panel__header">
+      <h1 id="logout-heading"><%= t("auth.logout.heading") %></h1>
+      <p><%= t("auth.logout.lede") %></p>
+    </header>
+
+    <%= form_with url: rodauth.logout_path, method: :post, data: {turbo: false}, class: "auth-form" do |form| %>
+      <div class="auth-actions">
+        <%= form.submit t("auth.logout.submit"), class: "button button-primary" %>
+      </div>
+    <% end %>
+
+    <p class="auth-panel__footer">
+      <%= link_to t("auth.logout.cancel"), root_path, class: "text-link" %>
+    </p>
+  </div>
+</section>

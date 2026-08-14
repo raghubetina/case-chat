@@ -1,0 +1,74 @@
+<% content_for :title, t("auth.create_account.heading") %>
+<% full_name_error = rodauth.field_error("full_name") %>
+<% email_error = rodauth.field_error(rodauth.login_param) %>
+<% password_error = rodauth.field_error(rodauth.password_param) %>
+
+<section class="auth-layout" aria-labelledby="create-account-heading">
+  <div class="auth-panel">
+    <header class="auth-panel__header">
+      <h1 id="create-account-heading"><%= t("auth.create_account.heading") %></h1>
+      <p><%= t("auth.create_account.lede") %></p>
+    </header>
+
+    <%= form_with url: rodauth.create_account_path, method: :post, data: {turbo: false}, class: "auth-form" do |form| %>
+      <div>
+        <%= form.label :full_name, t("auth.fields.full_name"), class: "form-label" %>
+        <%= form.text_field :full_name,
+              value: params[:full_name],
+              autocomplete: "name",
+              required: true,
+              class: class_names("form-input", "form-input-error": full_name_error.present?),
+              aria: ({invalid: true, describedby: "full-name-error"} if full_name_error) %>
+        <%= tag.p full_name_error, id: "full-name-error", class: "form-error" if full_name_error %>
+      </div>
+
+      <div>
+        <%= form.label "login", t("auth.fields.email"), class: "form-label" %>
+        <%= form.email_field rodauth.login_param,
+              value: params[rodauth.login_param],
+              id: "login",
+              autocomplete: "email",
+              required: true,
+              class: class_names("form-input", "form-input-error": email_error.present?),
+              aria: ({invalid: true, describedby: "login-error"} if email_error) %>
+        <%= tag.p email_error, id: "login-error", class: "form-error" if email_error %>
+      </div>
+
+      <% if rodauth.create_account_set_password? %>
+        <div>
+          <%= form.label "password", t("auth.fields.password"), class: "form-label" %>
+          <%= form.password_field rodauth.password_param,
+                value: "",
+                id: "password",
+                autocomplete: rodauth.password_field_autocomplete_value,
+                required: true,
+                class: class_names("form-input", "form-input-error": password_error.present?),
+                aria: {invalid: password_error.present?, describedby: ["password-hint", ("password-error" if password_error)].compact.join(" ")} %>
+          <p id="password-hint" class="auth-field-hint"><%= t("auth.fields.password_hint") %></p>
+          <%= tag.p password_error, id: "password-error", class: "form-error" if password_error %>
+        </div>
+
+        <% if rodauth.require_password_confirmation? %>
+          <div>
+            <%= form.label "password-confirm", t("auth.fields.confirm_password"), class: "form-label" %>
+            <%= form.password_field rodauth.password_confirm_param,
+                  value: "",
+                  id: "password-confirm",
+                  autocomplete: "new-password",
+                  required: true,
+                  class: "form-input" %>
+          </div>
+        <% end %>
+      <% end %>
+
+      <div class="auth-actions">
+        <%= form.submit t("auth.create_account.submit"), class: "button button-primary" %>
+      </div>
+    <% end %>
+
+    <p class="auth-panel__footer">
+      <%= t("auth.create_account.existing_account") %>
+      <%= link_to t("auth.create_account.sign_in"), rodauth.login_path, class: "text-link" %>
+    </p>
+  </div>
+</section>

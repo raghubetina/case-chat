@@ -32,11 +32,16 @@ ActiveRecordDoctor.configure do
   global :ignore_tables, solid_tables
   global :ignore_models, framework_models
 
-  # Rails intentionally gives these append-only records created_at without
-  # updated_at. Keep the exception local to the timestamp detector rather than
-  # excluding Active Storage tables from the rest of the schema audit.
+  # Rails intentionally gives Active Storage's append-only records created_at
+  # without updated_at. Rodauth's deadline-bound remember-key table has neither
+  # timestamp because the deadline is its lifecycle field. Keep both exceptions
+  # local to this detector instead of excluding the tables from the schema audit.
   detector :table_without_timestamps,
-    ignore_tables: %w[active_storage_attachments active_storage_blobs]
+    ignore_tables: %w[
+      active_storage_attachments
+      active_storage_blobs
+      user_remember_keys
+    ]
 
   # Runtime trees are database-cascaded and intentionally delete in bulk; the
   # callbacks doctor sees on Conversation and Message are only their own
@@ -51,7 +56,8 @@ ActiveRecordDoctor.configure do
     ]
 
   # These attributes deliberately allow blank text, or use stricter custom
-  # object/numeric validators that active_record_doctor cannot infer.
+  # object/numeric validators that active_record_doctor cannot infer. Rodauth
+  # writes its non-null remember-key fields through Sequel, outside AR validation.
   detector :missing_presence_validation,
     ignore_attributes: %w[
       Attempt.configuration_snapshot Attempt.sequence
@@ -65,5 +71,6 @@ ActiveRecordDoctor.configure do
       Referral.guidance
       Stakeholder.description Stakeholder.instructions Stakeholder.provider_settings
       TestDrive.configuration_snapshot
+      User::RememberKey.deadline User::RememberKey.key
     ]
 end

@@ -4,7 +4,7 @@ require "application_system_test_case"
 # this smoke pass IS the a11y gate for all shipped pages - in both themes, via
 # the real toggle rather than emulation, which also proves persistence.
 class BaselinePagesTest < ApplicationSystemTestCase
-  SHIPPED_PAGES = ["/", "/privacy", "/terms", "/404", "/422", "/500"]
+  SHIPPED_PAGES = ["/", "/login", "/create-account", "/privacy", "/terms", "/403", "/404", "/422", "/500"]
 
   test "all shipped pages pass the audit in the default (light) theme" do
     SHIPPED_PAGES.each { |path| visit path }
@@ -55,7 +55,7 @@ class BaselinePagesTest < ApplicationSystemTestCase
   test "shows keyboard focus on the theme control" do
     visit "/"
 
-    find(".app-header__brand a").send_keys(:tab)
+    find(".primary-nav a", text: I18n.t("nav.create_account")).send_keys(:tab)
 
     assert page.evaluate_script("document.activeElement.classList.contains('theme-toggle__input')")
     assert_equal "solid", page.evaluate_script("getComputedStyle(document.querySelector('.theme-toggle')).outlineStyle")

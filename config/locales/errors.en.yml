@@ -1,0 +1,7 @@
+---
+en:
+  errors:
+    forbidden:
+      body: You do not have permission to view or change this page.
+      code: "403"
+      heading: Access denied

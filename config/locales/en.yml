@@ -1,6 +1,48 @@
 ---
 en:
   app_name: "Case Chat"
+  auth:
+    change_password:
+      heading: Change your password
+      lede: Choose a new password for your Case Chat account.
+      submit: Save new password
+    errors:
+      full_name_required: Enter your full name.
+    create_account:
+      existing_account: Already have an account?
+      heading: Create your account
+      lede: Sign up before joining a cohort or creating a case of your own.
+      sign_in: Sign in
+      submit: Create account
+    fields:
+      confirm_new_password: Confirm new password
+      confirm_password: Confirm password
+      current_password: Current password
+      email: Email address
+      full_name: Full name
+      new_password: New password
+      password: Password
+      password_hint: Use at least 8 characters.
+    login:
+      create_account: Create account
+      heading: Sign in
+      lede: Continue researching a case or working on one of your own.
+      new_account: New to Case Chat?
+      remember: Keep me signed in on this device
+      submit: Sign in
+    logout:
+      cancel: Stay signed in
+      heading: Sign out
+      lede: End your current Case Chat session?
+      submit: Sign out
+    remember:
+      disable: Stop remembering me on every browser
+      forget: Stop remembering me on this browser
+      heading: Sign-in settings
+      lede: Control whether Case Chat can sign you in after your browser session ends.
+      legend: Choose an action
+      remember: Remember me on this browser for 14 days
+      submit: Update sign-in settings
   errors:
     back_home: Back to the home page
     internal_error:
@@ -21,6 +63,13 @@ en:
     heading: It works.
     lede: This app was generated on the Foundation baseline — hardened, observable, accessible, and ready for its real features.
   nav:
+    account: Account
+    create_account: Create account
+    password: Password
+    sign_in: Sign in
+    sign_in_settings: Sign-in settings
+    sign_out: Sign out
+    signed_in_as: Signed in as
     skip_to_content: Skip to main content
     toggle_theme: Toggle light/dark theme
   pages:

@@ -1,7 +1,7 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified for the current domain and infrastructure<br>
+**Implementation:** verified for the current domain, infrastructure, account, and policy layers<br>
 **Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
@@ -46,6 +46,13 @@ conversation snapshots, attempt reset, graph effects, runtime message
 contracts, cross-case boundaries, and side-by-side test-drive lifecycle. They
 exercise application-owned transitions rather than retesting Active Record or
 Active Storage declarations.
+
+`AuthenticationTest` exercises the application-owned Rodauth configuration
+through its real middleware, while `AuthenticationFlowTest` covers the visible
+account journey and both-theme accessibility. Policy tests cover actor and
+scope boundaries directly without retesting Pundit's dispatch. Product request
+tests must still prove that each future controller resolves submitted child IDs
+through its authorized parent and invokes the authenticated-controller guard.
 
 Native-presentation and PWA coverage will be kept, replaced, or removed with
 the UI decisions that determine whether those product surfaces remain. The

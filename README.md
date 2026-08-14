@@ -18,9 +18,10 @@ application. The target persistence model and lifecycle services for publishing,
 attempt reset, pinned conversations, introductions, and document releases are
 implemented. The obsolete public CRUD scaffold has been removed.
 
-The prototype is not deploy-ready yet. Authentication, authorization, product
-UI, and provider integrations remain planned; no domain product routes are
-currently exposed.
+The prototype is not deploy-ready yet. Rodauth account flows and the initial
+authorization policy layer are implemented, but domain product routes, their
+request-level authorization integration, product UI, and provider integrations
+remain planned.
 
 Start with [`docs/README.md`](docs/README.md). It distinguishes accepted
 decisions from implemented behavior and links to the product brief, canonical

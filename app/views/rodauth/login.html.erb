@@ -1,0 +1,57 @@
+<% content_for :title, t("auth.login.heading") %>
+<% email_error = rodauth.field_error(rodauth.login_param) %>
+<% password_error = rodauth.field_error(rodauth.password_param) %>
+
+<section class="auth-layout" aria-labelledby="login-heading">
+  <div class="auth-panel">
+    <header class="auth-panel__header">
+      <h1 id="login-heading"><%= t("auth.login.heading") %></h1>
+      <p><%= t("auth.login.lede") %></p>
+    </header>
+
+    <%= form_with url: rodauth.login_path, method: :post, data: {turbo: false}, class: "auth-form" do |form| %>
+      <div>
+        <%= form.label "login", t("auth.fields.email"), class: "form-label" %>
+        <%= form.email_field rodauth.login_param,
+              value: params[rodauth.login_param],
+              id: "login",
+              readonly: rodauth.skip_login_field_on_login?,
+              autocomplete: rodauth.login_field_autocomplete_value,
+              required: true,
+              class: class_names("form-input", "form-input-error": email_error.present?),
+              aria: ({invalid: true, describedby: "login-error"} if email_error) %>
+        <%= tag.p email_error, id: "login-error", class: "form-error" if email_error %>
+      </div>
+
+      <% unless rodauth.skip_password_field_on_login? %>
+        <div>
+          <%= form.label "password", t("auth.fields.password"), class: "form-label" %>
+          <%= form.password_field rodauth.password_param,
+                value: "",
+                id: "password",
+                autocomplete: rodauth.password_field_autocomplete_value,
+                required: true,
+                class: class_names("form-input", "form-input-error": password_error.present?),
+                aria: ({invalid: true, describedby: "password-error"} if password_error) %>
+          <%= tag.p password_error, id: "password-error", class: "form-error" if password_error %>
+        </div>
+      <% end %>
+
+      <div class="auth-choice">
+        <%= form.check_box rodauth.remember_param,
+              {id: "remember", class: "auth-choice__control", include_hidden: false},
+              rodauth.remember_remember_param_value %>
+        <%= form.label "remember", t("auth.login.remember") %>
+      </div>
+
+      <div class="auth-actions">
+        <%= form.submit t("auth.login.submit"), class: "button button-primary" %>
+      </div>
+    <% end %>
+
+    <p class="auth-panel__footer">
+      <%= t("auth.login.new_account") %>
+      <%= link_to t("auth.login.create_account"), rodauth.create_account_path, class: "text-link" %>
+    </p>
+  </div>
+</section>
