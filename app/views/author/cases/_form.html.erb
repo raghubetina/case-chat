@@ -1,4 +1,4 @@
-<%= form_with model: [:author, case_record], class: "case-form" do |form| %>
+<%= form_with model: [:author, case_record], id: dom_id(case_record, :draft_form), class: "case-form" do |form| %>
   <% if case_record.errors.any? %>
     <div class="case-form-errors" role="alert" tabindex="-1">
       <h2><%= t("author.cases.form.errors_heading") %></h2>

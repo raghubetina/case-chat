@@ -1,7 +1,7 @@
 # Product brief
 
 **Status:** accepted<br>
-**Implementation:** partial; accounts plus case and stakeholder drafting are verified<br>
+**Implementation:** partial; accounts, case and stakeholder drafting, and author publication are verified<br>
 **Last verified:** 2026-08-14
 
 ## The experiment
@@ -50,8 +50,27 @@ learner-visible description, private instructions, background knowledge,
 initial availability, publication inclusion, provider, and model. Those draft
 fields may be incomplete while the author experiments. Editing a case or
 stakeholder after publication leaves the current published snapshot untouched.
-Referrals, documents and sharing rules, test drives, publication controls,
-cohorts, transcripts, prompt composition, and model calls remain planned.
+The case editor shows an advisory readiness summary and lets the author publish
+a valid configuration. A first publication creates the current snapshot; a
+changed republication replaces it and refreshes the publication time. Publishing
+an unchanged already-published case is a true no-op. Publishing an archived case
+explicitly reactivates it and refreshes the publication time even when its
+candidate snapshot is unchanged. Existing learner attempts remain pinned to the
+snapshot they started with.
+
+The publication button submits the current case form. When those case fields
+pass model validation and the complete draft is ready, the fields and snapshot
+are saved and published in one transaction while the case row remains locked.
+Model-invalid case fields remain unsaved and visible with their errors. A valid
+case edit that leaves the overall draft structurally incomplete is saved, but no
+publication or publication lock is changed.
+
+Readiness requires every included stakeholder to have a learner-visible
+description, private instructions, an allowed provider name, and a nonblank
+model ID. These structural checks do not prove that credentials work, the
+provider offers that model, or a conversation succeeds.
+Referrals, documents and sharing rules, test drives, archive controls, cohorts,
+transcripts, prompt composition, and model calls remain planned.
 
 Test-drive conversations are author tools. They are never enrollments and never
 appear in learner or cohort metrics. A new test drive pins the current draft so

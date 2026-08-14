@@ -30,7 +30,7 @@ class AuthorStakeholderFlowTest < ApplicationSystemTestCase
     end
 
     assert_title "Create a stakeholder · Case Chat"
-    assert_text "This description is visible to learners."
+    assert_text "Required before publishing. Describe why learners might want to speak with this person without giving away private facts."
     assert_text "The learner assignment is never shared with a stakeholder."
     assert_checked_field "Knows the case background"
     assert_unchecked_field "Available from the start"

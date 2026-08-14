@@ -1,5 +1,11 @@
 module Cases
   class Publish
+    Result = Data.define(:snapshot, :outcome) do
+      def publication_changed?
+        outcome == :published
+      end
+    end
+
     def self.call(case_record:, at: Time.current)
       new(case_record:, at:).call
     end
@@ -11,58 +17,27 @@ module Cases
 
     def call
       case_record.with_lock do
-        case_record.reload
-        snapshot = ConfigurationSnapshot.build(case_record:, mode: :publication)
-        validate!(snapshot)
-        lock_graph_members!(snapshot)
-        lock_attachments!(snapshot)
-        case_record.update!(
-          status: "published",
-          published_configuration: snapshot,
-          published_at: at
-        )
-        snapshot
+        readiness = PublicationReadiness.call(case_record:)
+        raise InvalidConfiguration.new(readiness) unless readiness.ready?
+
+        if readiness.publish_needed?
+          lock_graph_members!(readiness.snapshot)
+          lock_attachments!(readiness.snapshot)
+          case_record.update!(
+            status: "published",
+            published_configuration: readiness.snapshot,
+            published_at: at
+          )
+          Result.new(snapshot: readiness.snapshot, outcome: :published)
+        else
+          Result.new(snapshot: readiness.snapshot, outcome: :current)
+        end
       end
     end
 
     private
 
     attr_reader :case_record, :at
-
-    def validate!(snapshot)
-      problems = []
-      problems << "background is blank" if snapshot.dig("case", "background").blank?
-      problems << "assignment is blank" if snapshot.dig("case", "assignment").blank?
-      problems << "at least one stakeholder is required" if snapshot.fetch("stakeholders").empty?
-      unless snapshot.fetch("stakeholders").any? { |_id, stakeholder| stakeholder.fetch("available_at_start") }
-        problems << "at least one stakeholder must be available at the start"
-      end
-
-      snapshot.fetch("stakeholders").each_value do |stakeholder|
-        unless %w[openai anthropic].include?(stakeholder.fetch("provider"))
-          problems << "#{stakeholder.fetch("name")} uses an unsupported provider"
-        end
-        problems << "#{stakeholder.fetch("name")} has no model" if stakeholder.fetch("model_id").blank?
-      end
-
-      snapshot.fetch("referrals").each do |referral|
-        source_id = referral.fetch("source_stakeholder_id")
-        target_id = referral.fetch("target_stakeholder_id")
-        unless snapshot.fetch("stakeholders").key?(source_id) && snapshot.fetch("stakeholders").key?(target_id)
-          problems << "referral #{referral.fetch("id")} crosses the case boundary"
-        end
-      end
-
-      snapshot.fetch("bundles").each_value do |bundle|
-        problems << "#{bundle.fetch("name")} has no documents" if bundle.fetch("document_ids").empty?
-        problems << "#{bundle.fetch("name")} has no stakeholder" unless snapshot.fetch("stakeholders").key?(bundle.fetch("stakeholder_id"))
-        if bundle.fetch("document_ids").any? { |document_id| !snapshot.fetch("documents").key?(document_id) }
-          problems << "#{bundle.fetch("name")} contains a document from another case"
-        end
-      end
-
-      raise InvalidConfiguration, problems if problems.any?
-    end
 
     def lock_attachments!(snapshot)
       CaseDocument.with_attached_file.where(id: snapshot.fetch("documents").keys).find_each do |document|

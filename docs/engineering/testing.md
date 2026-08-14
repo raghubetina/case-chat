@@ -1,7 +1,7 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified for the current domain, infrastructure, account, policy, case-authoring, and stakeholder-authoring layers<br>
+**Implementation:** verified for the current domain, infrastructure, account, policy, authoring, and publication layers<br>
 **Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
@@ -74,6 +74,23 @@ the configuration that keeps private stakeholder instructions out of logs.
 Future product request tests must still prove that each controller resolves
 submitted child IDs through its authorized parent and invokes the
 authenticated-controller guard.
+
+`CasePublicationReadinessTest` proves that the advisory result uses the exact
+candidate snapshot and distinguishes an invalid draft, a changed publication,
+an unchanged current publication, and an archived case requiring reactivation.
+`CasePublishTest` covers first publication, changed republication, archived
+reactivation, the unchanged no-op, invalid rollback, graph locks, and preservation
+of existing attempt snapshots. `AuthorCasePublicationTest` proves the
+authenticated author-only endpoint and the combined form submission: a ready,
+model-valid edit saves and publishes together; model-invalid fields remain
+unsaved and visible; and a model-valid but structurally incomplete edit saves
+without publishing. It also covers the alert announced for that partial outcome,
+advisory error rendering, and absence of publication state changes on rejected
+requests. `AuthorCasePublicationFlowTest` covers the visible readiness and
+publication journey, its major panel states at narrow width, and accessibility
+in both themes. These tests do not treat a syntactically allowed provider and
+model ID as evidence that a provider call works; provider contracts and model
+test drives require their own later tests.
 
 Native-presentation and PWA coverage will be kept, replaced, or removed with
 the UI decisions that determine whether those product surfaces remain. The

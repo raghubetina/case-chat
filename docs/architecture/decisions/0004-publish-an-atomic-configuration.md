@@ -1,7 +1,7 @@
 # 0004 — Publish an atomic configuration snapshot
 
 **Decision status:** accepted<br>
-**Implementation:** lifecycle plus case and stakeholder editing verified; remaining child authoring integration planned<br>
+**Implementation:** lifecycle, author publication, and case and stakeholder editing verified; remaining child authoring integration planned<br>
 **Date:** 2026-08-13<br>
 **Last verified:** 2026-08-14
 
@@ -28,11 +28,38 @@ document rows. Resetting creates a new attempt that uses the latest publication.
 The prototype stores only the current publication. It does not keep a revision
 history, diff UI, rollback mechanism, or per-message prompt migration.
 
+The author case editor shows advisory readiness built from the exact candidate
+snapshot. The publish command rebuilds and validates the configuration while
+holding the case lock, so a stale readiness result is never authority to write.
+The first publication stores the snapshot and time. A changed republication
+replaces both. Re-publishing an unchanged `published` case performs no writes;
+publishing an `archived` case is an explicit reactivation and refreshes the
+snapshot and publication time even if its content has not changed. A direct
+publish validation failure changes neither the case nor publication locks.
+
+The case editor's publication button submits the current case form rather than
+publishing a stale saved draft. `Cases::UpdateAndPublish` wraps the draft update,
+readiness check, and publication in one outer transaction, so the case-row lock
+acquired by the update remains held through the combined outcome. A ready,
+model-valid submission saves and publishes together. Model-invalid case fields
+remain unsaved and on screen; a model-valid edit that leaves the configuration
+structurally incomplete is saved as a draft without changing the publication or
+its locks.
+
 ## Consequences
 
 - Draft editing cannot leak partially into the learner experience.
 - Active conversations remain internally consistent.
 - Publishing and reset have simple, explainable semantics.
+- The publication action evaluates the submitted case fields, not an older form
+  state.
+- Existing attempts stay pinned when an author republishes; only later attempts
+  receive the replacement snapshot.
+- Repeated submission of an unchanged published configuration does not create
+  a misleading new publication time or touch graph members.
+- Readiness is structural advice, not provider verification. A supported
+  provider value and nonblank model ID do not establish that credentials, model
+  availability, or responses work.
 - We accept that the prototype cannot restore an older publication.
 - An attachment referenced by a published configuration is immutable. Replacing
   a file creates a new `CaseDocument` record that can enter the next publication;
@@ -65,6 +92,14 @@ same parent-lock protocol for stakeholder creation and editing, including child
 resolution and parent-touch behavior. These service tests deliberately do not
 claim to be two-connection database concurrency proofs. Referral, document, and
 bundle authoring are not yet integrated with the lock protocol.
+
+`CasePublicationReadinessTest`, `CasePublishTest`,
+`AuthorCasePublicationTest`, and `AuthorCasePublicationFlowTest` verify the
+advisory readiness result, first and changed publications, unchanged no-op,
+archived reactivation, invalid rollback, combined save-and-publish behavior,
+author-only HTTP boundary, visible workflow, and preservation of existing
+attempt snapshots. Provider execution remains outside this confirmation
+boundary.
 
 ## Revisit when
 
