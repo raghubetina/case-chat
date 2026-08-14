@@ -1,0 +1,14 @@
+<div id="test_composer" class="border-t border-line p-3">
+  <%= form_with url: author_case_contact_test_drive_path(case_study, contact),
+        method: :post, scope: :test_drive, id: "test_drive_form",
+        data: {controller: "composer", action: "turbo:submit-end->composer#clear"} do |form| %>
+    <div class="flex items-end gap-2 rounded-lg border border-line bg-surface p-2">
+      <%= form.text_area :body, rows: 1, required: true,
+            "aria-label": t("author.test_drive.compose_label", name: contact.full_name),
+            placeholder: t("author.test_drive.compose_placeholder"),
+            class: "max-h-[140px] min-h-[36px] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-base leading-snug outline-none",
+            data: {composer_target: "input", action: "input->composer#grow keydown->composer#submitOnEnter"} %>
+      <%= form.submit t("threads.send"), class: "btn btn-primary h-10 shrink-0" %>
+    </div>
+  <% end %>
+</div>

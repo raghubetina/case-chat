@@ -24,7 +24,11 @@ class ApplicationController < ActionController::Base
   end
   helper_method :current_user
 
+  # formats: :html because a refusal can arrive on any request shape. Without
+  # it a turbo_stream request — the composer, the test drive — looks for
+  # errors/forbidden.turbo_stream, fails to find it, and 500s on the way to
+  # saying 403.
   def forbidden
-    render "errors/forbidden", status: :forbidden, layout: "application"
+    render "errors/forbidden", status: :forbidden, layout: "application", formats: :html
   end
 end

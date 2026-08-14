@@ -27,7 +27,11 @@ Rails.application.configure do
   # Show full error reports and raise exceptions by default. Error-page tests
   # opt individual requests into production-like exception rendering.
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+  # Not :null_store. Some features keep state in Rails.cache — the author's
+  # test drive transcript, which the web process writes and the job process
+  # reads — and a null store makes them silently do nothing, so the tests
+  # covering them would pass against a feature that never worked.
+  config.cache_store = :memory_store
 
   config.action_dispatch.show_exceptions = :none
 

@@ -216,6 +216,20 @@ en:
       sidebar_label: Case, cast and files
       unreachable: Unreachable
       your_cases: Your cases
+    test_drive:
+      blank: Ask something first.
+      compose_label: "Ask %{name} something, as a student would"
+      compose_placeholder: Ask as a student
+      empty: "Nothing yet. Ask %{name} something and see what they do with it."
+      failed: That answer did not come back. Try again.
+      heading: Test drive
+      not_applied: Nothing here was applied. This is what a student would have received.
+      not_visible: Not visible to students
+      reset: Reset
+      too_many: That is a lot of test drives in a short time. Give it a minute.
+      triggered: Triggered
+      would_introduce_html: "Would introduce %{name}"
+      would_share_html: "Would share %{name}"
   cases:
     collected_note: Files people have shared with you in conversation.
     course: Course

@@ -1,0 +1,32 @@
+<%# Rehearsing the stakeholder from inside their editor. Nothing here is
+    persisted as domain data: no enrollment, no conversation, no messages, and
+    nothing the reply triggers is applied. See TestDrive. %>
+<div id="test_drive" class="flex min-w-0 flex-col border-t border-line bg-wash xl:border-l xl:border-t-0">
+  <%= turbo_stream_from contact, current_user, :test_drive %>
+
+  <div class="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+    <div class="flex flex-col">
+      <span class="kick text-xs text-accent"><%= t("author.test_drive.heading") %></span>
+      <span class="text-sm text-mute"><%= t("author.test_drive.not_visible") %></span>
+    </div>
+    <%= button_to t("author.test_drive.reset"),
+          author_case_contact_test_drive_path(case_study, contact),
+          method: :delete, class: "btn btn-outline btn-sm" %>
+  </div>
+
+  <div class="scroll-y flex flex-1 flex-col gap-4 p-4"
+       data-controller="autoscroll" data-autoscroll-target="container">
+    <div id="test_transcript" class="flex flex-col gap-4">
+      <% if drive.turns.empty? %>
+        <p id="test_drive_empty" class="text-sm text-mute">
+          <%= t("author.test_drive.empty", name: contact.full_name) %>
+        </p>
+      <% end %>
+      <% drive.turns.each do |turn| %>
+        <%= render "author/contacts/test_turn", turn: turn, contact: contact %>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "author/contacts/test_composer", contact: contact, case_study: case_study %>
+</div>

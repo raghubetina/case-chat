@@ -27,7 +27,8 @@
     <% end %>
   </div>
 
-  <div class="scroll-y flex flex-1 flex-col gap-8 p-6 lg:p-8">
+  <div class="grid min-h-0 flex-1 xl:grid-cols-[1fr_minmax(360px,420px)]">
+    <div class="scroll-y flex flex-col gap-8 p-6 lg:p-8">
     <% unless @contact.in_starting_directory? || @introducers.any? %>
       <div class="rounded-lg border border-error bg-surface p-4 text-sm text-mute">
         <%= t("author.contacts.orphan_warning", name: @contact.full_name) %>
@@ -166,5 +167,10 @@
         <% end %>
       </section>
     </div>
+    </div>
+
+    <%= render "author/contacts/test_drive",
+          contact: @contact, case_study: @case_study,
+          drive: TestDrive.new(current_user, @contact) %>
   </div>
 <% end %>
