@@ -1,7 +1,7 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified for the current domain, infrastructure, account, and policy layers<br>
+**Implementation:** verified for the current domain, infrastructure, account, policy, and author-case layers<br>
 **Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
@@ -50,9 +50,19 @@ Active Storage declarations.
 `AuthenticationTest` exercises the application-owned Rodauth configuration
 through its real middleware, while `AuthenticationFlowTest` covers the visible
 account journey and both-theme accessibility. Policy tests cover actor and
-scope boundaries directly without retesting Pundit's dispatch. Product request
-tests must still prove that each future controller resolves submitted child IDs
-through its authorized parent and invokes the authenticated-controller guard.
+scope boundaries directly without retesting Pundit's dispatch.
+
+`AuthorCasesTest` proves the first product controller's account guard,
+authored-only scope, pagination boundary, foreign-record 404 behavior,
+server-owned field rejection, and invalid-edit preservation.
+`CaseDraftEditingTest` covers the application-owned draft services and lock
+protocol without claiming to retest PostgreSQL's row-lock implementation.
+`AuthorCaseFlowTest` exercises creation and revision in a real browser and
+audits the author pages in both themes, including responsive wrapping for
+maximum-length unbroken author content at desktop and mobile widths. Future
+product request tests must still prove that each controller resolves submitted
+child IDs through its authorized parent and invokes the authenticated-controller
+guard.
 
 Native-presentation and PWA coverage will be kept, replaced, or removed with
 the UI decisions that determine whether those product surfaces remain. The

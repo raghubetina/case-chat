@@ -1,0 +1,54 @@
+<% content_for :title, t("author.cases.index.heading") %>
+
+<section class="author-workspace">
+  <header class="author-page-header">
+    <div>
+      <p class="author-eyebrow"><%= t("author.cases.index.eyebrow") %></p>
+      <h1><%= t("author.cases.index.heading") %></h1>
+      <p class="author-page-lede"><%= t("author.cases.index.lede") %></p>
+    </div>
+    <%= link_to t("author.cases.index.create"), new_author_case_path, class: "button button-primary" %>
+  </header>
+
+  <% if @pagy.count.zero? %>
+    <div class="author-empty-state">
+      <div class="author-empty-state__mark" aria-hidden="true"></div>
+      <h2><%= t("author.cases.index.empty_heading") %></h2>
+      <p><%= t("author.cases.index.empty_lede") %></p>
+      <%= link_to t("author.cases.index.create"), new_author_case_path, class: "button button-primary" %>
+    </div>
+  <% else %>
+    <ol class="case-list">
+      <% @cases.each do |case_record| %>
+        <li>
+          <article class="case-card">
+            <div class="case-card__body">
+              <div class="case-card__heading">
+                <span class="case-status case-status--<%= case_record.status %>"><%= t("author.cases.status.#{case_record.status}") %></span>
+                <span class="case-card__updated"><%= t("author.cases.index.updated", date: l(case_record.updated_at.to_date, format: :long)) %></span>
+              </div>
+              <h2>
+                <%= link_to case_record.title, edit_author_case_path(case_record) %>
+              </h2>
+              <ul class="case-card__readiness" aria-label="<%= t("author.cases.index.readiness_label") %>">
+                <li class="<%= "is-ready" if case_record.background.present? %>">
+                  <%= t("author.cases.index.readiness.#{case_record.background.present? ? "background_ready" : "background_missing"}") %>
+                </li>
+                <li class="<%= "is-ready" if case_record.assignment.present? %>">
+                  <%= t("author.cases.index.readiness.#{case_record.assignment.present? ? "assignment_ready" : "assignment_missing"}") %>
+                </li>
+              </ul>
+            </div>
+            <%= link_to t("author.cases.index.edit", title: case_record.title), edit_author_case_path(case_record), class: "button button-ghost case-card__action" %>
+          </article>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+
+  <% if @pagy.pages > 1 %>
+    <div class="pagination">
+      <%== @pagy.series_nav(aria_label: t("author.cases.index.pagination")) %>
+    </div>
+  <% end %>
+</section>

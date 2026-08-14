@@ -22,6 +22,7 @@
 #  fk_rails_...  (author_id => users.id) ON DELETE => restrict
 #
 class Case < ApplicationRecord
+  DRAFT_EDITABLE_ATTRIBUTES = %i[title background assignment].freeze
   STATUSES = %w[draft published archived].freeze
 
   belongs_to :author, class_name: "User", inverse_of: :authored_cases

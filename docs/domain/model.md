@@ -1,7 +1,7 @@
 # Target domain model
 
 **Status:** accepted for the prototype<br>
-**Implementation:** verified for persistence, lifecycle, account, and policy semantics; concurrent authoring and domain product UI remain planned<br>
+**Implementation:** verified for persistence, lifecycle, accounts, policies, and the first author case editor; child authoring and the remaining product UI are planned<br>
 **Last verified:** 2026-08-14
 
 This is the canonical model implemented by the current schema and lifecycle
@@ -59,6 +59,12 @@ configuration snapshot. New attempts copy that snapshot; new learner
 conversations copy the relevant stakeholder configuration from their attempt.
 We deliberately do not build a publication history or general revision system
 for the prototype.
+
+The author workspace implements creation and parent-row-locked editing of the
+title, background, and assignment. Server-owned author, status, publication
+snapshot, and publication timestamp fields are not accepted from the form.
+Editing a published case changes the normalized draft while preserving the
+configuration already pinned by active learners.
 
 ### Cohort and Enrollment
 
@@ -227,10 +233,11 @@ each boundary; generated foreign-key inputs must never be trusted merely because
 the referenced row exists.
 
 Publishing holds the parent `Case` row lock while reading and replacing the
-snapshot. Authoring mutation commands must acquire that same parent lock before
-changing child records so an accepted publication cannot mix concurrent draft
-states. Those authoring commands are not implemented yet, so concurrent
-authoring coherence is an integration seam rather than a verified guarantee.
+snapshot. The implemented top-level case draft update acquires that same lock.
+Future stakeholder, referral, document, and bundle mutation commands must do so
+as well, so an accepted publication cannot mix concurrent child states. Those
+child commands are not implemented yet; full concurrent authoring coherence is
+still an integration seam rather than a verified guarantee.
 
 ## Deliberately deferred
 

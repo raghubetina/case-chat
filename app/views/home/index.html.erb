@@ -1,10 +1,45 @@
-<% content_for :title, t("home.heading") %>
+<% if request.env.key?("rodauth") && rodauth.logged_in? %>
+  <% content_for :title, t("home.signed_in.heading", name: rodauth.rails_account.full_name) %>
 
-<section class="hero-layout bg-muted rounded-[2px] mt-8">
-  <div class="hero-layout-inner text-center py-16">
-    <div class="max-w-md">
-      <h1 class="text-4xl font-bold"><%= t("home.heading") %></h1>
-      <p class="py-6 text-muted-foreground"><%= t("home.lede") %></p>
+  <section class="signed-in-home">
+    <div class="signed-in-home__intro">
+      <p class="author-eyebrow"><%= t("home.signed_in.eyebrow") %></p>
+      <h1><%= t("home.signed_in.heading", name: rodauth.rails_account.full_name) %></h1>
+      <p><%= t("home.signed_in.lede") %></p>
     </div>
-  </div>
-</section>
+    <div class="signed-in-home__actions">
+      <article class="home-action-card">
+        <span class="home-action-card__number" aria-hidden="true"></span>
+        <div>
+          <h2><%= t("home.signed_in.your_cases_heading") %></h2>
+          <p><%= t("home.signed_in.your_cases_lede") %></p>
+        </div>
+        <%= link_to t("home.signed_in.your_cases_action"), author_cases_path, class: "button button-primary" %>
+      </article>
+      <article class="home-action-card">
+        <span class="home-action-card__number" aria-hidden="true"></span>
+        <div>
+          <h2><%= t("home.signed_in.new_case_heading") %></h2>
+          <p><%= t("home.signed_in.new_case_lede") %></p>
+        </div>
+        <%= link_to t("home.signed_in.new_case_action"), new_author_case_path, class: "button button-ghost home-action-card__secondary-action" %>
+      </article>
+    </div>
+  </section>
+<% else %>
+  <% content_for :title, t("home.heading") %>
+
+  <section class="product-home hero-layout">
+    <div class="hero-layout-inner">
+      <div class="product-home__panel">
+        <p class="author-eyebrow"><%= t("home.eyebrow") %></p>
+        <h1><%= t("home.public_heading") %></h1>
+        <p><%= t("home.lede") %></p>
+        <div class="product-home__actions">
+          <%= link_to t("home.create_account"), rodauth.create_account_path, class: "button button-primary" %>
+          <%= link_to t("home.sign_in"), rodauth.login_path, class: "button button-ghost" %>
+        </div>
+      </div>
+    </div>
+  </section>
+<% end %>

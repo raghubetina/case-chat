@@ -1,0 +1,50 @@
+---
+en:
+  author:
+    cases:
+      flash:
+        created: Case created. Add the rest of the case when you are ready.
+        updated: Draft changes saved.
+      form:
+        assignment_hint: Learners see this alongside the background. Stakeholders never receive the assignment.
+        assignment_label: Learner assignment
+        background_hint: Learners see this before they begin interviewing stakeholders.
+        background_label: Case background
+        errors_heading: Review the highlighted fields
+        errors_lede: Correct the following before saving this case.
+        title_hint: Learners see this title in their case workspace and cohort invitation.
+        title_label: Case title
+      index:
+        create: Create a case
+        edit: Edit %{title}
+        empty_heading: Start with a case worth investigating
+        empty_lede: Draft the background and assignment first. Stakeholders, documents, cohorts, and publishing come next.
+        eyebrow: Author workspace
+        heading: Your cases
+        lede: Build the situations learners will investigate through stakeholder interviews.
+        pagination: Case list pages
+        readiness_label: Draft readiness
+        readiness:
+          assignment_missing: Assignment needs drafting
+          assignment_ready: Assignment drafted
+          background_missing: Background needs drafting
+          background_ready: Background drafted
+        updated: Updated %{date}
+      new:
+        back: Back to your cases
+        eyebrow: New case
+        heading: Create a case
+        lede: Begin with the brief a learner needs before their first interview.
+        submit: Create case
+      edit:
+        back: Back to your cases
+        eyebrow: Case draft
+        heading: Edit %{title}
+        lede: Shape what learners know at the start of their research.
+        published_draft_heading: Your changes are a new draft
+        published_draft_lede: Active learners keep the version they started with. Changes here will not reach a learner until a future publishing step replaces the case snapshot.
+        submit: Save changes
+      status:
+        archived: Archived
+        draft: Draft
+        published: Published

@@ -1,7 +1,7 @@
 # 0002 — Use `rodauth-rails` for accounts
 
 **Decision status:** accepted<br>
-**Implementation:** partial — account lifecycle and policy layer verified; product-controller integration planned<br>
+**Implementation:** partial — accounts, policies, and the first author controller are verified; remaining product integration is planned<br>
 **Date:** 2026-08-13<br>
 **Last verified:** 2026-08-14
 
@@ -55,8 +55,8 @@ fixed-deadline forget/disable behavior, password change, authenticated
 account-switch prevention, and unauthenticated redirect through Rodauth's real
 middleware. `AuthenticationFormContractTest` proves the app-owned forms carry
 Rails CSRF tokens and that tokenless account submissions are rejected.
-`RateLimitingTest` proves those
-middleware-owned endpoints still pass through Rack Attack.
+`RateLimitingTest` proves those middleware-owned endpoints still pass through
+Rack Attack.
 `AuthenticationFlowTest` exercises the account screens in a real browser and
 audits them for accessibility in both themes. `ErrorPagesTest` proves explicit
 Pundit denials map to the branded 403 response.
@@ -64,9 +64,12 @@ Pundit denials map to the branded 403 response.
 The focused policy suites verify the author, learner, cohort, attempt,
 test-drive, and conversation decisions and scopes. `AuthenticatedController`
 requires a login and a Pundit authorization or policy scope for every product
-action. No product controllers exist yet, so parent-scoped loading and those
-controller integration points remain planned; do not describe the whole
-authorization surface as verified until their request tests pass.
+action. `AuthorCasesTest` verifies that the first product controller requires an
+account, limits the index and member lookups to authored cases, returns 404 for
+foreign or enrolled-only case IDs, and rejects server-owned fields. The same
+parent-scoped loading and request-level proof remain required for every future
+stakeholder, document, cohort, learner, transcript, and provider controller; do
+not describe the whole authorization surface as verified yet.
 
 ## Revisit when
 
