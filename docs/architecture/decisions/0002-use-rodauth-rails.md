@@ -1,9 +1,9 @@
 # 0002 — Use `rodauth-rails` for accounts
 
 **Decision status:** accepted<br>
-**Implementation:** planned<br>
+**Implementation:** partial — account lifecycle and policy layer verified; product-controller integration planned<br>
 **Date:** 2026-08-13<br>
-**Last verified:** 2026-08-13
+**Last verified:** 2026-08-14
 
 ## Context
 
@@ -42,14 +42,31 @@ separate author account type and no second authentication stack.
   Rails routes.
 - The app must adapt its UUID `users` migration carefully instead of blindly
   accepting the generator's default schema.
+- Signup writes through Rodauth's Sequel connection, so the app-owned hook must
+  set `full_name` and timestamps instead of relying on Active Record callbacks.
 - Adding email verification or recovery later is a deliberate feature change
   with delivery and UX work, not dormant prototype plumbing.
 
 ## Confirmation
 
-Planned tests: account creation, login/logout, remembered session, password
-change, unauthenticated redirect, authorization boundaries for author and
-learner records. Mark implementation verified only after those tests pass.
+`AuthenticationTest` verifies canonical account creation, the bcrypt byte
+boundary, login/logout, optional remembered sessions, server-side revocation,
+fixed-deadline forget/disable behavior, password change, authenticated
+account-switch prevention, and unauthenticated redirect through Rodauth's real
+middleware. `AuthenticationFormContractTest` proves the app-owned forms carry
+Rails CSRF tokens and that tokenless account submissions are rejected.
+`RateLimitingTest` proves those
+middleware-owned endpoints still pass through Rack Attack.
+`AuthenticationFlowTest` exercises the account screens in a real browser and
+audits them for accessibility in both themes. `ErrorPagesTest` proves explicit
+Pundit denials map to the branded 403 response.
+
+The focused policy suites verify the author, learner, cohort, attempt,
+test-drive, and conversation decisions and scopes. `AuthenticatedController`
+requires a login and a Pundit authorization or policy scope for every product
+action. No product controllers exist yet, so parent-scoped loading and those
+controller integration points remain planned; do not describe the whole
+authorization surface as verified until their request tests pass.
 
 ## Revisit when
 
@@ -63,3 +80,5 @@ second account class.
   `590a6d4e532b2920541bfff4d03a4a08223679e7`. Its install generator defaults to
   verification and reset features, explicitly supports a `users` table, and
   documents removing features and their tables when they are not needed.
+- [`Authentication and authorization research`](../../research/authentication-and-authorization.md)
+  records the complete pinned library set and the Rails/Sequel boundary.

@@ -19,6 +19,18 @@ gem "cssbundling-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 
+# Perimeter rate limiting must load before Rodauth so account endpoints pass
+# through Rack::Attack before the authentication middleware handles them.
+gem "rack-attack"
+
+# Authentication and authorization
+gem "rodauth-rails", "~> 2.2.1"
+gem "rodauth", "~> 2.45.0", require: false
+gem "bcrypt", "~> 3.1.22", require: false
+gem "rodauth-i18n", "~> 0.11.0", require: false
+gem "sequel-activerecord_connection", "~> 2.0.1", require: false
+gem "pundit", "~> 2.5.2"
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
@@ -42,9 +54,6 @@ gem "strong_migrations"
 
 # Paginate every collection (ceiling guardrail: Relations, never Arrays).
 gem "pagy"
-
-# Perimeter per-IP rate limiting; counters ride Rails.cache.
-gem "rack-attack"
 
 group :production do
   # Hard request deadline so a wedged request cannot hold a Puma thread forever.

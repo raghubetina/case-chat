@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_010100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_14_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -94,7 +94,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_010100) do
     t.index ["author_id"], name: "index_cases_on_author_id"
     t.check_constraint "btrim(title::text) <> ''::text", name: "cases_title_nonblank"
     t.check_constraint "published_configuration IS NULL AND published_at IS NULL AND status::text <> 'published'::text OR published_configuration IS NOT NULL AND jsonb_typeof(published_configuration) = 'object'::text AND published_at IS NOT NULL", name: "cases_publication_complete"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[])", name: "cases_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'published'::character varying::text, 'archived'::character varying::text])", name: "cases_status_valid"
   end
 
   create_table "cohorts", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -126,7 +126,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_010100) do
     t.index ["stakeholder_id"], name: "index_conversations_on_stakeholder_id"
     t.index ["test_drive_id", "slot"], name: "index_conversations_on_test_drive_and_slot", unique: true, where: "(test_drive_id IS NOT NULL)"
     t.index ["test_drive_id"], name: "index_conversations_on_test_drive_id"
-    t.check_constraint "attempt_id IS NOT NULL AND test_drive_id IS NULL AND slot IS NULL OR attempt_id IS NULL AND test_drive_id IS NOT NULL AND (slot::text = ANY (ARRAY['left'::character varying, 'right'::character varying]::text[]))", name: "conversations_one_context"
+    t.check_constraint "attempt_id IS NOT NULL AND test_drive_id IS NULL AND slot IS NULL OR attempt_id IS NULL AND test_drive_id IS NOT NULL AND (slot::text = ANY (ARRAY['left'::character varying::text, 'right'::character varying::text]))", name: "conversations_one_context"
     t.check_constraint "btrim(model_id::text) <> ''::text", name: "conversations_model_nonblank"
     t.check_constraint "btrim(provider::text) <> ''::text", name: "conversations_provider_nonblank"
     t.check_constraint "jsonb_typeof(configuration_snapshot) = 'object'::text", name: "conversations_snapshot_object"
@@ -203,8 +203,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_010100) do
     t.check_constraint "\"position\" > 0", name: "messages_position_positive"
     t.check_constraint "role::text = 'assistant'::text OR status::text = 'complete'::text", name: "messages_non_assistant_complete"
     t.check_constraint "role::text = 'tool'::text AND btrim(tool_name::text) <> ''::text AND btrim(tool_call_id::text) <> ''::text AND tool_result IS NOT NULL AND jsonb_typeof(tool_result) = 'object'::text OR role::text <> 'tool'::text AND tool_name IS NULL AND tool_call_id IS NULL AND tool_result IS NULL", name: "messages_tool_metadata_matches_role"
-    t.check_constraint "role::text = ANY (ARRAY['user'::character varying, 'assistant'::character varying, 'tool'::character varying]::text[])", name: "messages_role_valid"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'streaming'::character varying, 'complete'::character varying, 'failed'::character varying]::text[])", name: "messages_status_valid"
+    t.check_constraint "role::text = ANY (ARRAY['user'::character varying::text, 'assistant'::character varying::text, 'tool'::character varying::text])", name: "messages_role_valid"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'streaming'::character varying::text, 'complete'::character varying::text, 'failed'::character varying::text])", name: "messages_status_valid"
   end
 
   create_table "model_runs", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -234,7 +234,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_010100) do
     t.check_constraint "jsonb_typeof(usage) = 'object'::text", name: "model_runs_usage_object"
     t.check_constraint "latency_ms IS NULL OR latency_ms >= 0", name: "model_runs_latency_nonnegative"
     t.check_constraint "raw_response IS NULL OR jsonb_typeof(raw_response) = 'object'::text", name: "model_runs_raw_response_object"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'streaming'::character varying, 'complete'::character varying, 'failed'::character varying]::text[])", name: "model_runs_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'streaming'::character varying::text, 'complete'::character varying::text, 'failed'::character varying::text])", name: "model_runs_status_valid"
   end
 
   create_table "referrals", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -280,10 +280,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_010100) do
     t.check_constraint "jsonb_typeof(configuration_snapshot) = 'object'::text", name: "test_drives_snapshot_object"
   end
 
+  create_table "user_remember_keys", id: :uuid, default: nil, force: :cascade do |t|
+    t.datetime "deadline", null: false
+    t.string "key", null: false
+  end
+
   create_table "users", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.string "full_name", null: false
+    t.string "password_hash"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.check_constraint "btrim(full_name::text) <> ''::text", name: "users_full_name_nonblank"
@@ -319,4 +325,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_010100) do
   add_foreign_key "stakeholders", "cases", on_delete: :restrict
   add_foreign_key "test_drives", "stakeholders", on_delete: :restrict
   add_foreign_key "test_drives", "users", column: "author_id", on_delete: :restrict
+  add_foreign_key "user_remember_keys", "users", column: "id", on_delete: :cascade
 end

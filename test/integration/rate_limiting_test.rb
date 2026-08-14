@@ -28,6 +28,16 @@ class RateLimitingTest < ActionDispatch::IntegrationTest
     assert_equal "#{I18n.t("rate_limit.exceeded", seconds: retry_after)}\n", response.body
   end
 
+  test "authentication endpoints stay inside the perimeter" do
+    3.times do
+      get "/login"
+      assert_response :success
+    end
+
+    get "/login"
+    assert_response :too_many_requests
+  end
+
   test "perimeter counters stay off the application database cache" do
     assert_instance_of ActiveSupport::Cache::MemoryStore, @original_store
     refute_same Rails.cache, @original_store

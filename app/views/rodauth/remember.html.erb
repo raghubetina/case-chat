@@ -1,0 +1,47 @@
+<% content_for :title, t("auth.remember.heading") %>
+
+<section class="auth-layout" aria-labelledby="remember-heading">
+  <div class="auth-panel">
+    <header class="auth-panel__header">
+      <h1 id="remember-heading"><%= t("auth.remember.heading") %></h1>
+      <p><%= t("auth.remember.lede") %></p>
+    </header>
+
+    <%= form_with url: rodauth.remember_path, method: :post, data: {turbo: false}, class: "auth-form" do |form| %>
+      <fieldset class="auth-choice-list">
+        <legend><%= t("auth.remember.legend") %></legend>
+
+        <div class="auth-choice">
+          <%= form.radio_button rodauth.remember_param,
+                rodauth.remember_remember_param_value,
+                id: "remember-remember",
+                required: true,
+                class: "auth-choice__control" %>
+          <%= form.label "remember-remember", t("auth.remember.remember") %>
+        </div>
+
+        <div class="auth-choice">
+          <%= form.radio_button rodauth.remember_param,
+                rodauth.remember_forget_param_value,
+                id: "remember-forget",
+                required: true,
+                class: "auth-choice__control" %>
+          <%= form.label "remember-forget", t("auth.remember.forget") %>
+        </div>
+
+        <div class="auth-choice">
+          <%= form.radio_button rodauth.remember_param,
+                rodauth.remember_disable_param_value,
+                id: "remember-disable",
+                required: true,
+                class: "auth-choice__control" %>
+          <%= form.label "remember-disable", t("auth.remember.disable") %>
+        </div>
+      </fieldset>
+
+      <div class="auth-actions">
+        <%= form.submit t("auth.remember.submit"), class: "button button-primary" %>
+      </div>
+    <% end %>
+  </div>
+</section>

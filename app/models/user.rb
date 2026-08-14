@@ -2,17 +2,20 @@
 #
 # Table name: users
 #
-#  id         :uuid             not null, primary key
-#  email      :string           not null
-#  full_name  :string           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
+#  id            :uuid             not null, primary key
+#  email         :string           not null
+#  full_name     :string           not null
+#  password_hash :string
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
 #
 # Indexes
 #
 #  index_users_on_email  (email) UNIQUE
 #
 class User < ApplicationRecord
+  include Rodauth::Rails.model
+
   has_many :authored_cases, class_name: "Case", foreign_key: :author_id,
     inverse_of: :author, dependent: :restrict_with_exception
   has_many :enrollments, dependent: :restrict_with_exception

@@ -171,10 +171,12 @@ automatically selects the SDK's compatibility checksum mode; path-style URLs
 remain opt-in because AWS S3 expects virtual-hosted bucket URLs by default.
 
 Before inviting users, replace the placeholder privacy/terms copy and complete
-ADR 0002's authentication and authorization confirmation. `bin/production-smoke`
-builds the production image against fresh PostgreSQL, prepares all four logical
-databases, boots web and worker, constructs the production S3 adapter without a
-remote request, and performs one `ai` plus one `default` job.
+ADR 0002's remaining product-controller authorization confirmation. Its account
+and policy layers are already verified, but the later product routes must prove
+their parent-scoped loading. `bin/production-smoke` builds the production image
+against fresh PostgreSQL, prepares all four logical databases, boots web and
+worker, constructs the production S3 adapter without a remote request, and
+performs one `ai` plus one `default` job.
 
 Solid Cable retries a transient database interruption with bounded backoff for
 almost four minutes. A longer database outage still requires the web service to

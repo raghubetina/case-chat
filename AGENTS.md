@@ -63,8 +63,9 @@ if the fix is reusable, carry it back to `firstdraft/foundation-rails-core` for 
 - **Rate limiting is two-layer**: the configurable per-IP perimeter lives in
   `config/initializers/rack_attack.rb`; business limits use Rails' `rate_limit to:, within:` directly on the
   endpoints that need them. Keep its `PerimeterClientIp` resolver: Render controls the first forwarded address,
-  while Rails/Rack's general proxy algorithm selects from the other end. Under crawler abuse, add measured
-  per-path throttles before raising the ceiling.
+  while Rails/Rack's general proxy algorithm selects from the other end. Keep `rack-attack` before
+  `rodauth-rails` in the Gemfile so middleware-owned account routes stay inside the perimeter. Under crawler
+  abuse, add measured per-path throttles before raising the ceiling.
 
 ## Testing rules
 Follow `docs/engineering/testing.md`. Preserve WebMock's network block and the
@@ -74,12 +75,14 @@ axe and Turbo system-test guards described above.
 The inherited Core did not supply auth, email delivery, uploads, jobs dashboards, Web Push, or native clients.
 Case Chat now owns the capabilities its accepted decisions require: use `rodauth-rails` as the single account
 stack per ADR 0002 and Active Storage for case documents. Do not introduce a second authentication stack or
-speculative capabilities outside the prototype scope. Authentication and authorization are not implemented yet;
-the obsolete generated CRUD surface has been removed until authorized product flows replace it.
+speculative capabilities outside the prototype scope. The Rodauth account flow, Pundit policy layer, and
+`AuthenticatedController` guard are implemented. New product controllers inherit that guard, load submitted child
+IDs through an authorized parent scope, and prove the integration in request tests; the obsolete generated CRUD
+surface remains removed until those authorized product flows replace it.
 
 ## Launch checklist (before inviting real users)
-- [ ] Verify Rodauth and the author, learner, cohort, transcript, and document authorization boundaries from ADR
-  0002 and the target domain model.
+- [ ] Complete request-level verification for the author, learner, cohort, transcript, and document authorization
+  boundaries from ADR 0002 and the target domain model; the Rodauth account and policy layers are already covered.
 - [ ] Replace the PLACEHOLDER copy on `/privacy` and `/terms`.
 - [ ] If the Designer declares public domains, apply its generated domain policy before mapping traffic.
 - [ ] Set `ROLLBAR_ACCESS_TOKEN` (errors) and `SKYLIGHT_AUTHENTICATION` (APM) if wanted; both are key-dormant.

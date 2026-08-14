@@ -24,8 +24,9 @@ module CaseChat
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
-    # Exceptions render through the router: branded 404/422/500 in the app layout.
+    # Exceptions render through the router: branded 403/404/422/500 in the app layout.
     config.exceptions_app = routes
+    config.action_dispatch.rescue_responses["Pundit::NotAuthorizedError"] = :forbidden
 
     # Deliberate fixtures only; scaffolds do not scatter per-model stubs,
     # per-resource helpers, or asset files.

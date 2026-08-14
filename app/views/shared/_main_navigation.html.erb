@@ -1,0 +1,19 @@
+<% if request.env.key?("rodauth") %>
+  <nav class="primary-nav" aria-label="<%= t("nav.account") %>">
+    <% if rodauth.logged_in? %>
+      <span class="primary-nav__identity">
+        <span class="sr-only"><%= t("nav.signed_in_as") %></span>
+        <%= rodauth.rails_account.full_name %>
+      </span>
+      <%= link_to t("nav.password"), rodauth.change_password_path, class: "button button-ghost button-small" %>
+      <%= link_to t("nav.sign_in_settings"), rodauth.remember_path, class: "button button-ghost button-small" %>
+      <%= button_to t("nav.sign_out"), rodauth.logout_path,
+            method: :post,
+            class: "button button-ghost button-small",
+            form: {class: "primary-nav__form", data: {turbo: false}} %>
+    <% else %>
+      <%= link_to t("nav.sign_in"), rodauth.login_path, class: "button button-ghost button-small" %>
+      <%= link_to t("nav.create_account"), rodauth.create_account_path, class: "button button-primary button-small" %>
+    <% end %>
+  </nav>
+<% end %>

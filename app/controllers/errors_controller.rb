@@ -6,6 +6,10 @@
 class ErrorsController < ActionController::Base
   layout "application"
 
+  def forbidden
+    render_error status: :forbidden, message: t("errors.forbidden.heading")
+  end
+
   def not_found
     render_error status: :not_found, message: t("errors.not_found.heading")
   end

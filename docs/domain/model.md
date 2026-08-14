@@ -1,8 +1,8 @@
 # Target domain model
 
 **Status:** accepted for the prototype<br>
-**Implementation:** verified for persistence and lifecycle semantics; concurrent authoring integration, auth, and product UI remain planned<br>
-**Last verified:** 2026-08-13
+**Implementation:** verified for persistence, lifecycle, account, and policy semantics; concurrent authoring and domain product UI remain planned<br>
+**Last verified:** 2026-08-14
 
 This is the canonical model implemented by the current schema and lifecycle
 services. The first-pass `CaseStudy`, `Contact`, top-level join code, and raw
@@ -42,8 +42,11 @@ erDiagram
 
 ### User
 
-Owns Rodauth account data plus `full_name`. A user can author and enroll without
-a separate role record. The prototype has no administrator role or support UI.
+Owns Rodauth account data plus `full_name`. Email is stripped and lowercased at
+the HTTP and model boundaries. A user can author and enroll without a separate
+role record. The prototype has no administrator role or support UI. Account
+creation, login/logout, optional remembered sessions, and password change are
+implemented; email verification and self-service recovery are not.
 
 ### Case
 
