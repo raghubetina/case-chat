@@ -2,7 +2,21 @@
 
 **Research date:** 2026-08-13<br>
 **Decision:** one authored instruction field inside an application-composed prompt<br>
-**Implementation:** planned
+**Implementation:** partial; author input verified, prompt rendering and provider use planned
+
+## Implemented author input
+
+The stakeholder draft form now collects name, role, learner-visible
+description, one free-form private instruction field, whether the stakeholder
+knows the case background, initial availability, inclusion in the next
+publication, provider, and model ID. The background checkbox defaults to on,
+and its guidance states that the learner assignment is never shared. Provider
+and model may be blank while a draft is incomplete.
+
+These are normalized author inputs only. The application does not yet assemble
+the prompt below, send it to a provider, expose referral or document tools, or
+run the evaluation set. Test drives and publication controls are also still
+planned.
 
 ## What a stakeholder receives
 

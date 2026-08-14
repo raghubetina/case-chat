@@ -20,10 +20,11 @@ implemented. The obsolete public CRUD scaffold has been removed.
 
 The prototype is not deploy-ready yet. Rodauth account flows, the authorization
 policy layer, and the first author workspace are implemented. A signed-in user
-can create a case, return to their authored cases, and revise its background and
-learner assignment without changing an existing published snapshot.
-Stakeholder and document authoring, cohorts, learner interviews, and provider
-integrations remain planned.
+can create a case, return to their authored cases, revise its background and
+learner assignment, and draft the stakeholders learners will interview. Draft
+edits do not change an existing published snapshot. Referrals, document
+authoring, test drives, publication controls, cohorts, learner interviews,
+prompt composition, and provider integrations remain planned.
 
 Start with [`docs/README.md`](docs/README.md). It distinguishes accepted
 decisions from implemented behavior and links to the product brief, canonical

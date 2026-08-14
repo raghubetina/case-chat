@@ -1,9 +1,9 @@
 # 0005 — Compose stakeholder prompts in the application
 
 **Decision status:** accepted<br>
-**Implementation:** planned<br>
+**Implementation:** partial; author input verified, prompt composition and AI integration planned<br>
 **Date:** 2026-08-13<br>
-**Last verified:** 2026-08-13
+**Last verified:** 2026-08-14
 
 ## Context
 
@@ -48,11 +48,18 @@ for the prompt contract and evaluation cases.
 
 ## Confirmation
 
-Snapshot tests cover prompt inclusion and exclusion. Provider contract tests
-cover tool translation. A small scripted evaluation checks secrecy, character
-consistency, uncertainty, natural referrals, and resistance to learner requests
-to reveal instructions. It also covers test-drive tool previews without learner
-side effects.
+`AuthorStakeholdersTest`, `StakeholderDraftEditingTest`, and
+`AuthorStakeholderFlowTest` verify the author-facing instruction field and the
+controls that will govern background inclusion, availability, publication,
+provider, and model. The form explicitly tells authors that the learner
+assignment is never shared with a stakeholder. No prompt renderer or provider
+adapter consumes those fields yet.
+
+Before AI integration is considered verified, snapshot tests must cover prompt
+inclusion and exclusion, provider contract tests must cover tool translation,
+and a small scripted evaluation must check secrecy, character consistency,
+uncertainty, natural referrals, resistance to requests to reveal instructions,
+and test-drive previews without learner side effects.
 
 ## Revisit when
 

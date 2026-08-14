@@ -41,10 +41,87 @@ en:
         eyebrow: Case draft
         heading: Edit %{title}
         lede: Shape what learners know at the start of their research.
+        manage_stakeholders: Manage stakeholders
         published_draft_heading: Your changes are a new draft
         published_draft_lede: Active learners keep the version they started with. Changes here will not reach a learner until a future publishing step replaces the case snapshot.
+        stakeholders_eyebrow: Interview design
+        stakeholders_heading: Build the interview panel
+        stakeholders_lede: Create the people learners can question, then decide what each person knows and when they become available.
         submit: Save changes
       status:
         archived: Archived
         draft: Draft
         published: Published
+    stakeholders:
+      flash:
+        created: Stakeholder created.
+        updated: Stakeholder changes saved.
+      providers:
+        anthropic: Anthropic
+        openai: OpenAI
+      index:
+        back: Back to case brief
+        configuration_missing: Model not configured
+        create: Create a stakeholder
+        description_missing: No learner-visible description yet.
+        edit: Edit
+        edit_named: Edit %{name}
+        empty_heading: Build the people learners can interview
+        empty_lede: Start with someone who can reveal a distinct point of view. You will control what they know and when learners can reach them.
+        eyebrow: Stakeholders · %{case_title}
+        heading: Stakeholders
+        lede: Give every interview a clear perspective, private knowledge, and a place in the learner's research path.
+        model_missing: "%{provider} · Model ID needed"
+        pagination: Stakeholder list pages
+        provider_missing: "Provider needed · %{model}"
+        provider_model: "%{provider} · %{model}"
+        published_draft_heading: Changes prepare the next version
+        published_draft_lede: Learners already researching this case keep the stakeholder configuration they started with. These edits take effect only after a future publishing step.
+        status:
+          available: Available from start
+          does_not_know_background: Does not know case background
+          excluded: Excluded from next publication
+          included: Included in next publication
+          introduced: Introduced later
+          knows_background: Knows case background
+        title: Stakeholders for %{case_title}
+      form:
+        available_hint: If unchecked, learners can reach this person only after an authored introduction.
+        available_label: Available from the start
+        back: Back to stakeholders
+        cancel: Cancel
+        description_hint: This description is visible to learners. Describe why they might want to speak with this person without giving away private facts.
+        description_label: Learner-visible description
+        errors_heading: Review the highlighted fields
+        errors_lede: Correct the following before saving this stakeholder.
+        identity_legend: Identity learners see
+        included_hint: Uncheck this to keep the draft without adding it to the next published configuration.
+        included_label: Include in next publication
+        instructions_hint: Write the person's perspective, facts, motivations, boundaries, and conversational behavior. The application will add safety and case context later.
+        instructions_label: Private stakeholder instructions
+        knowledge_legend: Knowledge and availability
+        knows_background_hint: Checked by default. The learner assignment is never shared with a stakeholder.
+        knows_background_label: Knows the case background
+        model_id_hint: Enter the provider's exact model identifier. You can change it before beginning a new test drive.
+        model_id_label: Model ID
+        model_lede: Choose a provider and model when you are ready to test this stakeholder. Both are required before publishing.
+        model_legend: Model configuration
+        name_hint: Use the name learners will see in the interview workspace.
+        name_label: Name
+        provider_hint: Case Chat uses platform-owned credentials. Only first-party OpenAI and Anthropic connections are in scope for the prototype.
+        provider_label: Provider
+        provider_none: Not selected
+        role_title_hint: Give learners enough context to understand this person's relationship to the case.
+        role_title_label: Role or title
+      new:
+        eyebrow: New stakeholder · %{case_title}
+        heading: Create a stakeholder
+        lede: Define one credible person the learner can question during their research.
+        submit: Create stakeholder
+        title: Create a stakeholder
+      edit:
+        eyebrow: Stakeholder draft · %{case_title}
+        heading: Edit %{name}
+        lede: Refine this person's perspective without changing the configuration active learners already started with.
+        submit: Save changes
+        title: Edit %{name}

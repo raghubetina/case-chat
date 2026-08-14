@@ -1,0 +1,85 @@
+<% content_for :title, t("author.stakeholders.index.title", case_title: @case.title) %>
+
+<section class="author-workspace stakeholder-workspace">
+  <%= link_to t("author.stakeholders.index.back"), edit_author_case_path(@case), class: "author-back-link" %>
+
+  <header class="author-page-header">
+    <div>
+      <p class="author-eyebrow"><%= t("author.stakeholders.index.eyebrow", case_title: @case.title) %></p>
+      <h1><%= t("author.stakeholders.index.heading") %></h1>
+      <p class="author-page-lede"><%= t("author.stakeholders.index.lede") %></p>
+    </div>
+    <%= link_to t("author.stakeholders.index.create"), new_author_case_stakeholder_path(@case), class: "button button-primary" %>
+  </header>
+
+  <% if @case.status == "published" %>
+    <aside class="published-draft-note" aria-labelledby="stakeholder-published-draft-heading">
+      <div class="published-draft-note__rule" aria-hidden="true"></div>
+      <div>
+        <h2 id="stakeholder-published-draft-heading"><%= t("author.stakeholders.index.published_draft_heading") %></h2>
+        <p><%= t("author.stakeholders.index.published_draft_lede") %></p>
+      </div>
+    </aside>
+  <% end %>
+
+  <% if @pagy.count.zero? %>
+    <div class="author-empty-state">
+      <div class="author-empty-state__mark author-empty-state__mark--stakeholder" aria-hidden="true"></div>
+      <h2><%= t("author.stakeholders.index.empty_heading") %></h2>
+      <p><%= t("author.stakeholders.index.empty_lede") %></p>
+      <%= link_to t("author.stakeholders.index.create"), new_author_case_stakeholder_path(@case), class: "button button-primary" %>
+    </div>
+  <% else %>
+    <ol class="stakeholder-list">
+      <% @stakeholders.each do |stakeholder| %>
+        <li>
+          <article class="stakeholder-card">
+            <div class="stakeholder-card__body">
+              <div class="stakeholder-card__statuses">
+                <span class="stakeholder-status <%= stakeholder.available_at_start? ? "stakeholder-status--ready" : "stakeholder-status--muted" %>">
+                  <%= t("author.stakeholders.index.status.#{stakeholder.available_at_start? ? "available" : "introduced"}") %>
+                </span>
+                <span class="stakeholder-status <%= stakeholder.included_in_publication? ? "stakeholder-status--included" : "stakeholder-status--excluded" %>">
+                  <%= t("author.stakeholders.index.status.#{stakeholder.included_in_publication? ? "included" : "excluded"}") %>
+                </span>
+                <span class="stakeholder-status stakeholder-status--muted">
+                  <%= t("author.stakeholders.index.status.#{stakeholder.knows_case_background? ? "knows_background" : "does_not_know_background"}") %>
+                </span>
+              </div>
+
+              <h2><%= link_to stakeholder.name, edit_author_case_stakeholder_path(@case, stakeholder) %></h2>
+              <p class="stakeholder-card__role"><%= stakeholder.role_title %></p>
+              <p class="stakeholder-card__description">
+                <%= stakeholder.description.presence || t("author.stakeholders.index.description_missing") %>
+              </p>
+
+              <p class="stakeholder-card__model">
+                <% provider_name = t("author.stakeholders.providers.#{stakeholder.provider}", default: stakeholder.provider) if stakeholder.provider.present? %>
+                <% if provider_name.present? && stakeholder.model_id.present? %>
+                  <%= t("author.stakeholders.index.provider_model", provider: provider_name, model: stakeholder.model_id) %>
+                <% elsif provider_name.present? %>
+                  <%= t("author.stakeholders.index.model_missing", provider: provider_name) %>
+                <% elsif stakeholder.model_id.present? %>
+                  <%= t("author.stakeholders.index.provider_missing", model: stakeholder.model_id) %>
+                <% else %>
+                  <%= t("author.stakeholders.index.configuration_missing") %>
+                <% end %>
+              </p>
+            </div>
+
+            <%= link_to t("author.stakeholders.index.edit"),
+                  edit_author_case_stakeholder_path(@case, stakeholder),
+                  class: "button button-ghost stakeholder-card__action",
+                  aria: {label: t("author.stakeholders.index.edit_named", name: stakeholder.name)} %>
+          </article>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+
+  <% if @pagy.pages > 1 %>
+    <div class="pagination">
+      <%== @pagy.series_nav(aria_label: t("author.stakeholders.index.pagination")) %>
+    </div>
+  <% end %>
+</section>

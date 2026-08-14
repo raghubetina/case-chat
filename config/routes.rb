@@ -22,7 +22,9 @@ Rails.application.routes.draw do
   match "/500", to: "errors#internal_error", via: :all
 
   namespace :author do
-    resources :cases, only: %i[index new create edit update]
+    resources :cases, only: %i[index new create edit update] do
+      resources :stakeholders, only: %i[index new create edit update]
+    end
   end
 
   root "home#index"

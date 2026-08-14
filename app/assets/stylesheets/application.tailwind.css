@@ -355,6 +355,7 @@
 
   .author-eyebrow {
     @apply text-xs font-bold tracking-[0.16em] text-accent uppercase;
+    overflow-wrap: anywhere;
   }
 
   .author-page-lede,
@@ -374,6 +375,10 @@
 
   .author-empty-state__mark::before {
     content: "C";
+  }
+
+  .author-empty-state__mark--stakeholder::before {
+    content: "S";
   }
 
   .author-empty-state h2 {
@@ -487,6 +492,22 @@
     @apply mt-8 border border-t-4 border-border border-t-accent bg-surface p-5 shadow-sm sm:p-8;
   }
 
+  .author-editor__next-step {
+    @apply mt-8 flex flex-col gap-6 border border-border bg-muted p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6;
+  }
+
+  .author-editor__next-step h2 {
+    @apply mt-2 text-xl font-bold;
+  }
+
+  .author-editor__next-step p:last-child {
+    @apply mt-2 max-w-2xl text-sm leading-6 text-muted-foreground;
+  }
+
+  .author-editor__next-step-action {
+    @apply w-full border border-border bg-surface sm:w-auto;
+  }
+
   .case-form {
     @apply space-y-7;
   }
@@ -537,6 +558,139 @@
 
   .published-draft-note p {
     @apply mt-1 text-sm leading-6 text-muted-foreground;
+  }
+
+  .stakeholder-workspace > .author-back-link {
+    @apply mb-8;
+  }
+
+  .stakeholder-list {
+    @apply mt-8 space-y-4;
+  }
+
+  .stakeholder-card {
+    @apply flex flex-col gap-6 border border-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6;
+  }
+
+  .stakeholder-card__body {
+    @apply min-w-0;
+  }
+
+  .stakeholder-card__statuses {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .stakeholder-status {
+    @apply inline-flex min-h-6 max-w-full items-center rounded-[2px] border px-2 py-0.5 text-xs font-bold tracking-wide uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  .stakeholder-status--ready {
+    @apply border-accent bg-accent text-accent-foreground;
+  }
+
+  .stakeholder-status--included {
+    @apply border-accent text-accent;
+  }
+
+  .stakeholder-status--muted {
+    @apply border-border bg-muted text-muted-foreground;
+  }
+
+  .stakeholder-status--excluded {
+    @apply border-control-border bg-surface text-muted-foreground;
+  }
+
+  .stakeholder-card h2 {
+    @apply mt-4 text-xl font-bold leading-snug;
+    overflow-wrap: anywhere;
+  }
+
+  .stakeholder-card h2 a {
+    @apply decoration-accent decoration-2 underline-offset-4 hover:underline;
+  }
+
+  .stakeholder-card__role {
+    @apply mt-1 text-sm font-semibold;
+    overflow-wrap: anywhere;
+  }
+
+  .stakeholder-card__description {
+    @apply mt-3 max-w-2xl text-sm leading-6 text-muted-foreground;
+    overflow-wrap: anywhere;
+  }
+
+  .stakeholder-card__model {
+    @apply mt-4 border-l-2 border-accent pl-3 text-xs font-semibold text-muted-foreground;
+    overflow-wrap: anywhere;
+  }
+
+  .stakeholder-card__action {
+    @apply w-full border border-border sm:w-auto;
+  }
+
+  .stakeholder-editor {
+    @apply max-w-5xl;
+  }
+
+  .stakeholder-form {
+    @apply space-y-8;
+  }
+
+  .stakeholder-form__section {
+    @apply space-y-6 border-0 p-0;
+  }
+
+  .stakeholder-form__section + .stakeholder-form__section {
+    @apply border-t border-border pt-8;
+  }
+
+  .stakeholder-form__section legend {
+    @apply mb-6 text-xl font-bold;
+    font-family: var(--app-heading-font);
+  }
+
+  .stakeholder-form__section-lede {
+    @apply -mt-4 max-w-2xl text-sm leading-6 text-muted-foreground;
+  }
+
+  .stakeholder-form__grid {
+    @apply grid gap-6 md:grid-cols-2;
+  }
+
+  .stakeholder-form__grid > *,
+  .stakeholder-form .form-input,
+  .stakeholder-form .form-select {
+    @apply min-w-0 w-full;
+  }
+
+  .stakeholder-form__textarea {
+    @apply min-h-32 resize-y leading-6;
+  }
+
+  .stakeholder-form__textarea--instructions {
+    @apply min-h-52;
+  }
+
+  .stakeholder-choice-list {
+    @apply grid gap-3 lg:grid-cols-3;
+  }
+
+  .stakeholder-choice {
+    @apply flex items-start gap-3 border border-border bg-muted p-4 text-sm;
+  }
+
+  .stakeholder-choice__control {
+    @apply mt-0.5 size-4 shrink-0;
+    accent-color: var(--app-accent);
+  }
+
+  .stakeholder-choice__label {
+    @apply block cursor-pointer font-bold;
+  }
+
+  .stakeholder-choice p {
+    @apply mt-1 leading-5 text-muted-foreground;
   }
 
   .signed-in-home {
