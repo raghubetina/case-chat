@@ -12,7 +12,7 @@ class AuthenticatedPagesTest < ApplicationSystemTestCase
     CaseSeeder::Vesta.new.call
     @case_study = CaseStudy.includes(:author).find_by!(join_code: "VESTA-01")
     @author = @case_study.author
-    @student = User.find_by!(email: "jordan@example.test")
+    @student = User.find_by!(email: "bob@example.com")
     @contact = Contact.find_by!(case_study: @case_study, full_name: "June Ellery")
   end
 

@@ -24,7 +24,7 @@ class StudentLoopTest < ApplicationSystemTestCase
     CaseSeeder::Vesta.new.call
     @case_study = CaseStudy.find_by!(join_code: CaseSeeder::Vesta::JOIN_CODE)
     @june = Contact.find_by!(case_study: @case_study, full_name: "June Ellery")
-    @student = User.find_by!(email: "jordan@example.test")
+    @student = User.find_by!(email: "bob@example.com")
     sign_in @student
   end
 

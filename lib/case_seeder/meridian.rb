@@ -17,8 +17,8 @@ module CaseSeeder
     SOURCE_DIR = SEED_FILES.join("meridian")
 
     def call
-      author = upsert_user("Rachel Okonkwo", "rachel@example.test")
-      student = upsert_user("Jordan Lin", "jordan@example.test", program: "MBA 2027")
+      author = upsert_user("Alice Alvarez", "alice@example.com")
+      student = upsert_user("Bob Brennan", "bob@example.com", program: "MBA 2027")
 
       case_study = upsert_case(author)
       contacts = upsert_contacts(case_study)
