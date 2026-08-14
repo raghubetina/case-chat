@@ -26,9 +26,11 @@ edits do not change an existing published snapshot. The case editor reports
 advisory readiness. Its publication action submits the current case form: valid
 case fields and a ready configuration are saved and published together, invalid
 fields remain unsaved and visible, and a structurally incomplete valid draft is
-saved without being published. Referrals, document authoring, test drives,
-archive controls, cohorts, learner interviews, prompt composition, and provider
-integrations remain planned.
+saved without being published. A provider-neutral, versioned prompt composer
+now renders the allowlisted interview instructions from a pinned conversation
+configuration, but no provider consumes that output yet. Referrals, document
+authoring, test drives, archive controls, cohorts, learner interviews, and
+provider integrations remain planned.
 
 Start with [`docs/README.md`](docs/README.md). It distinguishes accepted
 decisions from implemented behavior and links to the product brief, canonical
