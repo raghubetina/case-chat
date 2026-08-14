@@ -1,4 +1,22 @@
-# Production topology for a real deployment, not a portfolio demo.
+# A TESTING profile, deliberately smaller than the topology this app wants.
+#
+# What was cut, and what it costs to have cut it:
+#
+#   Key Value is gone. Action Cable falls back to Solid Cable, which polls
+#   Postgres — every subscriber is a recurring query and every streamed token a
+#   write. Fine for a handful of testers, wrong for a class of thirty streaming
+#   at once, which is the case the Key Value instance existed to serve.
+#
+#   Web and worker are starter (512MB), so WEB_CONCURRENCY drops to one Puma
+#   worker. Two would not fit.
+#
+#   Postgres is basic-256mb, which holds the seeded cases and a few students.
+#
+# The worker stays a separate service. Folding jobs back into Puma would save
+# another instance and change the thing being tested: a reply streams for
+# 10-60 seconds and would hold a request thread for all of it.
+#
+# Restore before a class uses this: keyvalue back, standard/standard, basic-1gb.
 #
 # The Foundation blueprint runs everything in one 512MB web service with Solid
 # Queue inside Puma and Action Cable polling Postgres. That is a sound default
@@ -17,23 +35,15 @@
 #      where their access patterns are a good fit.
 databases:
   - name: case-chat-claude-db
-    plan: basic-1gb
+    plan: basic-256mb
     region: ohio
     postgresMajorVersion: "18"
 
 services:
-  # Action Cable only. Cache and queue remain on Postgres.
-  - name: case-chat-claude-cable
-    type: keyvalue
-    plan: starter
-    region: ohio
-    ipAllowList: [] # reachable only from inside the Render private network
-    maxmemoryPolicy: noeviction # dropping pub/sub state would silently break streams
-
   - type: web
     name: case-chat-claude
     runtime: docker
-    plan: standard
+    plan: starter
     region: ohio
     autoDeployTrigger: checksPass
     healthCheckPath: /ready
@@ -49,16 +59,11 @@ services:
         fromDatabase:
           name: case-chat-claude-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: case-chat-claude-cable
-          type: keyvalue
-          property: connectionString
       - key: PORT
         value: "80"
       # Standard has room for a real cluster; each worker gets its own threads.
       - key: WEB_CONCURRENCY
-        value: "2"
+        value: "1"
       - key: RAILS_MAX_THREADS
         value: "5"
       # Web processes no longer run jobs — that is the worker's job now.
@@ -66,7 +71,7 @@ services:
         value: "false"
       # Per Puma worker: threads plus headroom for Action Cable and Solid Cache.
       - key: DB_POOL
-        value: "8"
+        value: "6"
       # Streaming responses are held open by Action Cable, not by a request, so
       # the ordinary request deadline stays short.
       - key: RACK_TIMEOUT_SERVICE_TIMEOUT
@@ -80,7 +85,7 @@ services:
   - type: worker
     name: case-chat-claude-worker
     runtime: docker
-    plan: standard
+    plan: starter
     region: ohio
     autoDeployTrigger: checksPass
     # Not ./bin/rails server, so the entrypoint's db:prepare does not run here:
@@ -97,17 +102,12 @@ services:
         fromDatabase:
           name: case-chat-claude-db
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: case-chat-claude-cable
-          type: keyvalue
-          property: connectionString
       # A reply job spends most of its life waiting on the model, so threads
       # are cheap here; this is IO-bound, not CPU-bound.
       - key: JOB_CONCURRENCY
-        value: "2"
+        value: "1"
       - key: DB_POOL
-        value: "12"
+        value: "6"
 
 # Two groups on purpose. This one is the blueprint's: wiring it can derive, and
 # values it generates. The other, `case-chat`, is managed by hand in the

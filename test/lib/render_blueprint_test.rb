@@ -45,19 +45,36 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     assert @group_vars.fetch("SECRET_KEY_BASE").key?("generateValue")
   end
 
-  test "Action Cable has somewhere to broadcast that is not the database" do
-    # Token streaming is many broadcasts per second per thread; Solid Cable
-    # polls Postgres, so every subscriber is a recurring query.
-    cable = @services.fetch("case-chat-claude-cable")
+  # Two coherent shapes, and the half-migrated state between them is the bug
+  # this catches: a Key Value instance wired to both services, or no Key Value
+  # and no REDIS_URL anywhere, in which case config/cable.yml falls back to
+  # Solid Cable and its table has to be in the schema.
+  #
+  # Redis is the right shape under load — token streaming is many broadcasts a
+  # second per thread, and Solid Cable polls Postgres, so every subscriber is a
+  # recurring query and every token a write. The testing profile trades that
+  # away knowingly; what it must not do is trade it away halfway.
+  test "Action Cable has a backend, and only one" do
+    cable = @services["case-chat-claude-cable"]
+    redis_refs = [@web, @worker].map do |service|
+      service.fetch("envVars").find { |entry| entry["key"] == "REDIS_URL" }
+    end
 
-    assert_equal "keyvalue", cable.fetch("type")
-    assert_equal "noeviction", cable.fetch("maxmemoryPolicy"),
-      "evicting pub/sub state would drop stream messages silently"
-    [@web, @worker].each do |service|
-      wired = service.fetch("envVars").find { |entry| entry["key"] == "REDIS_URL" }
-
-      assert_equal "case-chat-claude-cable", wired&.dig("fromService", "name"),
-        "#{service.fetch("name")} must resolve the Key Value instance"
+    if cable
+      assert_equal "keyvalue", cable.fetch("type")
+      assert_equal "noeviction", cable.fetch("maxmemoryPolicy"),
+        "evicting pub/sub state would drop stream messages silently"
+      redis_refs.each_with_index do |wired, i|
+        assert_equal "case-chat-claude-cable", wired&.dig("fromService", "name"),
+          "#{[@web, @worker][i].fetch("name")} must resolve the Key Value instance"
+      end
+    else
+      assert_empty redis_refs.compact,
+        "REDIS_URL is wired to a Key Value instance the blueprint no longer creates"
+      assert_match(/adapter: solid_cable/, Rails.root.join("config/cable.yml").read,
+        "without Key Value, cable.yml must fall back to Solid Cable")
+      assert_match(/create_table "solid_cable_messages"/, Rails.root.join("db/schema.rb").read,
+        "Solid Cable needs its table in the schema production loads")
     end
   end
 

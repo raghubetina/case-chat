@@ -22,6 +22,14 @@ Four resources, one region:
 | `case-chat-claude-db` (Postgres, basic-1gb) | Domain data, plus Solid Cache and Solid Queue, whose access patterns suit it. |
 | `case-chat-claude-cable` (Key Value, starter) | Action Cable only. Token streaming is many broadcasts per second per thread; Solid Cable polls Postgres, so each subscriber is a recurring query and each token a write. |
 
+> **The blueprint currently ships a testing profile**, not the topology above:
+> no Key Value instance (Action Cable falls back to Solid Cable, which polls
+> Postgres), starter web and worker with a single Puma worker, and a
+> basic-256mb database. That is right for a handful of testers and wrong for a
+> class streaming at once. Restore Key Value, standard/standard and basic-1gb
+> before real use; the header comment in `render.yaml` says exactly what to put
+> back.
+
 Both services inherit the `case-chat-claude-runtime` environment group. That is
 load-bearing rather than tidy: a `SECRET_KEY_BASE` that differed between web and
 worker would mean signed cookies and Active Storage URLs minted by one are
