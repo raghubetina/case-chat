@@ -39,6 +39,8 @@ services:
     healthCheckPath: /ready
     envVars:
       - fromGroup: case-chat-runtime
+      # Secrets set by hand in the dashboard; see the note on the group below.
+      - fromGroup: case_chat
       - key: PORT
         value: "80"
       # Standard has room for a real cluster; each worker gets its own threads.
@@ -73,6 +75,7 @@ services:
     dockerCommand: ./bin/jobs
     envVars:
       - fromGroup: case-chat-runtime
+      - fromGroup: case_chat
       # A reply job spends most of its life waiting on the model, so threads
       # are cheap here; this is IO-bound, not CPU-bound.
       - key: JOB_CONCURRENCY
@@ -80,6 +83,11 @@ services:
       - key: DB_POOL
         value: "12"
 
+# Two groups on purpose. This one is the blueprint's: wiring it can derive, and
+# values it generates. The other, `case_chat`, is managed by hand in the
+# dashboard and holds the secrets — RESPONDER, CLOUDINARY_URL, and the provider
+# keys. Nothing appears in both, because a key declared twice resolves to
+# whichever group is listed last and that is not a thing to leave to ordering.
 envVarGroups:
   - name: case-chat-runtime
     envVars:
@@ -102,26 +110,8 @@ envVarGroups:
           name: case-chat-cable
           type: keyvalue
           property: connectionString
-      # Which model answers as a contact: anthropic | openai.
-      #
-      # openai because the reply has to read as live typing. Measured on one
-      # prompt: OpenAI streams 252 text frames ~13ms apart, Anthropic 12 frames
-      # of ~104 characters ~704ms apart, which lands as visible slabs. Both
-      # adapters are behind the same seam, so this is one value to flip — watch
-      # the [reply] cache_read lines before deciding permanently.
-      - key: RESPONDER
-        value: openai
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
       # Host for mailer links.
       - key: APPLICATION_HOST
-        sync: false
-      # Document blobs. The container filesystem is ephemeral, so this is not
-      # optional in production — without it every uploaded document survives
-      # until the next deploy and then has no blob behind it.
-      - key: CLOUDINARY_URL
         sync: false
       # Load the teaching cases on first boot. Off unless set, because seeding
       # creates sign-in-able demo accounts.
