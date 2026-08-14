@@ -11,6 +11,10 @@ worker="rails-app-smoke-worker-${suffix}"
 database_gate="rails-app-smoke-database-gate-${suffix}"
 postgres_image="${POSTGRES_IMAGE:-postgres:18}"
 token="${suffix}"
+cloudinary_api_key="production-smoke-key"
+cloudinary_api_secret="production-smoke-secret"
+cloudinary_cloud_name="case-chat-production-smoke"
+cloudinary_url="cloudinary://${cloudinary_api_key}:${cloudinary_api_secret}@${cloudinary_cloud_name}"
 
 cleanup() {
   status=$?
@@ -83,12 +87,16 @@ docker build --tag "${image}" .
 runtime_user="$(docker run --rm --entrypoint id "${image}" -u)"
 [[ "${runtime_user}" == "1000" ]] || { echo "Expected runtime UID 1000, got ${runtime_user}" >&2; exit 1; }
 installed_gems="$(docker run --rm --entrypoint bundle "${image}" list --name-only)"
-for excluded_gem in brakeman foreman image_processing ruby-vips selenium-webdriver standard; do
+for excluded_gem in aws-sdk-s3 brakeman foreman image_processing ruby-vips selenium-webdriver standard; do
   if grep --fixed-strings --line-regexp --quiet "${excluded_gem}" <<<"${installed_gems}"; then
     echo "Production image unexpectedly contains ${excluded_gem}" >&2
     exit 1
   fi
 done
+grep --fixed-strings --line-regexp --quiet "cloudinary" <<<"${installed_gems}" || {
+  echo "Production image is missing cloudinary" >&2
+  exit 1
+}
 if docker run --rm --entrypoint dpkg-query "${image}" --show "libvips*" >/dev/null 2>&1; then
   echo "Production image unexpectedly contains libvips" >&2
   exit 1
@@ -117,37 +125,66 @@ for logical_database in app_production_cache app_production_queue app_production
   docker exec "${database}" createdb --username postgres "${logical_database}"
 done
 
-common_runtime_environment=(
+runtime_environment_without_cloudinary=(
   --env DATABASE_URL="${database_url}"
   --env CACHE_DATABASE_URL="${cache_database_url}"
   --env QUEUE_DATABASE_URL="${queue_database_url}"
   --env CABLE_DATABASE_URL="${cable_database_url}"
   --env SECRET_KEY_BASE="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   --env DB_POOL=3
-  --env CACHE_DB_POOL=3
+  --env CACHE_DB_POOL=2
   --env RAILS_MAX_THREADS=3
-  --env AI_JOB_THREADS=5
+  --env AI_JOB_THREADS=2
   --env DEFAULT_JOB_THREADS=2
-  --env OBJECT_STORAGE_ACCESS_KEY_ID=production-smoke-access-key
-  --env OBJECT_STORAGE_SECRET_ACCESS_KEY=production-smoke-secret-key
-  --env OBJECT_STORAGE_REGION=us-east-1
-  --env OBJECT_STORAGE_BUCKET=case-chat-production-smoke
   --env RENDER_EXTERNAL_HOSTNAME=render.test
   --env SMOKE_TOKEN="${token}"
   --env 'RUBYOPT=-rbundler/setup -r/rails/script/production_smoke_job'
 )
 
+common_runtime_environment=(
+  "${runtime_environment_without_cloudinary[@]}"
+  --env CLOUDINARY_URL="${cloudinary_url}"
+)
+
 web_runtime_environment=(
   "${common_runtime_environment[@]}"
-  --env CABLE_DB_POOL=3
+  --env CABLE_DB_POOL=2
   --env QUEUE_DB_POOL=2
 )
 
 worker_runtime_environment=(
   "${common_runtime_environment[@]}"
-  --env CABLE_DB_POOL=5
-  --env QUEUE_DB_POOL=7
+  --env CABLE_DB_POOL=2
+  --env QUEUE_DB_POOL=4
 )
+
+if cloudinary_boot_output="$(docker run --rm --network "${network}" \
+  "${runtime_environment_without_cloudinary[@]}" \
+  "${image}" timeout 15 ./bin/rails runner 'true' 2>&1)"; then
+  echo "Production boot unexpectedly accepted a missing CLOUDINARY_URL" >&2
+  exit 1
+else
+  cloudinary_boot_status=$?
+fi
+[[ "${cloudinary_boot_status}" == "1" ]] || {
+  echo "Missing-CLOUDINARY_URL boot check did not fail promptly" >&2
+  exit 1
+}
+grep --fixed-strings --quiet "CLOUDINARY_URL" <<<"${cloudinary_boot_output}" || {
+  echo "Missing-Cloudinary boot error did not name CLOUDINARY_URL" >&2
+  exit 1
+}
+for sensitive_value in \
+  "${cloudinary_url}" \
+  "${cloudinary_api_key}" \
+  "${cloudinary_api_secret}" \
+  "${cloudinary_cloud_name}" \
+  "${database_url}"; do
+  if grep --fixed-strings --quiet "${sensitive_value}" <<<"${cloudinary_boot_output}"; then
+    echo "Missing-Cloudinary boot error exposed a credential" >&2
+    exit 1
+  fi
+done
 
 docker run --detach --name "${database_gate}" --network "${network}" \
   "${worker_runtime_environment[@]}" \
@@ -223,7 +260,32 @@ docker exec "${app}" bin/rails runner \
   'key = "production-smoke:cache"; Rails.cache.write(key, ENV.fetch("SMOKE_TOKEN")); abort "Solid Cache failed" unless Rails.cache.read(key) == ENV.fetch("SMOKE_TOKEN")'
 
 docker exec "${app}" bin/rails runner \
-  'service = ActiveStorage::Blob.service; abort "Active Storage is not using S3" unless service.is_a?(ActiveStorage::Service::S3Service); abort "Active Storage bucket mismatch" unless service.bucket.name == ENV.fetch("OBJECT_STORAGE_BUCKET")'
+  'service = ActiveStorage::Blob.service
+  abort "Active Storage is not using Cloudinary" unless service.is_a?(ActiveStorage::Service::CloudinaryService)
+  abort "Cloudinary cloud name mismatch" unless Cloudinary.config.cloud_name == "case-chat-production-smoke"
+  abort "Cloudinary API key mismatch" unless Cloudinary.config.api_key == "production-smoke-key"
+  abort "Cloudinary API secret mismatch" unless Cloudinary.config.api_secret == "production-smoke-secret"
+
+  pdf_key = ActiveStorage::BlobKey.new(
+    key: "production-smoke-pdf",
+    filename: "case.pdf",
+    content_type: "application/pdf",
+    service_name: "production"
+  )
+  csv_key = ActiveStorage::BlobKey.new(
+    key: "production-smoke-csv",
+    filename: "case.csv",
+    content_type: "text/csv",
+    service_name: "production"
+  )
+  pdf_url = service.url(pdf_key)
+  csv_url = service.url(csv_key)
+
+  abort "Cloudinary PDF URL is not authenticated image delivery" unless pdf_url.start_with?("https://") && pdf_url.include?("/image/authenticated/")
+  abort "Cloudinary CSV URL is not authenticated raw delivery" unless csv_url.start_with?("https://") && csv_url.include?("/raw/authenticated/")
+  abort "Cloudinary delivery URL is outside the app folder" unless [pdf_url, csv_url].all? { |url| url.include?("/case-chat-codex/") }
+  abort "Cloudinary delivery URL is not signed" unless [pdf_url, csv_url].all? { |url| url.include?("/s--") }
+  abort "Cloudinary API secret leaked into a delivery URL" if [pdf_url, csv_url].any? { |url| url.include?(Cloudinary.config.api_secret) }'
 
 cable_before="$(docker exec "${app}" bin/rails runner 'puts SolidCable::Message.count')"
 docker exec "${app}" bin/rails runner 'ActionCable.server.broadcast("production-smoke", {ok: true})'
@@ -279,4 +341,4 @@ done
   exit 1
 }
 
-echo "Production web and worker booted; isolated Cache, Queue, and Cable databases, S3 storage configuration, and both job lanes passed"
+echo "Production web and worker booted; isolated Cache, Queue, and Cable databases, authenticated Cloudinary storage, and both job lanes passed"

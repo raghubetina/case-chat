@@ -113,7 +113,7 @@ production:
   queue:
     <<: *default
     url: <%= ENV["QUEUE_DATABASE_URL"] %>
-    max_connections: <%= Integer(ENV.fetch("QUEUE_DB_POOL", "7"), 10) %>
+    max_connections: <%= Integer(ENV.fetch("QUEUE_DB_POOL", "4"), 10) %>
     migrations_paths: db/queue_migrate
   cable:
     <<: *default

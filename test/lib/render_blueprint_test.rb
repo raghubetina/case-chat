@@ -9,11 +9,12 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     @worker = @blueprint.fetch("services").find { |service| service.fetch("type") == "worker" }
     @web_environment = keyed_environment(@web)
     @worker_environment = keyed_environment(@worker)
-    environment_group = @blueprint.fetch("envVarGroups").find { |group| group.fetch("name") == "case-chat-production" }
-    @shared_environment = environment_group.fetch("envVars").index_by { |entry| entry.fetch("key") }
   end
 
   test "declares paid web and worker services" do
+    assert_equal 2, @blueprint.fetch("services").size
+    assert_equal "case-chat-codex-web", @web.fetch("name")
+    assert_equal "case-chat-codex-worker", @worker.fetch("name")
     assert_equal "standard", @web.fetch("plan")
     assert_equal "standard", @worker.fetch("plan")
     assert_equal "./bin/jobs", @worker.fetch("dockerCommand")
@@ -25,14 +26,18 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     assert_equal "./bin/wait-for-database-preparation", @worker.fetch("preDeployCommand")
   end
 
-  test "shares one environment group and service-owned secrets" do
-    assert_equal({"fromGroup" => "case-chat-production"}, @web.fetch("envVars").first)
-    assert_equal({"fromGroup" => "case-chat-production"}, @worker.fetch("envVars").first)
+  test "references the dashboard-owned group without managing it" do
+    refute @blueprint.key?("envVarGroups")
+
+    [@web, @worker].each do |service|
+      group_references = service.fetch("envVars").select { |entry| entry.key?("fromGroup") }
+      assert_equal [{"fromGroup" => "case-chat"}], group_references
+    end
 
     %w[DATABASE_URL CACHE_DATABASE_URL QUEUE_DATABASE_URL CABLE_DATABASE_URL].each do |key|
       assert_equal false, @web_environment.fetch(key).fetch("sync")
       assert_equal(
-        {"type" => "web", "name" => "case-chat-web", "envVarKey" => key},
+        {"type" => "web", "name" => "case-chat-codex-web", "envVarKey" => key},
         @worker_environment.fetch(key).fetch("fromService")
       )
     end
@@ -43,41 +48,84 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     dashboard_managed_keys = %w[
       OPENAI_API_KEY
       ANTHROPIC_API_KEY
-      OBJECT_STORAGE_ACCESS_KEY_ID
-      OBJECT_STORAGE_SECRET_ACCESS_KEY
-      OBJECT_STORAGE_REGION
-      OBJECT_STORAGE_BUCKET
-      OBJECT_STORAGE_ENDPOINT
-      OBJECT_STORAGE_FORCE_PATH_STYLE
+      CLOUDINARY_URL
     ]
-    blueprint_environment_keys = @shared_environment.keys | @web_environment.keys | @worker_environment.keys
+    blueprint_environment_keys = @web_environment.keys | @worker_environment.keys
 
     dashboard_managed_keys.each { |key| refute_includes blueprint_environment_keys, key }
   end
 
+  test "keeps runtime configuration on each service" do
+    shared_values = {
+      "RAILS_ENV" => "production",
+      "PORT" => "80",
+      "WEB_CONCURRENCY" => "1",
+      "RAILS_MAX_THREADS" => "3",
+      "DB_POOL" => "3",
+      "CACHE_DB_POOL" => "2",
+      "AI_JOB_THREADS" => "2",
+      "DEFAULT_JOB_THREADS" => "2",
+      "RACK_TIMEOUT_SERVICE_TIMEOUT" => "15",
+      "RAILS_LOG_LEVEL" => "info",
+      "BUNDLE_WITHOUT" => "development:test"
+    }
+
+    shared_values.each do |key, value|
+      assert_equal value, @web_environment.fetch(key).fetch("value")
+      assert_equal value, @worker_environment.fetch(key).fetch("value")
+    end
+
+    assert_equal "2", @web_environment.fetch("CABLE_DB_POOL").fetch("value")
+    assert_equal "2", @worker_environment.fetch("CABLE_DB_POOL").fetch("value")
+  end
+
   test "configures queue capacity without an in-Puma worker" do
-    all_environment_keys = @shared_environment.keys | @web_environment.keys | @worker_environment.keys
-    ai_threads = @shared_environment.fetch("AI_JOB_THREADS").fetch("value").to_i
-    default_threads = @shared_environment.fetch("DEFAULT_JOB_THREADS").fetch("value").to_i
+    all_environment_keys = @web_environment.keys | @worker_environment.keys
+    ai_threads = @worker_environment.fetch("AI_JOB_THREADS").fetch("value").to_i
+    default_threads = @worker_environment.fetch("DEFAULT_JOB_THREADS").fetch("value").to_i
     web_queue_pool = @web_environment.fetch("QUEUE_DB_POOL").fetch("value").to_i
     worker_queue_pool = @worker_environment.fetch("QUEUE_DB_POOL").fetch("value").to_i
 
     refute_includes all_environment_keys, "SOLID_QUEUE_IN_PUMA"
     refute_includes Rails.root.join("config/puma.rb").read, "plugin :solid_queue"
-    assert_equal 5, ai_threads
+    assert_equal 2, ai_threads
     assert_equal 2, default_threads
     assert_equal 2, web_queue_pool
-    assert_equal 7, worker_queue_pool
+    assert_equal 4, worker_queue_pool
     assert_operator worker_queue_pool, :>=, [ai_threads, default_threads].max + 2
   end
 
+  test "keeps fallback queue capacity aligned with the deployed profile" do
+    with_environment("AI_JOB_THREADS" => nil, "DEFAULT_JOB_THREADS" => nil, "QUEUE_DB_POOL" => nil) do
+      workers = queue_configuration.fetch("workers")
+      ai_worker = workers.find do |worker|
+        worker.fetch("queues") == ["ai"]
+      end
+      default_worker = workers.find do |worker|
+        worker.fetch("queues") == ["mailers", "default"]
+      end
+      database_configuration = YAML.safe_load(
+        ERB.new(Rails.root.join("config/database.yml").read).result,
+        aliases: true
+      )
+
+      assert_equal 2, ai_worker.fetch("threads")
+      assert_equal 2, default_worker.fetch("threads")
+      assert_equal 4, database_configuration.dig("production", "queue", "max_connections")
+    end
+  end
+
   test "pins the public port and keeps auxiliary connection ceilings bounded" do
-    ai_threads = @shared_environment.fetch("AI_JOB_THREADS").fetch("value").to_i
+    ai_threads = @worker_environment.fetch("AI_JOB_THREADS").fetch("value").to_i
+    web_threads = @web_environment.fetch("RAILS_MAX_THREADS").fetch("value").to_i
+    web_primary_pool = @web_environment.fetch("DB_POOL").fetch("value").to_i
+    web_cable_pool = @web_environment.fetch("CABLE_DB_POOL").fetch("value").to_i
     worker_cable_pool = @worker_environment.fetch("CABLE_DB_POOL").fetch("value").to_i
 
-    assert_equal "80", @shared_environment.fetch("PORT").fetch("value")
-    assert_equal "3", @shared_environment.fetch("CABLE_DB_POOL").fetch("value")
-    assert_equal 5, worker_cable_pool
+    assert_equal "80", @web_environment.fetch("PORT").fetch("value")
+    assert_equal 2, web_cable_pool
+    assert_operator web_primary_pool, :>=, web_threads
+    assert_operator web_cable_pool, :>=, 2
     assert_operator worker_cable_pool, :>=, ai_threads
   end
 
@@ -89,14 +137,14 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     recurring_tasks = YAML.safe_load_file(Rails.root.join("config/recurring.yml")).fetch("production")
     queue_only_processes = 2 + (recurring_tasks.empty? ? 0 : 1)
 
-    web_ceiling = @shared_environment.fetch("WEB_CONCURRENCY").fetch("value").to_i * web_pool_ceiling
+    web_ceiling = @web_environment.fetch("WEB_CONCURRENCY").fetch("value").to_i * web_pool_ceiling
     worker_ceiling = queue_only_processes * environment_value(@worker_environment, "QUEUE_DB_POOL").to_i +
       worker_entries * worker_pool_ceiling
     steady_state_ceiling = web_ceiling + worker_ceiling
-    usable_direct_connections = 200 - 10
+    usable_direct_connections = 100 - 10
 
-    assert_equal 80, steady_state_ceiling
-    assert_equal 30, usable_direct_connections - (2 * steady_state_ceiling)
+    assert_equal 39, steady_state_ceiling
+    assert_equal 12, usable_direct_connections - (2 * steady_state_ceiling)
   end
 
   private
@@ -108,7 +156,7 @@ class RenderBlueprintTest < ActiveSupport::TestCase
   end
 
   def environment_value(service_environment, key)
-    (service_environment[key] || @shared_environment.fetch(key)).fetch("value")
+    service_environment.fetch(key).fetch("value")
   end
 
   def queue_configuration
@@ -116,5 +164,13 @@ class RenderBlueprintTest < ActiveSupport::TestCase
       ERB.new(Rails.root.join("config/queue.yml").read).result,
       aliases: true
     ).fetch("production")
+  end
+
+  def with_environment(overrides)
+    previous = overrides.to_h { |key, _value| [key, ENV[key]] }
+    overrides.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    yield
+  ensure
+    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 end

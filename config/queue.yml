@@ -4,7 +4,7 @@ default: &default
       batch_size: 500
   workers:
     - queues: [ai]
-      threads: <%= Integer(ENV.fetch("AI_JOB_THREADS", "5"), 10) %>
+      threads: <%= Integer(ENV.fetch("AI_JOB_THREADS", "2"), 10) %>
       processes: 1
       polling_interval: 0.1
     - queues: [mailers, default]

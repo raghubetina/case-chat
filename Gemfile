@@ -64,7 +64,7 @@ group :production do
   gem "rack-timeout", require: "rack/timeout/base"
 
   # Active Storage documents live outside ephemeral web and worker filesystems.
-  gem "aws-sdk-s3", "~> 1.0", require: false
+  gem "cloudinary", "~> 2.4.5"
 end
 
 # Reduces boot times through caching; required in config/boot.rb
