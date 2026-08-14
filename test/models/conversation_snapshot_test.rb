@@ -53,15 +53,22 @@ class ConversationSnapshotTest < ActiveSupport::TestCase
     assert_includes conversation.errors.details[:base], error: :configuration_pinned
   end
 
-  test "allows the provider response cursor to advance after messages exist" do
+  test "advances a provider response cursor with the assistant position it covers" do
     records = create_publishable_case
     publish_case(records[:case])
     attempt = start_attempt(case_record: records[:case])
     conversation = Conversations::StartLearner.call(attempt:, stakeholder_id: records[:stakeholder].id)
     Message.create!(conversation:, position: 1, role: "user", status: "complete")
 
-    assert conversation.update!(provider_cursor: "resp_123")
+    refute conversation.update(provider_cursor: "resp_without_position")
+    assert_includes conversation.errors.details[:base], error: :provider_cursor_incomplete
+
+    refute conversation.update(provider_cursor: "", provider_cursor_position: 1)
+    assert_includes conversation.errors.details[:provider_cursor], error: :blank
+
+    assert conversation.update!(provider_cursor: "resp_123", provider_cursor_position: 1)
     assert_equal "resp_123", conversation.reload.provider_cursor
+    assert_equal 1, conversation.provider_cursor_position
   end
 
   test "rejects a stakeholder who is neither initially available nor introduced" do

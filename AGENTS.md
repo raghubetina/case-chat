@@ -83,8 +83,9 @@ nested stakeholder draft workspace and publication action implement that contrac
 to the unbuilt referral, document, cohort, archive, or learner controllers. Publication readiness is advisory; the
 publish command remains the authoritative validation boundary under the case lock.
 Use the app-owned `AiProviders` contract and first-party OpenAI/Anthropic adapters for provider work; do not add a
-parallel LLM abstraction. They translate streams but are not yet invoked by a job or controller, so provider
-execution, persistence, authorization, and limits still need their own product integration and proof.
+parallel LLM abstraction. `Conversations::SubmitTurn` and `GenerateStakeholderReplyJob` now own persisted text
+generation, but no product controller exposes it yet; request authorization, limits, tools, and browser behavior
+still need their own integration and proof.
 
 ## Launch checklist (before inviting real users)
 - [ ] Complete request-level verification for the remaining author-child, learner, cohort, transcript, and document

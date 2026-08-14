@@ -1,0 +1,13 @@
+<article id="<%= dom_id(message) %>" class="conversation-message conversation-message--<%= message.role %>" data-message-status="<%= message.status %>">
+  <p class="conversation-message__content">
+    <% if message.content.present? %>
+      <%= message.content %>
+    <% elsif message.status == "pending" %>
+      <%= t("messages.pending") %>
+    <% end %>
+  </p>
+
+  <% if message.status == "failed" %>
+    <p class="conversation-message__status"><%= t("messages.failed") %></p>
+  <% end %>
+</article>

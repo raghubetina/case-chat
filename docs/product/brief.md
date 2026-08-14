@@ -1,7 +1,7 @@
 # Product brief
 
 **Status:** accepted<br>
-**Implementation:** partial; accounts, case and stakeholder drafting, author publication, and prompt composition are verified<br>
+**Implementation:** partial; accounts, case and stakeholder drafting, author publication, prompt composition, and text-generation orchestration are verified<br>
 **Last verified:** 2026-08-14
 
 ## The experiment
@@ -70,14 +70,17 @@ description, private instructions, an allowed provider name, and a nonblank
 model ID. These structural checks do not prove that credentials work, the
 provider offers that model, or a conversation succeeds.
 
-The provider-neutral `stakeholder-interview-v1` composer now renders the
+The provider-neutral `stakeholder-interview-v1` composer renders the
 platform interview rules and an allowlisted projection of a single pinned
 conversation configuration. It includes case background only for stakeholders
 configured to know it, and excludes the learner assignment and all unrelated
-case data. No provider consumes the rendered prompt yet.
+case data. A persisted AI-lane job now sends that prompt and completed local
+history through the selected first-party provider adapter, durably checkpoints
+streamed text, and saves usage and provider identifiers. The author test-drive
+screen and learner interview screen do not expose that path yet.
 
-Referrals, documents and sharing rules, test drives, archive controls, cohorts,
-transcripts, model calls, and provider prompt delivery remain planned.
+Referrals, documents and sharing rules, test-drive UI, archive controls,
+cohorts, learner transcripts, and model-driven tool effects remain planned.
 
 Test-drive conversations are author tools. They are never enrollments and never
 appear in learner or cohort metrics. A new test drive pins the current draft so
