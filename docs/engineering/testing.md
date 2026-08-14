@@ -1,7 +1,7 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified for the current domain, infrastructure, account, policy, authoring, publication, and prompt-composition layers<br>
+**Implementation:** verified for the current domain, infrastructure, account, policy, authoring, publication, prompt-composition, and provider-adapter layers<br>
 **Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
@@ -105,9 +105,28 @@ tests feed real `Conversations::StartLearner` and `TestDrives::Start` output int
 the composer. They prove those producers satisfy the required singular shape
 and that an incomplete draft test drive renders empty context elements
 intentionally. They do not claim that a provider follows those instructions,
-prevents prompt leaks, translates tools, streams output, or persists a run.
-Those behaviors require adapter, job, request, and scripted evaluation coverage
-when provider execution is implemented.
+prevents prompt leaks, or receives this exact rendered prompt. The provider
+adapter tests below cover generic request, tool, and stream translation; job,
+request, and scripted evaluation coverage must connect and verify the remaining
+boundaries.
+
+The `AiProviders` value-contract tests pin the small typed boundary shared by
+both providers, including recursively copied and frozen hash payloads and
+copied outer collections. `OpenAiAdapterTest` and `AnthropicAdapterTest` use
+recording fake SDK resources and finite fake streams to verify the exact
+app-to-SDK request, normalized text and tool events, final output and usage,
+provider IDs, cursor rules, and expected failure categories. WebMock remains
+closed and no live provider call occurs. These tests exercise application
+translation, not the SDKs' own HTTP or SSE parsing. They do not prove job
+persistence, Turbo broadcasting, authorization, rate limits, real credentials,
+model availability, or model behavior; those remain separate orchestration,
+request, manual-smoke, and evaluation boundaries.
+
+A credentialed manual smoke on 2026-08-14 exercised one minimal text-only stream
+through each real SDK and adapter (`gpt-5-mini` and `claude-sonnet-4-5`). Both
+returned text deltas, terminal text, usage, request IDs, and response IDs. This
+narrows SDK-stream-shape risk but does not prove tool-call events, model quality,
+or any job, database, authorization, rate-limit, or Turbo behavior.
 
 Native-presentation and PWA coverage will be kept, replaced, or removed with
 the UI decisions that determine whether those product surfaces remain. The

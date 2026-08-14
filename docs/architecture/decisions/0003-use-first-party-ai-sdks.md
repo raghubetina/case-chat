@@ -1,9 +1,9 @@
 # 0003 — Integrate providers through first-party SDKs
 
 **Decision status:** accepted<br>
-**Implementation:** planned<br>
+**Implementation:** partial; provider adapters verified, job and product integration planned<br>
 **Date:** 2026-08-13<br>
-**Last verified:** 2026-08-13
+**Last verified:** 2026-08-14
 
 ## Context
 
@@ -18,11 +18,41 @@ Use the official `openai` and `anthropic` Ruby gems behind two small application
 adapters. Keep the application's `Conversation`, `Message`, tool effects, and
 `ModelRun` provider-neutral; let adapters translate only at the API boundary.
 
+The app-owned adapter contract accepts a rendered system prompt, completed
+user/assistant text history, the newest interviewer input, a pinned model, an
+output-token limit, optional OpenAI cache identity and response cursor, and tool
+definitions with hash input schemas. Each adapter sends those tools through its
+provider's strict mode. The contract yields provider-neutral text and tool-call
+deltas and returns completed text, tool calls, token usage, provider identifiers,
+finish reason, and a serialized copy of the final provider response. Provider SDK
+exceptions and terminal stream failures become a small typed failure carrying
+the partial text and retry metadata; unexpected application errors still raise
+normally.
+
+This first adapter boundary emits tool calls but does not yet represent a tool
+result as continuation input. The orchestration slice that validates and
+persists domain effects must add and prove that provider-neutral continuation
+shape before it runs a multi-step tool loop.
+
 The PostgreSQL transcript is authoritative. Never require provider retention to
-render or recover a conversation. OpenAI uses a `previous_response_id` cursor
-that advances only after a locally recorded completion; Anthropic receives the
-completed local message history. Provider-specific prompt caching is an
-optimization, not storage.
+render or ultimately recover a conversation. OpenAI requests deliberately set
+`store: true` from the first turn so each completed response can become the
+next `previous_response_id`; this permits OpenAI application-state retention
+under its data-controls policy. That provider copy includes the rendered
+private stakeholder instructions and conversation input and output. A
+deployment that requires Zero Data Retention cannot rely on that cursor and
+must use the local transcript instead. Anthropic receives the completed local
+message history. Provider-specific prompt caching is an optimization, not
+storage.
+
+The OpenAI adapter uses the Responses API's raw typed stream so it can retain
+the HTTP request ID. It repeats `instructions` on every request and sends only
+the newest input when a previous-response cursor is available; an unchained
+request carries the full local history. The Anthropic adapter uses the Messages
+stream helper, always re-sends local history through `messages`, supplies the
+prompt through `system_:`, and requests top-level ephemeral cache control. It
+raises an application argument error if passed a cursor rather than implying
+Anthropic persists conversation state.
 
 Stream ordinary provider SSE from a dedicated `ai` Solid Queue job. Coalesce
 message checkpoints and synchronous Turbo Stream broadcasts instead of writing
@@ -52,13 +82,22 @@ reasonable third adapter if the professor's model exploration requires it.
 
 ## Confirmation
 
-Adapter contract tests must prove text deltas, one completed assistant message,
-tool-call translation, usage capture, request/response IDs, and failure state
-without live network access. Job tests must prove a failure after emitted deltas
+`OpenAiAdapterTest`, `AnthropicAdapterTest`, and the provider value-contract
+tests use recording fake SDK resources and streams. They prove exact request
+translation, text and tool-call deltas, completed results, usage and request ID
+capture, cursor semantics, incomplete or missing terminal events, and typed SDK
+failure translation without live network access. They deliberately do not
+retest either SDK's SSE parser.
+
+A credentialed manual smoke on 2026-08-14 confirmed real text-delta streams and
+terminal text, usage, request IDs, and response IDs through `gpt-5-mini` and
+`claude-sonnet-4-5`. It did not exercise provider tool calls or any product
+orchestration.
+
+This ADR remains partial. Job tests must prove a failure after emitted deltas
 preserves the partial output without automatically starting a second provider
-run. One manual smoke per provider confirms the real stream shape before marking
-this verified. Request tests must prove anonymous or unauthorized callers cannot
-enqueue provider work and configured limits apply across resets.
+run. Request tests must prove anonymous or unauthorized callers cannot enqueue
+provider work and configured limits apply across resets.
 
 ## Revisit when
 
@@ -68,8 +107,12 @@ stable duplication that a shared library would remove more code than capability.
 ## Sources
 
 - [OpenAI Ruby SDK](https://github.com/openai/openai-ruby), 0.78.0 source
-  reviewed at commit `6768a7c29664fc9edce4f4da261920da8bb1959d`
+  reviewed at commit `7fd4f6c94bdafb669e23de48915d4465ec020215`
+- [OpenAI streaming Responses](https://developers.openai.com/api/docs/guides/streaming-responses)
 - [OpenAI conversation state](https://developers.openai.com/api/docs/guides/conversation-state)
+- [OpenAI API data controls](https://platform.openai.com/docs/models/default-usage-policies-by-endpoint)
 - [Anthropic Ruby SDK](https://github.com/anthropics/anthropic-sdk-ruby), 1.62.0
   source reviewed at commit `fe3443a3a52ffc6b41ceb8b89a6afc063690ac55`
+- [Anthropic streaming Messages](https://platform.claude.com/docs/en/build-with-claude/streaming)
+- [Anthropic API errors](https://platform.claude.com/docs/en/api/errors)
 - [Claude prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
