@@ -22,9 +22,23 @@ class ContactBriefing
     @contact = contact
   end
 
+  # Four different kinds of content get mixed here: the situation, the person
+  # the author wrote, and two lists this app generates from rows. Both vendors
+  # say to delimit distinct content blocks with XML tags for exactly this case —
+  # so the seams are tagged, and nothing inside a tag is reformatted.
+  #
+  # In particular the persona is passed through as the author wrote it. Prompt
+  # formatting bleeds into output formatting ("removing markdown from your
+  # prompt can reduce the volume of markdown in the output"), and a stakeholder
+  # who answers an interview question in headed bullet lists is not a person.
   def system_text
-    sections = [persona, referral_section, share_section].compact
-    sections.join("\n\n")
+    blocks = []
+    blocks << tag("case_background", background_text) if contact.knows_case_background? && background_text.present?
+    blocks << tag("who_you_are", persona)
+    blocks << tag("people_you_can_introduce", referral_lines) if referrals.any?
+    blocks << tag("documents_you_hold", share_lines) if share_rules.any?
+    blocks << tag("how_to_answer", answering_rules)
+    blocks.join("\n\n")
   end
 
   # Tool definitions are omitted entirely when a contact has nothing to offer:
@@ -54,52 +68,63 @@ class ContactBriefing
     @share_rules ||= contact.share_rules.includes(:document).to_a
   end
 
-  def persona
-    <<~TEXT.strip
-      You are #{contact.full_name}, #{contact.role_title}.
-
-      #{contact.system_prompt}
-
-      You are being interviewed by a student working a business-school case. Stay
-      in character. Answer only from what you know; if something is outside your
-      role, say so plainly rather than inventing it.
-    TEXT
+  def tag(name, body)
+    "<#{name}>\n#{body.strip}\n</#{name}>"
   end
 
-  def referral_section
-    return nil if referrals.empty?
+  # Read by column rather than through contact.case_study: a briefing is built
+  # from whatever Contact the caller happens to hold, and depending on every
+  # one of them to have eager-loaded the association is how this raises under
+  # strict_loading on the one path nobody tested.
+  def background_text
+    @background_text ||= CaseStudy.where(id: contact.case_study_id).pick(:background).to_s
+  end
 
+  def persona
+    "You are #{contact.full_name}, #{contact.role_title}.\n\n#{contact.system_prompt}"
+  end
+
+  # Conditions live on the Referral and ShareRule rows and are injected here.
+  # Authors write who a person *is*; when a handoff fires is a property of the
+  # edge between two people, and keeping it on the edge is what lets the app
+  # check that everyone in the cast is reachable.
+  def referral_lines
     lines = referrals.map do |referral|
       target = referral.referred_contact
-      "- #{target.full_name} (#{target.role_title}): #{referral.condition}"
+      "#{target.full_name} (#{target.role_title}) — introduce when: #{referral.condition}"
     end
 
-    <<~TEXT.strip
-      ## People you can introduce
-
-      You may point the student to these people, but only when the stated
-      condition is met. Use the #{INTRODUCE_TOOL} tool to make the introduction —
-      do not simply name them in passing.
-
-      #{lines.join("\n")}
-    TEXT
+    "Use the #{INTRODUCE_TOOL} tool when one of these conditions is met. " \
+      "Naming someone in passing does not introduce them.\n\n#{lines.join("\n")}"
   end
 
-  def share_section
-    return nil if share_rules.empty?
-
+  def share_lines
     lines = share_rules.map do |rule|
-      "- #{rule.document.file_name}: #{rule.condition}"
+      "#{rule.document.file_name} — hand over when: #{rule.condition}"
     end
 
+    "Use the #{SHARE_TOOL} tool when one of these conditions is met. " \
+      "Describing what a document says is not the same as handing it over.\n\n#{lines.join("\n")}"
+  end
+
+  # Written as prose on purpose: this is the block most likely to shape how the
+  # reply reads, and a bulleted rule list here produces bulleted answers.
+  def answering_rules
     <<~TEXT.strip
-      ## Documents you hold
+      You are being interviewed by a student working this case. Stay in
+      character and answer the way this person would actually talk — in
+      conversation, not in a memo. Do not use headings, bullet lists, or bold
+      text. Numbers belong in sentences.
 
-      You may hand these over, but only when the stated condition is met. Use the
-      #{SHARE_TOOL} tool to send them — do not describe a document's contents in
-      place of sharing it.
+      Answer from what you know. Where you are unsure, say you are unsure rather
+      than smoothing it over, and where something is outside your role say so
+      plainly instead of inventing it. You are one person with one vantage
+      point; you are not required to be right about the whole case, and you
+      should not pretend to speak for colleagues who see it differently.
 
-      #{lines.join("\n")}
+      Do not do the student's analysis for them, and do not tell them what to
+      conclude. Being asked a vague question is a reason to ask what they are
+      actually trying to decide.
     TEXT
   end
 

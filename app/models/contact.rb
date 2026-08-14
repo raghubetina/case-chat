@@ -6,6 +6,7 @@
 #  description           :text
 #  full_name             :string           not null
 #  in_starting_directory :boolean          default(FALSE), not null
+#  knows_case_background :boolean          default(TRUE), not null
 #  role_title            :string           not null
 #  system_prompt         :text             not null
 #  created_at            :datetime         not null

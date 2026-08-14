@@ -80,4 +80,47 @@ class ContactBriefingTest < ActiveSupport::TestCase
 
     assert_equal [ContactBriefing::INTRODUCE_TOOL, ContactBriefing::SHARE_TOOL].sort, names.sort
   end
+
+  test "tells a stakeholder which case they are standing in" do
+    @case_study.update!(background: "Margin fell 380 basis points before the April review.")
+
+    assert_match(/<case_background>/, briefing_for(@dana).system_text)
+    assert_match(/380 basis points/, briefing_for(@dana).system_text)
+  end
+
+  # An outside party who is handed the case background stops being an outside
+  # party: they answer from the situation rather than from their own corner of
+  # it, which removes the reason the student had to go and ask them.
+  test "an outsider can be kept out of the case background" do
+    @case_study.update!(background: "Margin fell 380 basis points before the April review.")
+    @dana.update!(knows_case_background: false)
+
+    text = briefing_for(@dana).system_text
+
+    assert_no_match(/case_background/, text)
+    assert_no_match(/380 basis points/, text)
+    assert_match(/Dana Whitfield/, text, "the persona still has to survive")
+  end
+
+  test "keeps each kind of content in its own block" do
+    @case_study.update!(background: "Some background.")
+    Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "On plants.")
+    document = build_document(case_study: @case_study)
+    ShareRule.create!(contact: @dana, document: document, condition: "On margin.")
+
+    text = briefing_for(@dana).system_text
+
+    %w[case_background who_you_are people_you_can_introduce documents_you_hold how_to_answer].each do |block|
+      assert_match(/<#{block}>.*<\/#{block}>/m, text, "#{block} should be delimited")
+    end
+  end
+
+  # Prompt formatting bleeds into reply formatting, and a person being
+  # interviewed does not answer in headed bullet lists.
+  test "asks for conversation rather than a memo" do
+    text = briefing_for(@dana).system_text
+
+    assert_match(/not in a memo/, text)
+    assert_match(/Do not use headings, bullet lists/, text)
+  end
 end
