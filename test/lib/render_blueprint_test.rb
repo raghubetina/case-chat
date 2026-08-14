@@ -63,13 +63,50 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     assert_equal "case-chat-db", @group_vars.fetch("DATABASE_URL").dig("fromDatabase", "name")
   end
 
-  test "provider keys are never committed" do
-    %w[ANTHROPIC_API_KEY OPENAI_API_KEY RESEND_API_KEY].each do |key|
-      entry = @group_vars.fetch(key)
+  # Secrets live in the hand-managed `case_chat` group, so most are simply not
+  # in this file. What has to hold is the invariant underneath: nothing that
+  # looks like a credential is ever committed with a literal value, whichever
+  # group ends up owning it.
+  SECRET_KEYS = %w[
+    ANTHROPIC_API_KEY OPENAI_API_KEY RESEND_API_KEY CLOUDINARY_URL
+    SECRET_KEY_BASE SEED_PASSWORD
+  ].freeze
 
-      assert_equal false, entry.fetch("sync"), "#{key} must be set in the dashboard, not the repo"
-      assert_nil entry["value"]
+  test "no secret is committed with a value" do
+    committed = @blueprint.fetch("envVarGroups").flat_map { |group| group.fetch("envVars") } +
+      @blueprint.fetch("services").flat_map { |service| service["envVars"] || [] }
+
+    committed.each do |entry|
+      key = entry["key"]
+      next unless key && SECRET_KEYS.include?(key)
+      # generateValue is Render minting it, which is the opposite of committing it.
+      next if entry["generateValue"]
+
+      assert_equal false, entry["sync"],
+        "#{key} must be set in the dashboard, not the repo"
+      assert_nil entry["value"], "#{key} must not carry a literal value"
     end
+  end
+
+  # The secrets that are not in this file still have to reach both services, and
+  # they only do if every service reads the group holding them.
+  test "both services read the hand-managed secret group" do
+    [@web, @worker].each do |service|
+      groups = service.fetch("envVars").filter_map { |entry| entry["fromGroup"] }
+
+      assert_includes groups, "case_chat",
+        "#{service.fetch("name")} would boot without the provider keys or CLOUDINARY_URL"
+    end
+  end
+
+  # A key declared in two groups resolves to whichever is listed last. That is
+  # not a thing to leave to ordering, so the blueprint declares none of them.
+  test "the blueprint does not shadow the hand-managed group" do
+    declared = @blueprint.fetch("envVarGroups").flat_map { |g| g.fetch("envVars").map { |e| e["key"] } }
+    hand_managed = %w[RESPONDER CLOUDINARY_URL ANTHROPIC_API_KEY OPENAI_API_KEY]
+
+    assert_empty declared & hand_managed,
+      "these are set by hand in the dashboard; declaring them here makes the winner depend on group order"
   end
 
   test "every service and the database sit in one region" do
