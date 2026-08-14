@@ -32,6 +32,7 @@
 #
 class ModelRun < ApplicationRecord
   STATUSES = %w[pending streaming complete failed].freeze
+  IDENTITY_ATTRIBUTES = %w[message_id provider model_id input_snapshot].freeze
 
   belongs_to :message
 
@@ -42,6 +43,7 @@ class ModelRun < ApplicationRecord
   validate :input_snapshot_is_an_object
   validate :raw_response_is_an_object
   validate :message_is_assistant
+  validate :identity_is_immutable, on: :update
 
   private
 
@@ -66,5 +68,11 @@ class ModelRun < ApplicationRecord
       Message.where(id: message_id).pick(:role)
     end
     errors.add(:message, :not_assistant) unless role == "assistant"
+  end
+
+  def identity_is_immutable
+    return unless IDENTITY_ATTRIBUTES.any? { |attribute| will_save_change_to_attribute?(attribute) }
+
+    errors.add(:base, :identity_immutable)
   end
 end

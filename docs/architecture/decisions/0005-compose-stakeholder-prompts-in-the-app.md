@@ -1,7 +1,7 @@
 # 0005 — Compose stakeholder prompts in the application
 
 **Decision status:** accepted<br>
-**Implementation:** partial; author input and prompt composition verified, provider adapters available, orchestration planned<br>
+**Implementation:** partial; author input, composition, and persisted provider delivery verified; domain tools planned<br>
 **Date:** 2026-08-13<br>
 **Last verified:** 2026-08-14
 
@@ -53,10 +53,11 @@ ignored when the required singular shape remains compatible; the composer
 validates the fields it actually consumes instead of claiming ownership of the
 whole case snapshot contract.
 
-Provider consumption remains a later boundary. The implemented adapters accept
-a rendered prompt as provider-level instructions and translate local history
-plus provider-neutral tools, but nothing yet invokes them from a conversation.
-The future orchestration will expose `introduce_stakeholder` and
+`Conversations::SubmitTurn` now renders this prompt from the pinned conversation
+snapshot and stores it inside the `ModelRun` request snapshot. The AI worker
+reconstructs the typed provider request only from that immutable run identity,
+then passes the prompt and completed local history to the selected adapter.
+The future tool slice will expose `introduce_stakeholder` and
 `release_documents` as provider-native tools. The server will validate every
 requested effect against the attempt's pinned configuration before creating an
 `Introduction` or `DocumentRelease`.
@@ -104,11 +105,13 @@ not prove that either provider follows the prompt or keeps private instructions
 secret.
 
 Provider adapter tests cover the generic prompt, transcript, and tool request
-boundary independently of this composer. Before AI integration is considered
-verified, orchestration tests must prove the composed prompt is passed through
-that boundary and persisted with the run. A small scripted evaluation must
-check prompt-leak resistance, character consistency, uncertainty, natural
-referrals, and test-drive previews without learner side effects.
+boundary independently of this composer. `Conversations::SubmitTurnTest` proves
+the exact composed prompt is stored with completed history while the assignment
+remains absent. `ConversationRuns::GenerateTest` proves the worker reconstructs
+and passes that persisted request through the adapter boundary. A small scripted
+evaluation must still check prompt-leak resistance, character consistency,
+uncertainty, natural referrals, and test-drive previews without learner side
+effects.
 
 ## Revisit when
 

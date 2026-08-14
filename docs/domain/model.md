@@ -1,7 +1,7 @@
 # Target domain model
 
 **Status:** accepted for the prototype<br>
-**Implementation:** verified for persistence, lifecycle, accounts, policies, case and stakeholder draft editors, author publication, and prompt composition; remaining product UI is planned<br>
+**Implementation:** verified for persistence, lifecycle, accounts, policies, case and stakeholder draft editors, author publication, prompt composition, and text-generation orchestration; remaining product UI is planned<br>
 **Last verified:** 2026-08-14
 
 This is the canonical model implemented by the current schema and lifecycle
@@ -176,8 +176,9 @@ published document from being hard-deleted.
 - a learner `Attempt`; or
 - an author `TestDrive`, with a `slot` of `left` or `right`.
 
-It stores the pinned `provider`, `model_id`, provider response cursor when
-applicable, and `configuration_snapshot`. There is one conversation per
+It stores the pinned `provider`, `model_id`, provider response cursor and the
+assistant-message position that cursor covers when applicable, and
+`configuration_snapshot`. There is one conversation per
 `[attempt_id, stakeholder_id]` and at most one per `[test_drive_id, slot]`.
 Learner conversation configuration comes from its attempt; test-drive
 configuration comes from its test drive.
@@ -207,14 +208,20 @@ and transcripts. Required authored values are strings but may be blank; an
 incomplete draft test drive intentionally renders empty elements so the author
 can observe the missing context. Learner publication separately blocks blank
 descriptions and private instructions. Authored values are XML-escaped once.
-Provider adapters do not consume this result yet, and no `ModelRun` persists it
-until that integration is built. The provider boundary itself is now
-implemented: `AiProviders::OpenAiAdapter` and `AiProviders::AnthropicAdapter`
-translate an app-owned request into each official SDK's streaming API and
-return provider-neutral text, tool calls, usage, identifiers, and failures.
-Nothing invokes those adapters from a conversation yet, so this does not claim
-that a composed prompt or transcript reaches a provider or that a run is
-persisted.
+`Conversations::SubmitTurn` now stores this rendered prompt with the completed
+local history and newest interviewer input in a narrow `ModelRun` request
+snapshot. It never copies the full conversation snapshot, provider settings,
+learner assignment, or credentials. `GenerateStakeholderReplyJob` reconstructs
+the typed request from that immutable run and invokes
+`AiProviders::OpenAiAdapter` or `AiProviders::AnthropicAdapter` on the `ai`
+queue. The generator durably checkpoints streamed text, completes run metadata
+and any OpenAI cursor plus its covered position atomically, and preserves failed
+partial output without automatic provider replay. A later turn falls back to
+complete local history whenever the cursor does not cover the latest completed
+transcript turn. Reset is the prototype recovery for a pending or streaming run
+stranded by queue or worker failure; a less disruptive interrupted-turn action
+remains planned alongside product controllers, request limits, and tool
+execution.
 
 ### Introduction and DocumentRelease
 

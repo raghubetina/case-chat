@@ -76,6 +76,9 @@ en:
       your_cases_action: Open your cases
       your_cases_heading: Continue authoring
       your_cases_lede: Return to a draft or review the current state of a published case.
+  messages:
+    failed: This reply stopped before it finished.
+    pending: Thinking…
   nav:
     account: Primary navigation
     create_account: Create account

@@ -2,7 +2,7 @@
 
 **Research date:** 2026-08-13<br>
 **Decision:** use first-party OpenAI and Anthropic Ruby SDKs<br>
-**Implementation:** partial; adapters and offline contracts verified, orchestration planned
+**Implementation:** partial; adapters and persisted text orchestration verified, product request and tools planned
 
 ## Source review
 
@@ -20,8 +20,11 @@ supports provider changes between attempts, and makes the app recoverable if a
 provider expires or deletes its state.
 
 For OpenAI, use `previous_response_id` as a cursor to the last response that the
-app recorded as complete. Advance it only after `response.completed`; a failed
-partial stream keeps the prior cursor. Repeat `instructions` on every request,
+app recorded as complete, along with the assistant-message position that
+response covers. Advance both only after `response.completed`; a failed partial
+stream keeps the prior cursor, but the intervening completed user turn makes
+that cursor ineligible for the following request. The app then omits it and
+sends the complete local history. Repeat `instructions` on every request,
 because they do not carry forward through the response chain. Set `store: true`
 on the first and later turns because every completed response may become the
 next cursor. The Responses API retains that application state for 30 days by
@@ -38,24 +41,33 @@ excluding failed partial assistant output. Supply the system prompt through the
 SDK's top-level `system_:` parameter and use top-level ephemeral cache control
 when the repeated prefix is eligible.
 
-## Planned streaming delivery
+## Implemented streaming delivery
 
-The future controller will persist the learner message and a pending assistant
-placeholder in one transaction, then enqueue an `ai` Solid Queue job after
-commit. The job will consume the provider's ordinary SSE stream; no web request
-will remain open.
+`Conversations::SubmitTurn` persists the interviewer message, pending assistant
+placeholder, and pending `ModelRun` in one primary-database transaction. Active
+Job is configured to defer the `ai` Solid Queue enqueue until that transaction
+commits. Because the queue uses another database, the transcript commit and
+enqueue are not atomic: a queue outage in between can leave a pending run with
+no job. The job consumes the provider's ordinary SSE stream; no web request
+remains open.
 
-The job should change the assistant message to `streaming` on its first delta
-and coalesce persistence plus synchronous Turbo Stream replacement broadcasts
-to roughly 75–100 milliseconds. PostgreSQL will remain authoritative because
-Action Cable broadcasts are ephemeral; a reload must reconstruct the transcript.
+The job changes the assistant message to `streaming` on its first delta and
+coalesces persistence plus synchronous Turbo Stream replacement broadcasts to
+roughly 100 milliseconds. Broadcast failures are reported but do not abort
+generation. PostgreSQL remains authoritative because Action Cable broadcasts
+are ephemeral; a reload reconstructs the transcript.
 
-On completion, save the final content, provider and request IDs, usage, stop
-reason, latency, and successful `ModelRun` atomically. On failure, retain the
-last checkpointed partial text and mark both records failed. A retry creates a
-new `ModelRun` for the existing assistant turn. Do not wrap a consumed stream
-in broad Active Job retries: reconnecting after deltas can duplicate or branch
-the response.
+On completion, the generator saves final content, provider and request IDs,
+usage, stop reason, latency, and the successful `ModelRun` atomically with any
+OpenAI cursor and covered-position advancement. On failure, it retains even
+output newer than the last checkpoint and marks both records failed. It never
+replays a delivery that finds a streaming or terminal run. A worker exit after
+claiming can therefore leave a streaming run stranded, just as a failed enqueue
+can leave a pending one stranded. The prototype's safe recovery is to reset into
+a new test drive or learner attempt, preserving the prior transcript for author
+inspection. A narrower interrupted-turn action remains planned. The current job
+deliberately has no broad retry because reconnecting after deltas can duplicate
+or branch the response.
 
 ## Prompt caching
 
@@ -97,7 +109,7 @@ exist.
 `AiProviders::Failure` normalizes only expected provider and stream failure
 categories. It retains the accumulated partial text, provider code and IDs,
 retryability, usage when available, and raw diagnostics. Adapters do not rescue
-arbitrary application exceptions. This gives the future job enough information
+arbitrary application exceptions. This gives the generation job enough information
 to preserve a failed partial answer without silently retrying a consumed stream.
 The retryable flag classifies the provider condition; it never overrides the
 rule that a run with emitted output is not automatically replayed.
@@ -115,8 +127,8 @@ cursor; passing one is an application argument error. Anthropic can emit an SSE
 `error` after an HTTP 200; the SDK raises that as an `APIStatusError`, so
 translation considers the provider error type as well as the HTTP status.
 
-The planned Turbo Stream delivery will update one persisted assistant message
-as deltas arrive. The browser must never receive a provider API key or call a
+Turbo Stream delivery replaces one persisted assistant message as durable
+checkpoints arrive. The browser never receives a provider API key or calls a
 provider directly.
 
 Side-by-side test drives will enqueue one independent job per slot. A slow or

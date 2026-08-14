@@ -1,7 +1,7 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified for the current domain, infrastructure, account, policy, authoring, publication, prompt-composition, and provider-adapter layers<br>
+**Implementation:** verified for the current domain, infrastructure, account, policy, authoring, publication, prompt-composition, provider-adapter, and text-orchestration layers<br>
 **Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
@@ -127,6 +127,23 @@ through each real SDK and adapter (`gpt-5-mini` and `claude-sonnet-4-5`). Both
 returned text deltas, terminal text, usage, request IDs, and response IDs. This
 narrows SDK-stream-shape risk but does not prove tool-call events, model quality,
 or any job, database, authorization, rate-limit, or Turbo behavior.
+
+`Conversations::SubmitTurnTest` proves the versioned narrow request snapshot,
+completed-history and cursor-coverage projection, prompt and assignment
+boundary, transactional placeholder creation, and closed-attempt and in-flight
+rejection. `SubmitTurnEnqueueTest` exercises the service's default handoff to the
+real job class; `ApplicationJobTest` separately pins the inherited post-commit
+enqueue setting. `ConversationRuns::GenerateTest` proves typed request
+reconstruction, first and coalesced checkpoints, completion metadata, cursor
+rollback with terminal writes, failed-partial preservation, no replay after
+claim, unexpected-failure visibility, and the best-effort Cable boundary.
+`ConversationRuns::BroadcastTest` pins the application stream target and renders
+the app-owned pending and failed partial paths without retesting Turbo transport.
+`GenerateStakeholderReplyJobTest` pins the `ai` lane and UUID delegation, while
+`ModelRunLifecycleTest` protects the immutable provider request identity.
+Product request authorization, business limits, browser streaming behavior,
+tool loops, interrupted-turn recovery beyond reset, and model quality remain
+separate proof boundaries.
 
 Native-presentation and PWA coverage will be kept, replaced, or removed with
 the UI decisions that determine whether those product surfaces remain. The

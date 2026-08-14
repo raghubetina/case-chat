@@ -2,17 +2,18 @@
 #
 # Table name: conversations
 #
-#  id                     :uuid             not null, primary key
-#  configuration_snapshot :jsonb            not null
-#  provider               :string           not null
-#  provider_cursor        :string
-#  slot                   :string
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  attempt_id             :uuid
-#  model_id               :string           not null
-#  stakeholder_id         :uuid             not null
-#  test_drive_id          :uuid
+#  id                       :uuid             not null, primary key
+#  configuration_snapshot   :jsonb            not null
+#  provider                 :string           not null
+#  provider_cursor          :string
+#  provider_cursor_position :integer
+#  slot                     :string
+#  created_at               :datetime         not null
+#  updated_at               :datetime         not null
+#  attempt_id               :uuid
+#  model_id                 :string           not null
+#  stakeholder_id           :uuid             not null
+#  test_drive_id            :uuid
 #
 # Indexes
 #
@@ -42,6 +43,11 @@ class Conversation < ApplicationRecord
   validate :has_one_valid_context
   validate :stakeholder_belongs_to_context
   validate :configuration_snapshot_is_an_object
+  validate :provider_cursor_is_complete
+  validates :provider_cursor, presence: true, allow_nil: true
+  validates :provider_cursor_position,
+    numericality: {only_integer: true, greater_than: 0},
+    allow_nil: true
   validate :context_is_immutable, on: :update
   validate :configuration_is_pinned_after_first_message, on: :update
 
@@ -93,5 +99,11 @@ class Conversation < ApplicationRecord
 
   def configuration_snapshot_is_an_object
     errors.add(:configuration_snapshot, :invalid) unless configuration_snapshot.is_a?(Hash)
+  end
+
+  def provider_cursor_is_complete
+    return if provider_cursor.nil? == provider_cursor_position.nil?
+
+    errors.add(:base, :provider_cursor_incomplete)
   end
 end

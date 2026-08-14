@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_14_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_14_010100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -117,6 +117,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_000000) do
     t.string "model_id", null: false
     t.string "provider", null: false
     t.string "provider_cursor"
+    t.integer "provider_cursor_position"
     t.string "slot"
     t.uuid "stakeholder_id", null: false
     t.uuid "test_drive_id"
@@ -126,10 +127,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_000000) do
     t.index ["stakeholder_id"], name: "index_conversations_on_stakeholder_id"
     t.index ["test_drive_id", "slot"], name: "index_conversations_on_test_drive_and_slot", unique: true, where: "(test_drive_id IS NOT NULL)"
     t.index ["test_drive_id"], name: "index_conversations_on_test_drive_id"
+    t.check_constraint "(provider_cursor IS NULL) = (provider_cursor_position IS NULL)", name: "conversations_provider_cursor_complete"
     t.check_constraint "attempt_id IS NOT NULL AND test_drive_id IS NULL AND slot IS NULL OR attempt_id IS NULL AND test_drive_id IS NOT NULL AND (slot::text = ANY (ARRAY['left'::character varying::text, 'right'::character varying::text]))", name: "conversations_one_context"
     t.check_constraint "btrim(model_id::text) <> ''::text", name: "conversations_model_nonblank"
     t.check_constraint "btrim(provider::text) <> ''::text", name: "conversations_provider_nonblank"
     t.check_constraint "jsonb_typeof(configuration_snapshot) = 'object'::text", name: "conversations_snapshot_object"
+    t.check_constraint "provider_cursor IS NULL OR btrim(provider_cursor::text) <> ''::text", name: "conversations_provider_cursor_present"
+    t.check_constraint "provider_cursor_position IS NULL OR provider_cursor_position > 0", name: "conversations_provider_cursor_position_positive"
   end
 
   create_table "document_bundle_items", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|

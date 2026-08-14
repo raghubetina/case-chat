@@ -1,7 +1,7 @@
 # 0003 — Integrate providers through first-party SDKs
 
 **Decision status:** accepted<br>
-**Implementation:** partial; provider adapters verified, job and product integration planned<br>
+**Implementation:** partial; provider adapters and persisted text generation verified, product request integration planned<br>
 **Date:** 2026-08-13<br>
 **Last verified:** 2026-08-14
 
@@ -54,10 +54,33 @@ prompt through `system_:`, and requests top-level ephemeral cache control. It
 raises an application argument error if passed a cursor rather than implying
 Anthropic persists conversation state.
 
-Stream ordinary provider SSE from a dedicated `ai` Solid Queue job. Coalesce
-message checkpoints and synchronous Turbo Stream broadcasts instead of writing
-or enqueueing once per token. Preserve failed partial output, and do not apply a
-broad Active Job retry after a stream has emitted deltas.
+`Conversations::SubmitTurn` stores one narrow, versioned provider request with a
+completed user message, pending assistant placeholder, and pending `ModelRun`.
+`GenerateStakeholderReplyJob` streams ordinary provider SSE on the dedicated
+`ai` Solid Queue lane. The generator checkpoints the first text delta
+immediately, coalesces later PostgreSQL writes and synchronous Turbo Stream
+broadcasts to roughly 100 milliseconds, and treats Cable delivery as
+best-effort. PostgreSQL remains authoritative on reload.
+
+Only a completed run advances OpenAI's response cursor, together with the exact
+assistant-message position it covers, in the same transaction that completes
+the message. A later request uses that cursor only when no completed transcript
+turn exists after the covered position; otherwise it omits the cursor and sends
+the complete local history. Expected provider failures preserve all emitted
+partial output and diagnostics without replaying the stream. Unexpected
+application failures are persisted and re-raised for worker visibility. A
+redelivery that finds a run already streaming or terminal does not call the
+provider again.
+
+The primary transcript commit and the separate Solid Queue enqueue cannot be
+atomic. A queue outage after the primary commit can strand a pending run, and a
+worker exit after claiming can strand a streaming run. Automatically declaring
+an old stream dead or replaying it could branch a response that is still active,
+so this prototype does neither. Its coarse recovery is the already accepted
+reset: start a new test drive or learner attempt while retaining the old rows for
+author inspection. A product-level interrupted-turn action remains planned if
+the pilot shows reset is too disruptive. Broad Active Job retry is intentionally
+absent.
 
 Provider generations require an authenticated, authorized conversation. Apply
 configurable per-user request limits and per-user or per-cohort usage ceilings
@@ -94,10 +117,19 @@ terminal text, usage, request IDs, and response IDs through `gpt-5-mini` and
 `claude-sonnet-4-5`. It did not exercise provider tool calls or any product
 orchestration.
 
-This ADR remains partial. Job tests must prove a failure after emitted deltas
-preserves the partial output without automatically starting a second provider
-run. Request tests must prove anonymous or unauthorized callers cannot enqueue
-provider work and configured limits apply across resets.
+`Conversations::SubmitTurnTest`, `SubmitTurnEnqueueTest`,
+`ConversationRuns::GenerateTest`, `ConversationRuns::BroadcastTest`, and
+`GenerateStakeholderReplyJobTest` prove the narrow persisted request, default
+job handoff, AI-lane delegation, coalesced durable checkpoints, cursor coverage
+and completion rollback, failed-partial preservation, redelivery idempotency,
+renderable message states, and the best-effort Cable boundary.
+`ApplicationJobTest` pins post-commit enqueue configuration, while
+`ModelRunLifecycleTest` pins the provider request identity after creation.
+
+This ADR remains partial. Product request tests must prove anonymous or
+unauthorized callers cannot enqueue provider work and configured limits apply
+across resets. Tool-result continuation and a less disruptive interrupted-turn
+recovery action also remain planned.
 
 ## Revisit when
 
