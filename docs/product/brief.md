@@ -1,7 +1,7 @@
 # Product brief
 
 **Status:** accepted<br>
-**Implementation:** partial; accounts, case and stakeholder drafting, and author publication are verified<br>
+**Implementation:** partial; accounts, case and stakeholder drafting, author publication, and prompt composition are verified<br>
 **Last verified:** 2026-08-14
 
 ## The experiment
@@ -69,8 +69,15 @@ Readiness requires every included stakeholder to have a learner-visible
 description, private instructions, an allowed provider name, and a nonblank
 model ID. These structural checks do not prove that credentials work, the
 provider offers that model, or a conversation succeeds.
+
+The provider-neutral `stakeholder-interview-v1` composer now renders the
+platform interview rules and an allowlisted projection of a single pinned
+conversation configuration. It includes case background only for stakeholders
+configured to know it, and excludes the learner assignment and all unrelated
+case data. No provider consumes the rendered prompt yet.
+
 Referrals, documents and sharing rules, test drives, archive controls, cohorts,
-transcripts, prompt composition, and model calls remain planned.
+transcripts, model calls, and provider prompt delivery remain planned.
 
 Test-drive conversations are author tools. They are never enrollments and never
 appear in learner or cohort metrics. A new test drive pins the current draft so

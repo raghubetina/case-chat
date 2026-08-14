@@ -1,7 +1,7 @@
 # Target domain model
 
 **Status:** accepted for the prototype<br>
-**Implementation:** verified for persistence, lifecycle, accounts, policies, case and stakeholder draft editors, and author publication; remaining product UI is planned<br>
+**Implementation:** verified for persistence, lifecycle, accounts, policies, case and stakeholder draft editors, author publication, and prompt composition; remaining product UI is planned<br>
 **Last verified:** 2026-08-14
 
 This is the canonical model implemented by the current schema and lifecycle
@@ -138,8 +138,8 @@ Description, instructions, provider, and model may remain blank while drafting;
 the publication gate requires all four fields for every included stakeholder
 and accepts only a supported provider. The case ID, provider settings, and
 publication lock are server-owned and are not accepted from the form.
-Stakeholder deletion, referrals, document bundles, test drives, prompt
-composition, and provider calls remain planned.
+Stakeholder deletion, referrals, document bundles, test drives, and provider
+calls remain planned.
 
 `Referral` links a source stakeholder to a target stakeholder in the same case
 and contains author guidance about when an introduction is natural. Row
@@ -193,6 +193,22 @@ the provider/model, provider response and request IDs, status, usage, latency,
 errors, and the rendered prompt/input snapshot. Local messages are
 authoritative; provider conversation state is an optimization and diagnostic
 aid, not the only copy of a transcript.
+
+`StakeholderPrompts::Compose` renders prompt version
+`stakeholder-interview-v1` from one conversation's singular, pinned
+`configuration_snapshot`. It validates the required singular case and
+stakeholder shape and rejects a plural case-wide snapshot. It reads only the
+stakeholder's name, role title, description, private instructions, and
+background-knowledge flag. It adds case background only when that flag is the
+literal Boolean `true`, so malformed truthy values fail closed. It ignores the
+outer `schema_version` and all unrelated fields, including assignment, title,
+IDs, provider/model settings, referrals, documents, other stakeholder data,
+and transcripts. Required authored values are strings but may be blank; an
+incomplete draft test drive intentionally renders empty elements so the author
+can observe the missing context. Learner publication separately blocks blank
+descriptions and private instructions. Authored values are XML-escaped once.
+Provider adapters do not consume this result yet, and no `ModelRun` persists it
+until that integration is built.
 
 ### Introduction and DocumentRelease
 

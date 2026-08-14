@@ -1,7 +1,7 @@
 # Testing strategy
 
 **Status:** accepted<br>
-**Implementation:** verified for the current domain, infrastructure, account, policy, authoring, and publication layers<br>
+**Implementation:** verified for the current domain, infrastructure, account, policy, authoring, publication, and prompt-composition layers<br>
 **Last audited:** 2026-08-14
 
 Keep Minitest and write tests around behavior the application owns. Prefer
@@ -91,6 +91,23 @@ publication journey, its major panel states at narrow width, and accessibility
 in both themes. These tests do not treat a syntactically allowed provider and
 model ID as evidence that a provider call works; provider contracts and model
 test drives require their own later tests.
+
+`StakeholderPrompts::ComposeTest` pins the exact
+`stakeholder-interview-v1` output and prompt version, the singular conversation
+snapshot allowlist, conditional case-background inclusion, XML escaping of
+hostile authored text, fail-closed handling of a malformed truthy background
+flag, tolerance of unrelated outer schema-version changes, and rejection of a
+plural case-wide snapshot. Its validation cases also require the singular root,
+case, stakeholder, and authored string fields while permitting blanks.
+The suite's “composes from the learner conversation snapshot producer” and
+“composes intentional empty context from the test-drive snapshot producer”
+tests feed real `Conversations::StartLearner` and `TestDrives::Start` output into
+the composer. They prove those producers satisfy the required singular shape
+and that an incomplete draft test drive renders empty context elements
+intentionally. They do not claim that a provider follows those instructions,
+prevents prompt leaks, translates tools, streams output, or persists a run.
+Those behaviors require adapter, job, request, and scripted evaluation coverage
+when provider execution is implemented.
 
 Native-presentation and PWA coverage will be kept, replaced, or removed with
 the UI decisions that determine whether those product surfaces remain. The
