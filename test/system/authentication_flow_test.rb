@@ -34,7 +34,9 @@ class AuthenticationFlowTest < ApplicationSystemTestCase
     click_button I18n.t("nav.sign_out")
     assert_link I18n.t("nav.sign_in"), href: "/login"
 
-    click_link I18n.t("nav.sign_in")
+    within ".primary-nav" do
+      click_link I18n.t("nav.sign_in")
+    end
     assert_selector "input[type='checkbox'][name='remember']"
     assert_no_selector "input[type='hidden'][name='remember']", visible: :all
     fill_in I18n.t("auth.fields.email"), with: "alex.morgan@example.com"
@@ -120,18 +122,22 @@ class AuthenticatedMobileNavigationTest < ApplicationSystemTestCase
       (() => {
         const container = document.querySelector(".app-header__nav");
         const signOut = container.querySelector("form button");
+        const yourCases = container.querySelector("a[href='#{author_cases_path}']");
         const containerBounds = container.getBoundingClientRect();
         const signOutBounds = signOut.getBoundingClientRect();
+        const yourCasesBounds = yourCases.getBoundingClientRect();
+        const fullyVisible = (bounds) =>
+          bounds.left >= containerBounds.left &&
+          bounds.right <= containerBounds.right &&
+          bounds.top >= containerBounds.top &&
+          bounds.bottom <= containerBounds.bottom;
 
         return {
           viewportWidth: window.innerWidth,
           clientWidth: container.clientWidth,
           scrollWidth: container.scrollWidth,
-          signOutFullyVisible:
-            signOutBounds.left >= containerBounds.left &&
-            signOutBounds.right <= containerBounds.right &&
-            signOutBounds.top >= containerBounds.top &&
-            signOutBounds.bottom <= containerBounds.bottom
+          signOutFullyVisible: fullyVisible(signOutBounds),
+          yourCasesFullyVisible: fullyVisible(yourCasesBounds)
         };
       })()
     JS
@@ -139,5 +145,6 @@ class AuthenticatedMobileNavigationTest < ApplicationSystemTestCase
     assert_equal MOBILE_SCREEN_SIZE.first, metrics.fetch("viewportWidth")
     assert_operator metrics.fetch("scrollWidth"), :<=, metrics.fetch("clientWidth"), metrics.inspect
     assert metrics.fetch("signOutFullyVisible"), metrics.inspect
+    assert metrics.fetch("yourCasesFullyVisible"), metrics.inspect
   end
 end

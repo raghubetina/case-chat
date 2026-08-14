@@ -78,11 +78,14 @@ stack per ADR 0002 and Active Storage for case documents. Do not introduce a sec
 speculative capabilities outside the prototype scope. The Rodauth account flow, Pundit policy layer, and
 `AuthenticatedController` guard are implemented. New product controllers inherit that guard, load submitted child
 IDs through an authorized parent scope, and prove the integration in request tests; the obsolete generated CRUD
-surface remains removed until those authorized product flows replace it.
+surface remains removed until those authorized product flows replace it. The first author case list and editor
+implement that contract; do not generalize their proof to the unbuilt stakeholder, document, cohort, or learner
+controllers.
 
 ## Launch checklist (before inviting real users)
-- [ ] Complete request-level verification for the author, learner, cohort, transcript, and document authorization
-  boundaries from ADR 0002 and the target domain model; the Rodauth account and policy layers are already covered.
+- [ ] Complete request-level verification for the remaining author-child, learner, cohort, transcript, and document
+  authorization boundaries from ADR 0002 and the target domain model; accounts and the first author case editor are
+  already covered.
 - [ ] Replace the PLACEHOLDER copy on `/privacy` and `/terms`.
 - [ ] If the Designer declares public domains, apply its generated domain policy before mapping traffic.
 - [ ] Set `ROLLBAR_ACCESS_TOKEN` (errors) and `SKYLIGHT_AUTHENTICATION` (APM) if wanted; both are key-dormant.

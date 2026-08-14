@@ -1,6 +1,7 @@
 <% if request.env.key?("rodauth") %>
   <nav class="primary-nav" aria-label="<%= t("nav.account") %>">
     <% if rodauth.logged_in? %>
+      <%= link_to t("nav.your_cases"), author_cases_path, class: "button button-ghost button-small" %>
       <span class="primary-nav__identity">
         <span class="sr-only"><%= t("nav.signed_in_as") %></span>
         <%= rodauth.rails_account.full_name %>

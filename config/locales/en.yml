@@ -60,10 +60,24 @@ en:
   flash:
     dismiss: Dismiss
   home:
-    heading: It works.
-    lede: This app was generated on the Foundation baseline — hardened, observable, accessible, and ready for its real features.
+    create_account: Create an account
+    eyebrow: A different way into the case
+    heading: Cases, uncovered through conversation
+    lede: Case Chat is a prototype for teaching business cases through stakeholder conversations instead of handing over the full story up front.
+    public_heading: Let learners investigate the case
+    sign_in: Sign in
+    signed_in:
+      eyebrow: Case Chat workspace
+      heading: Welcome back, %{name}
+      lede: Create a business situation learners can investigate through conversation.
+      new_case_action: Start a new case
+      new_case_heading: Begin with the brief
+      new_case_lede: Capture the background and learner assignment, then build out the people and evidence around them.
+      your_cases_action: Open your cases
+      your_cases_heading: Continue authoring
+      your_cases_lede: Return to a draft or review the current state of a published case.
   nav:
-    account: Account
+    account: Primary navigation
     create_account: Create account
     password: Password
     sign_in: Sign in
@@ -72,6 +86,7 @@ en:
     signed_in_as: Signed in as
     skip_to_content: Skip to main content
     toggle_theme: Toggle light/dark theme
+    your_cases: Your cases
   pages:
     placeholder_warning: PLACEHOLDER — replace this copy before inviting real users. A wrong legal page is worse than none.
     privacy:

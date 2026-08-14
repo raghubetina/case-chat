@@ -1,0 +1,27 @@
+<% content_for :title, t("author.cases.edit.heading", title: @case.title) %>
+
+<section class="author-editor">
+  <div class="author-editor__intro">
+    <%= link_to t("author.cases.edit.back"), author_cases_path, class: "author-back-link" %>
+    <p class="author-eyebrow"><%= t("author.cases.edit.eyebrow") %></p>
+    <div class="author-editor__title-row">
+      <h1><%= t("author.cases.edit.heading", title: @case.title) %></h1>
+      <span class="case-status case-status--<%= @case.status %>"><%= t("author.cases.status.#{@case.status}") %></span>
+    </div>
+    <p><%= t("author.cases.edit.lede") %></p>
+  </div>
+
+  <% if @case.status == "published" %>
+    <aside class="published-draft-note" aria-labelledby="published-draft-heading">
+      <div class="published-draft-note__rule" aria-hidden="true"></div>
+      <div>
+        <h2 id="published-draft-heading"><%= t("author.cases.edit.published_draft_heading") %></h2>
+        <p><%= t("author.cases.edit.published_draft_lede") %></p>
+      </div>
+    </aside>
+  <% end %>
+
+  <div class="author-editor__panel">
+    <%= render "form", case_record: @case, submit_label: t("author.cases.edit.submit") %>
+  </div>
+</section>

@@ -21,6 +21,10 @@ Rails.application.routes.draw do
   match "/422", to: "errors#unprocessable", via: :all
   match "/500", to: "errors#internal_error", via: :all
 
+  namespace :author do
+    resources :cases, only: %i[index new create edit update]
+  end
+
   root "home#index"
 
   # Defines the root path route ("/")

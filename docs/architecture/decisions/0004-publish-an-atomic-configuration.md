@@ -1,9 +1,9 @@
 # 0004 — Publish an atomic configuration snapshot
 
 **Decision status:** accepted<br>
-**Implementation:** lifecycle semantics verified; concurrent authoring integration planned<br>
+**Implementation:** lifecycle and top-level case editing verified; child authoring integration planned<br>
 **Date:** 2026-08-13<br>
-**Last verified:** 2026-08-13
+**Last verified:** 2026-08-14
 
 ## Context
 
@@ -44,9 +44,10 @@ history, diff UI, rollback mechanism, or per-message prompt migration.
   transaction. Unused draft documents remain editable. Referenced stakeholders,
   bundles, and documents cannot be hard-deleted; explicit publication-inclusion
   flags let authors omit stakeholders and bundles from later publications.
-- The publish command holds the parent case lock. Concurrent coherence depends
-  on future authoring mutation commands acquiring that same lock; that
-  integration remains planned.
+- The publish command holds the parent case lock. The top-level case draft
+  update now takes that lock, too. Concurrent coherence under stakeholder,
+  referral, document, or bundle edits depends on those future commands doing
+  the same; that child integration remains planned.
 
 ## Confirmation
 
@@ -57,7 +58,9 @@ publication, later-publication exclusion, conversation isolation and assignment
 exclusion, configured-document locks, immutable attachments, pinned bundle
 membership, and idempotent validated effects. `DomainBoundariesTest` covers
 cross-case graph rejection, immutable runtime identity, and deletion
-restrictions. Concurrent authoring integration is not yet verified.
+restrictions. `CaseDraftEditingTest` verifies that top-level case assignment and
+save happen within the parent lock, but it is deliberately not a two-connection
+database concurrency proof. Child authoring integration is not yet verified.
 
 ## Revisit when
 

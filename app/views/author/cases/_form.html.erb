@@ -1,0 +1,54 @@
+<%= form_with model: [:author, case_record], class: "case-form" do |form| %>
+  <% if case_record.errors.any? %>
+    <div class="case-form-errors" role="alert" tabindex="-1">
+      <h2><%= t("author.cases.form.errors_heading") %></h2>
+      <p><%= t("author.cases.form.errors_lede") %></p>
+      <ul>
+        <% case_record.errors.each do |error| %>
+          <li><%= link_to error.full_message, "##{form.field_id(error.attribute)}" %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="case-form__field">
+    <%= form.label :title, t("author.cases.form.title_label"), class: "form-label" %>
+    <% title_error_id = form.field_id(:title, :error) %>
+    <%= form.text_field :title,
+          class: ["form-input", {"form-input-error": case_record.errors[:title].any?}],
+          maxlength: 200,
+          required: true,
+          autofocus: true,
+          aria: {
+            invalid: case_record.errors[:title].any? || nil,
+            describedby: [form.field_id(:title, :hint), (title_error_id if case_record.errors[:title].any?)].compact
+          } %>
+    <p id="<%= form.field_id(:title, :hint) %>" class="form-field-hint"><%= t("author.cases.form.title_hint") %></p>
+    <% if case_record.errors[:title].any? %>
+      <p id="<%= title_error_id %>" class="form-error"><%= case_record.errors.full_messages_for(:title).to_sentence %></p>
+    <% end %>
+  </div>
+
+  <div class="case-form__field">
+    <%= form.label :background, t("author.cases.form.background_label"), class: "form-label" %>
+    <%= form.text_area :background,
+          class: ["form-input", "case-form__textarea"],
+          rows: 10,
+          aria: {describedby: form.field_id(:background, :hint)} %>
+    <p id="<%= form.field_id(:background, :hint) %>" class="form-field-hint"><%= t("author.cases.form.background_hint") %></p>
+  </div>
+
+  <div class="case-form__field">
+    <%= form.label :assignment, t("author.cases.form.assignment_label"), class: "form-label" %>
+    <%= form.text_area :assignment,
+          class: ["form-input", "case-form__textarea"],
+          rows: 7,
+          aria: {describedby: form.field_id(:assignment, :hint)} %>
+    <p id="<%= form.field_id(:assignment, :hint) %>" class="form-field-hint"><%= t("author.cases.form.assignment_hint") %></p>
+  </div>
+
+  <div class="case-form__actions">
+    <%= form.submit submit_label, class: "button button-primary" %>
+    <%= link_to t("author.cases.#{case_record.persisted? ? "edit" : "new"}.back"), author_cases_path, class: "button button-ghost" %>
+  </div>
+<% end %>
