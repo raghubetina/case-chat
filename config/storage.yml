@@ -6,6 +6,18 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+# Document blobs in production. The cloudinary gem reads CLOUDINARY_URL from the
+# environment, so no key material appears here or in credentials.
+#
+# Watch the resource type it derives from content type: text/* and most
+# application/* land as "raw", but application/pdf lands as "image". New
+# Cloudinary accounts ship with PDF delivery disabled, so a case PDF will upload
+# happily and then 401 on download until that is turned on in the account's
+# security settings.
+cloudinary:
+  service: Cloudinary
+  folder: <%= "case-chat-#{Rails.env}" %>
+
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:
 #   service: S3

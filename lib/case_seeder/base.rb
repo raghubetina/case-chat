@@ -6,7 +6,19 @@ module CaseSeeder
   # Subclasses supply the case itself — the cast, the referral graph, and the
   # share rules — because that part is the case, not the plumbing.
   class Base
+    # The development and test passphrase. It is committed to this repository,
+    # so seeding refuses to use it in production — a deployed box that will hand
+    # anyone the author account is worse than a box with no cases on it.
     PASSWORD = "case chat demo passphrase".freeze
+
+    def self.password
+      ENV.fetch("SEED_PASSWORD") do
+        next PASSWORD unless Rails.env.production?
+
+        raise "Set SEED_PASSWORD before seeding demo accounts in production; " \
+              "#{name}::PASSWORD is public."
+      end
+    end
 
     # Files that ship with the app rather than sitting beside it. A seeder that
     # reaches outside the repo works on a laptop and silently produces
@@ -35,7 +47,7 @@ module CaseSeeder
       )
       return if exists
 
-      hash = BCrypt::Password.create(self.class::PASSWORD)
+      hash = BCrypt::Password.create(self.class.password)
       ActiveRecord::Base.connection.execute(
         ActiveRecord::Base.sanitize_sql(
           ["INSERT INTO account_password_hashes (id, password_hash) VALUES (?, ?)", user.id, hash]
@@ -91,7 +103,7 @@ module CaseSeeder
       puts "  join code: #{case_study.join_code}"
       puts "  author:    #{case_study.author.email}"
       puts "  student:   #{student.email}"
-      puts "  password:  #{self.class::PASSWORD}"
+      puts "  password:  #{self.class.password}"
       puts "  cast:      #{case_study.contacts.count} (#{case_study.contacts.where(in_starting_directory: true).count} in the starting directory)"
       puts "  referrals: #{Referral.where(referring_contact_id: case_study.contacts.select(:id)).count}"
       puts "  documents: #{Document.where(case_study_id: case_study.id).count} (#{attached} with files)"

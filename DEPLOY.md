@@ -39,13 +39,45 @@ runs rather than silently dropping every broadcast.
 
 These are `sync: false` in the blueprint and must be set by hand:
 
-- `RESPONDER` — `anthropic` or `openai`. It selects both the voice of every contact
+- `RESPONDER` — `anthropic` or `openai`, defaulted to `openai` in the blueprint
+  because streaming cadence is a property of the provider: measured on one
+  prompt, OpenAI sends 252 text frames about 13ms apart and Anthropic sends 12
+  frames of ~104 characters about 704ms apart, which reads as the reply landing
+  in slabs. Both sit behind the same seam, so this is one value to flip. Watch
+  the `[reply] … cache_read=` log lines before settling it, since the briefing
+  is the cost lever and the two providers cache differently.
+  It selects both the voice of every contact
   and the drafter that reads uploaded documents. An unrecognized value fails
   loudly on first use rather than falling back, because the fallback used to be
   a canned cast an author could accept believing a model had read their case.
 - `ANTHROPIC_API_KEY` and/or `OPENAI_API_KEY` — whichever `RESPONDER` names.
-- `APPLICATION_HOST` — used for mailer links and Active Storage URLs.
+- `APPLICATION_HOST` — used for mailer links.
+- `CLOUDINARY_URL` — where document blobs live. Not optional: the container
+  filesystem is ephemeral, so without it every document an author uploads
+  survives until the next deploy and then has no blob behind it. The gem reads
+  this variable itself, so no key material is stored in the app.
 - `RESEND_API_KEY` and `MAIL_FROM` — transactional mail stays dormant until both are set.
+- `SEED_DEMO_CASES` and `SEED_PASSWORD` — set both to load the teaching cases on
+  first boot. Seeding creates accounts that can be signed into, so it is opt-in,
+  and it refuses to run in production without a passphrase because the
+  development one is committed to this repository. `db:prepare` only seeds a
+  database it just created; afterwards use `bin/rails case_chat:seed_cases`.
+
+## Turn on PDF delivery in Cloudinary
+
+New Cloudinary accounts block delivery of PDF and ZIP files. Case PDFs upload
+without complaint and are then undownloadable, and the failure is quiet:
+Active Storage reports the file as attached, `download` returns zero bytes
+rather than raising, and the student gets a 401 from the CDN.
+
+Verified against this account: an `.xlsx` (Cloudinary resource type `raw`)
+delivers 200 with its full body, while a `.pdf` (resource type `image`, which is
+how the gem maps `application/pdf`) delivers 401 with an empty body. Same
+credentials, same folder.
+
+Fix it once in the Cloudinary console under Settings → Security, in
+"Restricted media types": allow PDF. Do this before seeding, or the case
+handout will be missing on a deployment that otherwise looks healthy.
 
 ## Scaling notes
 

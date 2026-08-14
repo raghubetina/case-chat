@@ -56,6 +56,11 @@ services:
       # the ordinary request deadline stays short.
       - key: RACK_TIMEOUT_SERVICE_TIMEOUT
         value: "15"
+      # The perimeter throttle counts per client IP, and a seminar room behind
+      # one campus NAT is a single IP. 300 per five minutes is a sensible
+      # public default and far too low for thirty students working at once.
+      - key: RACK_ATTACK_LIMIT
+        value: "3000"
 
   - type: worker
     name: case-chat-worker
@@ -98,14 +103,33 @@ envVarGroups:
           type: keyvalue
           property: connectionString
       # Which model answers as a contact: anthropic | openai.
+      #
+      # openai because the reply has to read as live typing. Measured on one
+      # prompt: OpenAI streams 252 text frames ~13ms apart, Anthropic 12 frames
+      # of ~104 characters ~704ms apart, which lands as visible slabs. Both
+      # adapters are behind the same seam, so this is one value to flip — watch
+      # the [reply] cache_read lines before deciding permanently.
       - key: RESPONDER
-        value: anthropic
+        value: openai
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      # Host for mailer links and Active Storage URLs.
+      # Host for mailer links.
       - key: APPLICATION_HOST
+        sync: false
+      # Document blobs. The container filesystem is ephemeral, so this is not
+      # optional in production — without it every uploaded document survives
+      # until the next deploy and then has no blob behind it.
+      - key: CLOUDINARY_URL
+        sync: false
+      # Load the teaching cases on first boot. Off unless set, because seeding
+      # creates sign-in-able demo accounts.
+      - key: SEED_DEMO_CASES
+        sync: false
+      # The passphrase those demo accounts get. Seeding refuses to run in
+      # production without it: the default is committed to this repo.
+      - key: SEED_PASSWORD
         sync: false
       # Transactional mail stays dormant until both of these are set.
       - key: RESEND_API_KEY

@@ -76,6 +76,12 @@ gem "openai", "~> 0.78"
 # Perimeter per-IP rate limiting; counters ride Rails.cache.
 gem "rack-attack"
 
+# Document blobs. The official gem ships an Active Storage service and reads
+# CLOUDINARY_URL itself, so the app holds no credentials of its own. Render's
+# container filesystem is ephemeral and a mounted disk would pin the web
+# service to a single instance; object storage does neither.
+gem "cloudinary", "~> 2.4"
+
 group :production do
   # Hard request deadline so a wedged request cannot hold a Puma thread forever.
   gem "rack-timeout", require: "rack/timeout/base"

@@ -46,7 +46,9 @@ Rails.application.configure do
   config.cache_store = :memory_store
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Cloudinary when a key is present, so uploads exercise the same service
+  # production uses; the local disk otherwise, so a fresh clone still runs.
+  config.active_storage.service = ENV["CLOUDINARY_URL"].present? ? :cloudinary : :local
 
   # Don't care if the mailer can't send.
   # Render messages locally; no development email can reach the internet.
