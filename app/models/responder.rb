@@ -16,13 +16,14 @@ module Responder
   # What a contact said, plus the structured things they did while saying it.
   # The id lists are normalized here so no adapter can hand the pipeline a nil,
   # and every caller can iterate without guarding.
-  Reply = Data.define(:text, :introduced_contact_ids, :shared_document_ids, :usage) do
-    def initialize(text:, introduced_contact_ids: [], shared_document_ids: [], usage: NULL_USAGE)
+  Reply = Data.define(:text, :introduced_contact_ids, :shared_document_ids, :usage, :raw) do
+    def initialize(text:, introduced_contact_ids: [], shared_document_ids: [], usage: NULL_USAGE, raw: nil)
       super(
         text: text.to_s,
         introduced_contact_ids: Array(introduced_contact_ids).compact.uniq,
         shared_document_ids: Array(shared_document_ids).compact.uniq,
-        usage: usage
+        usage: usage,
+        raw: raw
       )
     end
   end
@@ -34,9 +35,9 @@ module Responder
   # present: with several keys configured, key-sniffing silently picks a winner
   # and nobody can tell from the code which model is in play.
   ADAPTERS = {
-    "anthropic" => -> { Anthropic.new },
-    "openai" => -> { OpenAI.new },
-    "fake" => -> { Fake.new }
+    "anthropic" => ->(**kwargs) { Anthropic.new(**kwargs) },
+    "openai" => ->(**kwargs) { OpenAI.new(**kwargs) },
+    "fake" => ->(**) { Fake.new }
   }.freeze
 
   DEFAULT_ADAPTER = "anthropic".freeze
@@ -60,6 +61,30 @@ module Responder
 
     def reset! = @current = nil
 
+    # The adapter that answers as this stakeholder. A model chosen on the
+    # stakeholder wins; otherwise the deployment's default answers, which is
+    # what every contact did before the column existed.
+    #
+    # Tests and an explicitly injected responder still win over both, so
+    # Responder.with continues to work on this path.
+    def for(contact)
+      return current if @current || Rails.env.test?
+
+      entry = ModelCatalogue.find(contact.model)
+      return current if entry.nil?
+
+      build(entry.provider, model: entry.id, effort: contact.effort.presence)
+    end
+
+    # The catalogue keys on provider, and an adapter knows its own class.
+    def provider_name(adapter)
+      case adapter
+      when Anthropic then "anthropic"
+      when OpenAI then "openai"
+      else "fake"
+      end
+    end
+
     def configured_name
       # Tests never reach a provider, whatever the environment says.
       return "fake" if Rails.env.test?
@@ -69,11 +94,11 @@ module Responder
 
     private
 
-    def build(name)
+    def build(name, **kwargs)
       factory = ADAPTERS[name]
       raise Error, "Unknown RESPONDER #{name.inspect}. Known: #{ADAPTERS.keys.join(", ")}" if factory.nil?
 
-      factory.call
+      factory.call(**kwargs)
     end
   end
 end

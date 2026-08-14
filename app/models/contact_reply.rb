@@ -11,7 +11,7 @@ class ContactReply
 
   attr_reader :conversation, :responder
 
-  def initialize(conversation, responder: Responder.current)
+  def initialize(conversation, responder: nil)
     @conversation = conversation
     @responder = responder
   end
@@ -24,16 +24,25 @@ class ContactReply
   # `on_delta` is where it goes instead.
   def generate!(&on_delta)
     briefing = ContactBriefing.new(contact)
-    reply = responder.reply(briefing: briefing, history: history, on_delta: on_delta)
+    adapter = responder || Responder.for(contact)
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    reply = adapter.reply(briefing: briefing, history: history, on_delta: on_delta)
+    elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
     log_usage(reply.usage)
 
-    ApplicationRecord.transaction do
-      message = persist_message(reply)
-      record_introductions(reply, briefing, message)
-      record_shares(reply, briefing, message)
+    message = ApplicationRecord.transaction do
+      saved = persist_message(reply)
+      record_introductions(reply, briefing, saved)
+      record_shares(reply, briefing, saved)
       touch_enrollment
-      message
+      saved
     end
+
+    # Outside the transaction on purpose. Cost accounting is worth having and
+    # is not worth a student's answer: recorded inside, a failure here would
+    # roll back the reply that has already been streamed to their screen.
+    record_call(adapter, reply, message, elapsed_ms)
+    message
   end
 
   private
@@ -47,6 +56,21 @@ class ContactReply
       "[reply] contact=#{contact.id} input=#{usage.input_tokens} output=#{usage.output_tokens} " \
       "cache_read=#{usage.cache_read_tokens} cache_write=#{usage.cache_write_tokens}"
     )
+  end
+
+  # Every request is recorded, so cost can be totalled per stakeholder without
+  # anybody having to have thought to log it at the time.
+  def record_call(adapter, reply, message, elapsed_ms)
+    ModelCall.record(
+      contact: contact, reply: reply, message: message,
+      provider: Responder.provider_name(adapter),
+      # A responder injected by a test may not name a model; record what it is
+      # rather than a blank, and never let the bookkeeping raise.
+      model: adapter.try(:model).presence || Responder.provider_name(adapter),
+      effort: adapter.try(:effort), duration_ms: elapsed_ms
+    )
+  rescue => e
+    Rails.logger.error("Could not record model call for contact #{contact.id}: #{e.message}")
   end
 
   def contact = conversation.contact

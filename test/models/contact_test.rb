@@ -7,9 +7,11 @@ require_relative "domain_test_helper"
 #
 #  id                    :uuid             not null, primary key
 #  description           :text
+#  effort                :string
 #  full_name             :string           not null
 #  in_starting_directory :boolean          default(FALSE), not null
 #  knows_case_background :boolean          default(TRUE), not null
+#  model                 :string
 #  role_title            :string           not null
 #  system_prompt         :text             not null
 #  created_at            :datetime         not null

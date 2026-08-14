@@ -11,6 +11,14 @@ module Responder
   # message. That is not how the real model decides, and it is not trying to be
   # — it just needs to be predictable enough to assert on.
   class Fake
+    # ModelCall records every request, including the ones the tests make, so the
+    # fake has to name itself rather than record a blank model.
+    MODEL = "fake".freeze
+
+    def model = MODEL
+
+    def effort = nil
+
     STOPWORDS = %w[
       when the student asks about a an and or if for to of in on at is are be
       once only do not does has have with what which that this it they them

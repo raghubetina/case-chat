@@ -63,7 +63,8 @@ module Author
     end
 
     def contact_params
-      params.expect(contact: %i[full_name role_title description system_prompt in_starting_directory])
+      params.expect(contact: %i[full_name role_title description system_prompt in_starting_directory
+        knows_case_background model effort])
     end
   end
 end

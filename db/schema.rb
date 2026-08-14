@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_14_151229) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_14_194500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -76,9 +76,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_151229) do
     t.uuid "case_study_id", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.string "effort"
     t.string "full_name", null: false
     t.boolean "in_starting_directory", default: false, null: false
     t.boolean "knows_case_background", default: true, null: false
+    t.string "model"
     t.string "role_title", null: false
     t.text "system_prompt", null: false
     t.datetime "updated_at", null: false
@@ -147,6 +149,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_151229) do
     t.datetime "updated_at", null: false
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
     t.index ["introduced_contact_id"], name: "index_messages_on_introduced_contact_id"
+  end
+
+  create_table "model_calls", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.integer "cache_read_tokens", default: 0, null: false
+    t.integer "cache_write_tokens", default: 0, null: false
+    t.uuid "contact_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "duration_ms"
+    t.string "effort"
+    t.integer "input_tokens", default: 0, null: false
+    t.uuid "message_id"
+    t.string "model", null: false
+    t.integer "output_tokens", default: 0, null: false
+    t.string "provider", null: false
+    t.jsonb "raw"
+    t.datetime "updated_at", null: false
+    t.index ["contact_id"], name: "index_model_calls_on_contact_id"
+    t.index ["message_id"], name: "index_model_calls_on_message_id"
+    t.index ["model", "created_at"], name: "index_model_calls_on_model_and_created_at"
   end
 
   create_table "referrals", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -369,6 +390,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_151229) do
   add_foreign_key "introductions", "enrollments", on_delete: :cascade
   add_foreign_key "messages", "contacts", column: "introduced_contact_id", on_delete: :nullify
   add_foreign_key "messages", "conversations", on_delete: :cascade
+  add_foreign_key "model_calls", "contacts", on_delete: :cascade
+  add_foreign_key "model_calls", "messages", on_delete: :nullify
   add_foreign_key "referrals", "contacts", column: "referred_contact_id", on_delete: :cascade
   add_foreign_key "referrals", "contacts", column: "referring_contact_id", on_delete: :cascade
   add_foreign_key "share_rules", "contacts", on_delete: :cascade

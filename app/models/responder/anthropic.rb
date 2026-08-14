@@ -18,14 +18,20 @@ module Responder
     # that matters is in the briefing, not in the sampling budget.
     EFFORT = "medium".freeze
 
-    def initialize(client: nil, model: MODEL)
+    def initialize(client: nil, model: MODEL, effort: nil)
       @client = client
       @model = model
+      @effort = effort.presence || EFFORT
     end
 
     # history is an ordered Array of Message records; the last one is the
     # student's turn that we are answering. `on_delta` receives text fragments
     # as they arrive, which is how the reply reaches the page live.
+    # Public because ModelCall records which model answered, and try returns
+    # nil for a private reader — which silently recorded the provider name
+    # as the model until a probe caught it.
+    attr_reader :model, :effort
+
     def reply(briefing:, history:, on_delta: nil)
       stream = client.messages.stream(**request_for(briefing:, history:))
 
@@ -42,8 +48,6 @@ module Responder
 
     private
 
-    attr_reader :model
-
     def client
       @client ||= ::Anthropic::Client.new(api_key: ENV.fetch("ANTHROPIC_API_KEY"))
     end
@@ -52,7 +56,7 @@ module Responder
       params = {
         model: model,
         max_tokens: MAX_TOKENS,
-        output_config: {effort: EFFORT},
+        output_config: {effort: effort},
         # The briefing is the stable prefix; the breakpoint goes at its end so
         # every later turn in this thread reads it instead of re-paying for it.
         #
@@ -94,7 +98,8 @@ module Responder
         text: text,
         introduced_contact_ids: ids_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :contact_id),
         shared_document_ids: ids_from(tool_uses, ContactBriefing::SHARE_TOOL, :document_ids),
-        usage: usage_from(message.usage)
+        usage: usage_from(message.usage),
+        raw: message.to_h
       )
     end
 

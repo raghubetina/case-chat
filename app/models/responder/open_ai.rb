@@ -15,10 +15,16 @@ module Responder
   class OpenAI
     MODEL = "gpt-5.6".freeze
 
-    def initialize(client: nil, model: MODEL)
+    def initialize(client: nil, model: MODEL, effort: nil)
       @client = client
       @model = model
+      @effort = effort.presence
     end
+
+    # Public because ModelCall records which model answered, and try returns
+    # nil for a private reader — which silently recorded the provider name
+    # as the model until a probe caught it.
+    attr_reader :model, :effort
 
     def reply(briefing:, history:, on_delta: nil)
       request = request_for(briefing:, history:)
@@ -42,8 +48,6 @@ module Responder
 
     private
 
-    attr_reader :model
-
     def client
       @client ||= ::OpenAI::Client.new(api_key: ENV.fetch("OPENAI_API_KEY"))
     end
@@ -57,6 +61,9 @@ module Responder
         prompt_cache_key: "contact-#{briefing.contact.id}",
         store: false
       }
+      # Reasoning effort is per-stakeholder. Left out entirely when unset so the
+      # model's own default applies rather than a value we invented.
+      params[:reasoning] = {effort: effort} if effort.present?
       tools = briefing.tools.map { |tool| to_function_tool(tool) }
       params[:tools] = tools if tools.any?
       params
@@ -89,7 +96,8 @@ module Responder
         text: response.output_text.to_s.strip,
         introduced_contact_ids: ids_from(calls, ContactBriefing::INTRODUCE_TOOL, :contact_id),
         shared_document_ids: ids_from(calls, ContactBriefing::SHARE_TOOL, :document_ids),
-        usage: usage_from(response.usage)
+        usage: usage_from(response.usage),
+        raw: response.to_h
       )
     end
 

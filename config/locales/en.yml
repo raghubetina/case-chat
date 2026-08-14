@@ -111,6 +111,14 @@ en:
       table_caption: Each student's progress through the case
       title: Cohort progress
     contacts:
+      effort_default: Model's own default
+      effort_label: Reasoning effort
+      knows_background: Knows the case background
+      knows_background_note: Off for an outsider whose value is that they only see their own end of it.
+      model_default: Deployment default
+      model_heading: Who answers as this person
+      model_label: Model
+      model_note: Costs are recorded per stakeholder
       add: Add contact
       back: Back to case setup
       create: Create contact

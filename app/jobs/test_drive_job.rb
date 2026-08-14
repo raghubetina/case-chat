@@ -24,7 +24,9 @@ class TestDriveJob < ApplicationJob
     last_flush = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
     begin
-      reply = Responder.current.reply(briefing: drive.briefing, history: drive.history) do |delta|
+      adapter = Responder.for(contact)
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      reply = adapter.reply(briefing: drive.briefing, history: drive.history) do |delta|
         next if delta.blank?
 
         buffer << delta
@@ -37,6 +39,16 @@ class TestDriveJob < ApplicationJob
       end
 
       broadcast_delta(drive, buffer) if buffer.present?
+
+      # Recorded with no message: a rehearsal costs real tokens and should show
+      # up in the total, but it belongs to nobody's transcript.
+      ModelCall.record(
+        contact: contact, reply: reply,
+        provider: Responder.provider_name(adapter),
+        model: adapter.try(:model).presence || Responder.provider_name(adapter),
+        effort: adapter.try(:effort),
+        duration_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+      )
       finish(drive, reply)
     rescue Responder::Error => e
       Rails.logger.error("Test drive failed for contact #{contact.id}: #{e.message}")

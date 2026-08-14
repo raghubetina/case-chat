@@ -121,4 +121,26 @@ class ResponderTest < ActiveSupport::TestCase
     assert_equal %w[user assistant], anthropic.pluck(:role)
     assert_equal %w[user assistant], openai.pluck(:role)
   end
+
+  # ModelCall reads these through try, and try returns nil for a private
+  # method — which recorded the provider name in the model column, looking
+  # entirely plausible, until a probe against the real API caught it.
+  test "an adapter says which model and effort it is using" do
+    [Responder::Anthropic.new(client: :unused, model: "claude-opus-5", effort: "high"),
+      Responder::OpenAI.new(client: :unused, model: "gpt-5.6-luna", effort: "low")].each do |adapter|
+      assert_respond_to adapter, :model
+      assert_respond_to adapter, :effort
+      assert_equal adapter.model, adapter.try(:model),
+        "try must reach it, or the recorded model is silently wrong"
+      assert_predicate adapter.try(:model), :present?
+    end
+  end
+
+  test "a stakeholder's chosen model picks the provider that serves it" do
+    contact = Contact.new(model: "gpt-5.6-luna", effort: "low")
+    entry = ModelCatalogue.find(contact.model)
+
+    assert_equal "openai", entry.provider
+    assert_includes entry.efforts, contact.effort
+  end
 end

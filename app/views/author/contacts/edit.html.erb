@@ -82,6 +82,40 @@
         </label>
 
         <div><%= form.submit t("author.contacts.save"), class: "btn btn-primary" %></div>
+
+      <div class="flex flex-col gap-4 border-t border-line pt-6">
+        <div class="flex items-baseline justify-between gap-4">
+          <span class="kick text-xs text-mute"><%= t("author.contacts.model_heading") %></span>
+          <span class="kick text-xs text-faint"><%= t("author.contacts.model_note") %></span>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="flex flex-col gap-2">
+            <%= form.label :model, t("author.contacts.model_label"), class: "kick text-xs text-mute" %>
+            <%= form.select :model,
+                  grouped_options_for_select(ModelCatalogue.grouped_for_select, @contact.model),
+                  {include_blank: t("author.contacts.model_default")},
+                  class: "select select-bordered w-full" %>
+          </div>
+          <div class="flex flex-col gap-2">
+            <%= form.label :effort, t("author.contacts.effort_label"), class: "kick text-xs text-mute" %>
+            <%# Every level any catalogued model offers; the model validates that
+                the one chosen is offered by the model chosen. %>
+            <%= form.select :effort,
+                  options_for_select(ModelCatalogue.all_efforts, @contact.effort),
+                  {include_blank: t("author.contacts.effort_default")},
+                  class: "select select-bordered w-full" %>
+          </div>
+        </div>
+
+        <label class="flex items-start gap-3">
+          <%= form.check_box :knows_case_background, class: "checkbox mt-1" %>
+          <span class="flex flex-col gap-1">
+            <span class="text-base"><%= t("author.contacts.knows_background") %></span>
+            <span class="text-sm text-mute"><%= t("author.contacts.knows_background_note") %></span>
+          </span>
+        </label>
+      </div>
       <% end %>
 
       <section class="flex flex-col gap-3">
