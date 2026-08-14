@@ -508,6 +508,77 @@
     @apply w-full border border-border bg-surface sm:w-auto;
   }
 
+  .publication-panel {
+    @apply mt-8 border border-t-4 border-border border-t-accent bg-surface p-5 shadow-sm sm:p-8;
+  }
+
+  .publication-panel h2 {
+    @apply mt-2 text-2xl font-bold;
+    overflow-wrap: anywhere;
+  }
+
+  .publication-panel__lede {
+    @apply mt-3 max-w-3xl text-sm leading-6 text-muted-foreground;
+  }
+
+  .publication-panel__checklist-heading {
+    @apply mt-7 font-sans text-sm font-bold text-foreground;
+  }
+
+  .publication-checklist {
+    @apply mt-3 divide-y divide-border border-y border-border;
+  }
+
+  .publication-checklist li {
+    @apply grid grid-cols-[0.75rem_minmax(0,1fr)] items-start gap-3 py-3 text-sm;
+  }
+
+  .publication-checklist li::before {
+    @apply mt-1 block size-2 rounded-full border border-accent;
+    content: "";
+  }
+
+  .publication-checklist a {
+    @apply font-semibold text-accent underline decoration-accent/50 underline-offset-4 hover:decoration-accent;
+    overflow-wrap: anywhere;
+  }
+
+  .publication-panel__timestamp {
+    @apply mt-5 text-sm font-semibold;
+  }
+
+  .publication-panel__timestamp time {
+    @apply text-muted-foreground;
+  }
+
+  .publication-panel__submit {
+    @apply mt-6 w-full sm:w-auto;
+  }
+
+  .publication-panel__snapshot-note {
+    @apply mt-7 border border-border border-l-4 border-l-accent bg-muted p-4;
+  }
+
+  .publication-panel__snapshot-note h3 {
+    @apply font-sans text-sm font-bold;
+  }
+
+  .publication-panel__snapshot-note p {
+    @apply mt-1 max-w-3xl text-sm leading-6 text-muted-foreground;
+  }
+
+  .publication-panel__caveat {
+    @apply mt-7 border border-border bg-muted p-4;
+  }
+
+  .publication-panel__caveat h3 {
+    @apply font-sans text-sm font-bold;
+  }
+
+  .publication-panel__caveat p {
+    @apply mt-1 max-w-3xl text-sm leading-6 text-muted-foreground;
+  }
+
   .case-form {
     @apply space-y-7;
   }

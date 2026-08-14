@@ -58,7 +58,7 @@ module DomainTestData
   end
 
   def publish_case(case_record)
-    Cases::Publish.call(case_record:)
+    Cases::Publish.call(case_record:).snapshot
   end
 
   def enroll(case_record:, user: create_user(full_name: "Lee Learner"), join_code: nil)

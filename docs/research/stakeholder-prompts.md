@@ -13,10 +13,10 @@ publication, provider, and model ID. The background checkbox defaults to on,
 and its guidance states that the learner assignment is never shared. Provider
 and model may be blank while a draft is incomplete.
 
-These are normalized author inputs only. The application does not yet assemble
-the prompt below, send it to a provider, expose referral or document tools, or
-run the evaluation set. Test drives and publication controls are also still
-planned.
+Publication readiness and controls now consume these fields when assembling a
+candidate case configuration. The application does not yet assemble the prompt
+below, send it to a provider, expose referral or document tools, run the
+evaluation set, or offer test drives.
 
 ## What a stakeholder receives
 

@@ -1,0 +1,97 @@
+<section id="publication-panel" class="publication-panel" aria-labelledby="publication-heading">
+  <p class="author-eyebrow"><%= t("author.cases.publication.eyebrow") %></p>
+
+  <% if case_record.errors.any? %>
+    <h2 id="publication-heading"><%= t("author.cases.publication.invalid.heading") %></h2>
+    <p class="publication-panel__lede"><%= t("author.cases.publication.invalid.lede") %></p>
+  <% elsif !publication_readiness.ready? %>
+    <h2 id="publication-heading"><%= t("author.cases.publication.incomplete.heading") %></h2>
+    <p class="publication-panel__lede"><%= t("author.cases.publication.incomplete.lede") %></p>
+
+    <h3 class="publication-panel__checklist-heading"><%= t("author.cases.publication.incomplete.checklist_heading") %></h3>
+    <ul class="publication-checklist">
+      <% publication_readiness.problems.each do |problem| %>
+        <% problem_key = problem.key.to_s %>
+        <% problem_label = t("author.cases.publication.problems.#{problem_key}", name: problem.name) %>
+        <% problem_path = case problem.key
+        when :background_blank
+          edit_author_case_path(case_record, anchor: "case_background")
+        when :assignment_blank
+          edit_author_case_path(case_record, anchor: "case_assignment")
+        when :stakeholders_empty
+          author_case_stakeholders_path(case_record)
+        when :stakeholder_description_blank
+          edit_author_case_stakeholder_path(case_record, problem.stakeholder_id, anchor: "stakeholder_description")
+        when :stakeholder_instructions_blank
+          edit_author_case_stakeholder_path(case_record, problem.stakeholder_id, anchor: "stakeholder_instructions")
+        when :stakeholder_provider_unsupported
+          edit_author_case_stakeholder_path(case_record, problem.stakeholder_id, anchor: "stakeholder_provider")
+        when :stakeholder_model_blank
+          edit_author_case_stakeholder_path(case_record, problem.stakeholder_id, anchor: "stakeholder_model_id")
+        else
+          author_case_stakeholders_path(case_record)
+        end %>
+        <li><%= link_to problem_label, problem_path %></li>
+      <% end %>
+    </ul>
+  <% elsif publication_readiness.current? %>
+    <h2 id="publication-heading"><%= t("author.cases.publication.current.heading") %></h2>
+    <p class="publication-panel__lede"><%= t("author.cases.publication.current.lede") %></p>
+    <% if case_record.published_at? %>
+      <p class="publication-panel__timestamp">
+        <%= t("author.cases.publication.current.published_at") %>
+        <%= time_tag case_record.published_at, l(case_record.published_at, format: :long) %>
+      </p>
+    <% end %>
+  <% else %>
+    <% if case_record.status == "archived" %>
+      <% heading = t("author.cases.publication.archived.heading") %>
+      <% lede = t("author.cases.publication.archived.lede") %>
+      <% button_label = t("author.cases.publication.archived.submit") %>
+    <% elsif case_record.published_configuration.present? %>
+      <% heading = t("author.cases.publication.changes.heading") %>
+      <% lede = t("author.cases.publication.changes.lede") %>
+      <% button_label = t("author.cases.publication.changes.submit") %>
+    <% else %>
+      <% heading = t("author.cases.publication.first.heading") %>
+      <% lede = t("author.cases.publication.first.lede") %>
+      <% button_label = t("author.cases.publication.first.submit") %>
+    <% end %>
+
+    <h2 id="publication-heading"><%= heading %></h2>
+    <p class="publication-panel__lede"><%= lede %></p>
+
+    <% if publication_readiness.publish_needed? %>
+      <%= button_tag button_label,
+            type: "submit",
+            name: "publish_after_save",
+            value: "1",
+            form: dom_id(case_record, :draft_form),
+            class: "button button-primary publication-panel__submit",
+            data: {turbo_submits_with: t("author.cases.publication.submitting")} %>
+    <% end %>
+  <% end %>
+
+  <% if case_record.published_configuration.present? %>
+    <% snapshot_heading_key = if case_record.status == "archived" || case_record.errors.any?
+      "pinned_heading"
+    elsif publication_readiness.current?
+      "current_heading"
+    else
+      "draft_heading"
+    end %>
+    <aside class="publication-panel__snapshot-note" aria-labelledby="publication-snapshot-heading">
+      <h3 id="publication-snapshot-heading">
+        <%= t("author.cases.publication.snapshot.#{snapshot_heading_key}") %>
+      </h3>
+      <p><%= t("author.cases.publication.snapshot.lede") %></p>
+    </aside>
+  <% end %>
+
+  <% if case_record.errors.empty? && publication_readiness.ready? %>
+    <aside class="publication-panel__caveat" aria-labelledby="publication-model-check-heading">
+      <h3 id="publication-model-check-heading"><%= t("author.cases.publication.model_check.heading") %></h3>
+      <p><%= t("author.cases.publication.model_check.lede") %></p>
+    </aside>
+  <% end %>
+</section>

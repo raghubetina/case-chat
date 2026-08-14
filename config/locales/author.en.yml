@@ -42,12 +42,59 @@ en:
         heading: Edit %{title}
         lede: Shape what learners know at the start of their research.
         manage_stakeholders: Manage stakeholders
-        published_draft_heading: Your changes are a new draft
-        published_draft_lede: Active learners keep the version they started with. Changes here will not reach a learner until a future publishing step replaces the case snapshot.
         stakeholders_eyebrow: Interview design
         stakeholders_heading: Build the interview panel
         stakeholders_lede: Create the people learners can question, then decide what each person knows and when they become available.
         submit: Save changes
+      publication:
+        archived:
+          heading: This case is archived
+          lede: Save the case fields above, then reopen the case with the resulting configuration.
+          submit: Save and reopen case
+        changes:
+          heading: Unpublished changes are ready
+          lede: Save the case fields above and publish the resulting configuration for new learner attempts.
+          submit: Save and publish changes
+        current:
+          heading: Published and current
+          lede: This saved draft matches the configuration new learner attempts receive.
+          published_at: Published
+        eyebrow: Publication
+        first:
+          heading: Ready to publish
+          lede: Save the case fields above and publish the resulting configuration for new learner attempts.
+          submit: Save and publish case
+        flash:
+          current: This case is already published with the current draft.
+          incomplete: Draft saved, but not published. Complete the checklist below.
+          published: Case published.
+        incomplete:
+          checklist_heading: Complete this checklist
+          heading: Before you publish
+          lede: Finish each item below so new learner attempts begin with one coherent configuration.
+        invalid:
+          heading: Save a valid draft first
+          lede: The publish check uses the last saved draft. Correct this form before publishing.
+        model_check:
+          heading: What this check proves
+          lede: Model settings are present, but Case Chat has not tested the provider connection. A saved provider or model ID can still be unavailable or misconfigured.
+        problems:
+          assignment_blank: Add the learner assignment
+          background_blank: Add the case background
+          bundle_document_crosses_case_boundary: Review the documents in %{name}
+          bundle_documents_empty: Add a document to %{name}
+          stakeholder_description_blank: Add a learner-visible description for %{name}
+          stakeholder_instructions_blank: Add private instructions for %{name}
+          stakeholder_model_blank: Enter a model ID for %{name}
+          stakeholder_provider_unsupported: Choose OpenAI or Anthropic for %{name}
+          stakeholders_empty: Include or create a stakeholder
+          starting_stakeholder_missing: Make an included stakeholder available from the start
+        snapshot:
+          current_heading: Active attempts remain pinned
+          draft_heading: Your changes are a new draft
+          lede: Active learners keep the version they started with. Publishing changes only what new attempts receive.
+          pinned_heading: Learner attempts remain pinned
+        submitting: Saving and publishing…
       status:
         archived: Archived
         draft: Draft
@@ -76,7 +123,7 @@ en:
         provider_missing: "Provider needed · %{model}"
         provider_model: "%{provider} · %{model}"
         published_draft_heading: Changes prepare the next version
-        published_draft_lede: Learners already researching this case keep the stakeholder configuration they started with. These edits take effect only after a future publishing step.
+        published_draft_lede: Learners already researching this case keep the stakeholder configuration they started with. Publish these changes when you want them to shape new learner attempts.
         status:
           available: Available from start
           does_not_know_background: Does not know case background
@@ -90,14 +137,14 @@ en:
         available_label: Available from the start
         back: Back to stakeholders
         cancel: Cancel
-        description_hint: This description is visible to learners. Describe why they might want to speak with this person without giving away private facts.
+        description_hint: Required before publishing. Describe why learners might want to speak with this person without giving away private facts.
         description_label: Learner-visible description
         errors_heading: Review the highlighted fields
         errors_lede: Correct the following before saving this stakeholder.
         identity_legend: Identity learners see
         included_hint: Uncheck this to keep the draft without adding it to the next published configuration.
         included_label: Include in next publication
-        instructions_hint: Write the person's perspective, facts, motivations, boundaries, and conversational behavior. The application will add safety and case context later.
+        instructions_hint: Required before publishing. Write the person's perspective, facts, motivations, boundaries, and conversational behavior. The application will add safety and case context later.
         instructions_label: Private stakeholder instructions
         knowledge_legend: Knowledge and availability
         knows_background_hint: Checked by default. The learner assignment is never shared with a stakeholder.

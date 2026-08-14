@@ -79,13 +79,14 @@ speculative capabilities outside the prototype scope. The Rodauth account flow, 
 `AuthenticatedController` guard are implemented. New product controllers inherit that guard, load submitted child
 IDs through an authorized parent scope, and prove the integration in request tests; the obsolete generated CRUD
 surface remains removed until those authorized product flows replace it. The author case list, case editor, and
-nested stakeholder draft workspace implement that contract; do not generalize their proof to the unbuilt referral,
-document, cohort, or learner controllers.
+nested stakeholder draft workspace and publication action implement that contract; do not generalize their proof
+to the unbuilt referral, document, cohort, archive, or learner controllers. Publication readiness is advisory; the
+publish command remains the authoritative validation boundary under the case lock.
 
 ## Launch checklist (before inviting real users)
 - [ ] Complete request-level verification for the remaining author-child, learner, cohort, transcript, and document
   authorization boundaries from ADR 0002 and the target domain model; accounts, case drafting, and stakeholder
-  drafting are already covered.
+  drafting and publication are already covered.
 - [ ] Replace the PLACEHOLDER copy on `/privacy` and `/terms`.
 - [ ] If the Designer declares public domains, apply its generated domain policy before mapping traffic.
 - [ ] Set `ROLLBAR_ACCESS_TOKEN` (errors) and `SKYLIGHT_AUTHENTICATION` (APM) if wanted; both are key-dormant.

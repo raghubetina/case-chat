@@ -11,16 +11,6 @@
     <p><%= t("author.cases.edit.lede") %></p>
   </div>
 
-  <% if @case.status == "published" %>
-    <aside class="published-draft-note" aria-labelledby="published-draft-heading">
-      <div class="published-draft-note__rule" aria-hidden="true"></div>
-      <div>
-        <h2 id="published-draft-heading"><%= t("author.cases.edit.published_draft_heading") %></h2>
-        <p><%= t("author.cases.edit.published_draft_lede") %></p>
-      </div>
-    </aside>
-  <% end %>
-
   <div class="author-editor__panel">
     <%= render "form", case_record: @case, submit_label: t("author.cases.edit.submit") %>
   </div>
@@ -33,4 +23,6 @@
     </div>
     <%= link_to t("author.cases.edit.manage_stakeholders"), author_case_stakeholders_path(@case), class: "button button-ghost author-editor__next-step-action" %>
   </section>
+
+  <%= render "publication", case_record: @case, publication_readiness: @publication_readiness %>
 </section>

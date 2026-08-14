@@ -1,7 +1,7 @@
 # Target domain model
 
 **Status:** accepted for the prototype<br>
-**Implementation:** verified for persistence, lifecycle, accounts, policies, and case and stakeholder draft editors; remaining product UI is planned<br>
+**Implementation:** verified for persistence, lifecycle, accounts, policies, case and stakeholder draft editors, and author publication; remaining product UI is planned<br>
 **Last verified:** 2026-08-14
 
 This is the canonical model implemented by the current schema and lifecycle
@@ -66,6 +66,43 @@ snapshot, and publication timestamp fields are not accepted from the form.
 Editing a published case changes the normalized draft while preserving the
 configuration already pinned by active learners.
 
+`Cases::PublicationReadiness` builds the exact candidate publication snapshot
+and an ordered list of structured problems for the author case editor. Its
+`ready?`, `current?`, and `publish_needed?` answers are advisory: the publish
+command rebuilds and validates under the parent row lock before writing. A
+candidate is current only when the case is `published` and its stored snapshot
+equals that candidate. Every included stakeholder needs a learner-visible
+description, private instructions, a supported prototype provider (`openai` or
+`anthropic`), and a nonblank model ID. Readiness does not contact a provider,
+verify credentials or model availability, or test conversation quality.
+
+The case editor's publication button submits the current case form through
+`Cases::UpdateAndPublish`. That command wraps the draft update, readiness check,
+and any publication in one outer transaction; the case-row lock acquired by the
+draft update remains held until the combined outcome finishes. A ready, valid
+submission saves and publishes together. Case fields that fail model validation
+remain unsaved and visible on the form. A model-valid edit that leaves the full
+configuration structurally incomplete is saved as a draft, but does not change
+the publication or its locks.
+
+`Cases::Publish` gives each state an explicit result:
+
+- The first valid publication changes `draft` to `published`, stores the
+  candidate snapshot, and sets `published_at`.
+- A changed valid publication replaces the snapshot and refreshes
+  `published_at`. Existing attempts retain their pinned snapshots; only later
+  attempts use the replacement.
+- Publishing an unchanged already-published case is a true no-op that preserves
+  the case timestamp, publication timestamp, snapshot, and member locks.
+- Publishing an `archived` case explicitly reactivates it as `published` and
+  refreshes its snapshot and `published_at`, even when the candidate equals the
+  stored snapshot.
+- Calling `Cases::Publish` directly with an invalid configuration changes
+  neither the case nor any publication lock.
+
+The author workspace implements readiness and publication. An archive action
+and archive UI remain planned.
+
 ### Cohort and Enrollment
 
 `Cohort` belongs to a case and owns `name`, a unique canonicalized `join_code`,
@@ -97,11 +134,12 @@ drives; a published stakeholder and its runtime history remain protected.
 
 The author workspace implements paginated listing plus creation and editing of
 all of those fields except `provider_settings` and `publication_locked_at`.
-Provider and model may remain blank in a draft; the publish command, not the
-draft form, enforces a supported provider and configured model. The case ID,
-provider settings, and publication lock are server-owned and are not accepted
-from the form. Stakeholder deletion, referrals, document bundles, publishing,
-test drives, prompt composition, and provider calls are not part of this slice.
+Description, instructions, provider, and model may remain blank while drafting;
+the publication gate requires all four fields for every included stakeholder
+and accepts only a supported provider. The case ID, provider settings, and
+publication lock are server-owned and are not accepted from the form.
+Stakeholder deletion, referrals, document bundles, test drives, prompt
+composition, and provider calls remain planned.
 
 `Referral` links a source stakeholder to a target stakeholder in the same case
 and contains author guidance about when an introduction is natural. Row

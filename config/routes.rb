@@ -23,6 +23,7 @@ Rails.application.routes.draw do
 
   namespace :author do
     resources :cases, only: %i[index new create edit update] do
+      post :publish, on: :member
       resources :stakeholders, only: %i[index new create edit update]
     end
   end
