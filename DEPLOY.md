@@ -18,11 +18,11 @@ Four resources, one region:
 | Resource | Why it is separate |
 |---|---|
 | `case-chat` (web, standard) | Serves requests and holds Action Cable connections. Runs migrations on boot. |
-| `case-chat-worker` (worker, standard) | Runs reply and drafting jobs. A contact's answer streams for 10-60 seconds and a case draft takes about two minutes; in-Puma jobs would hold that time inside the web process and starve request threads, and drafting inline would exceed the request deadline outright. |
-| `case-chat-db` (Postgres, basic-1gb) | Domain data, plus Solid Cache and Solid Queue, whose access patterns suit it. |
-| `case-chat-cable` (Key Value, starter) | Action Cable only. Token streaming is many broadcasts per second per thread; Solid Cable polls Postgres, so each subscriber is a recurring query and each token a write. |
+| `case-chat-claude-worker` (worker, standard) | Runs reply and drafting jobs. A contact's answer streams for 10-60 seconds and a case draft takes about two minutes; in-Puma jobs would hold that time inside the web process and starve request threads, and drafting inline would exceed the request deadline outright. |
+| `case-chat-claude-db` (Postgres, basic-1gb) | Domain data, plus Solid Cache and Solid Queue, whose access patterns suit it. |
+| `case-chat-claude-cable` (Key Value, starter) | Action Cable only. Token streaming is many broadcasts per second per thread; Solid Cable polls Postgres, so each subscriber is a recurring query and each token a write. |
 
-Both services inherit the `case-chat-runtime` environment group. That is
+Both services inherit the `case-chat-claude-runtime` environment group. That is
 load-bearing rather than tidy: a `SECRET_KEY_BASE` that differed between web and
 worker would mean signed cookies and Active Storage URLs minted by one are
 rejected by the other.

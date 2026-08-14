@@ -8,8 +8,8 @@ class RenderBlueprintTest < ActiveSupport::TestCase
   setup do
     @blueprint = YAML.safe_load_file(Rails.root.join("render.yaml"))
     @services = @blueprint.fetch("services").index_by { |service| service.fetch("name") }
-    @web = @services.fetch("case-chat")
-    @worker = @services.fetch("case-chat-worker")
+    @web = @services.fetch("case-chat-claude")
+    @worker = @services.fetch("case-chat-claude-worker")
     @group = @blueprint.fetch("envVarGroups").first
     @group_vars = @group.fetch("envVars").index_by { |entry| entry.fetch("key") }
   end
@@ -37,7 +37,7 @@ class RenderBlueprintTest < ActiveSupport::TestCase
   test "both services share one environment group" do
     # A SECRET_KEY_BASE that differs between web and worker means signed
     # cookies and Active Storage URLs minted by one are rejected by the other.
-    %w[case-chat case-chat-worker].each do |name|
+    %w[case-chat-claude case-chat-claude-worker].each do |name|
       groups = @services.fetch(name).fetch("envVars").filter_map { |e| e["fromGroup"] }
       assert_includes groups, @group.fetch("name"), "#{name} must inherit the shared group"
     end
@@ -48,19 +48,19 @@ class RenderBlueprintTest < ActiveSupport::TestCase
   test "Action Cable has somewhere to broadcast that is not the database" do
     # Token streaming is many broadcasts per second per thread; Solid Cable
     # polls Postgres, so every subscriber is a recurring query.
-    cable = @services.fetch("case-chat-cable")
+    cable = @services.fetch("case-chat-claude-cable")
 
     assert_equal "keyvalue", cable.fetch("type")
     assert_equal "noeviction", cable.fetch("maxmemoryPolicy"),
       "evicting pub/sub state would drop stream messages silently"
-    assert_equal "case-chat-cable", @group_vars.fetch("REDIS_URL").dig("fromService", "name")
+    assert_equal "case-chat-claude-cable", @group_vars.fetch("REDIS_URL").dig("fromService", "name")
   end
 
   test "the database is managed and wired to both services" do
     database = @blueprint.fetch("databases").first
 
-    assert_equal "case-chat-db", database.fetch("name")
-    assert_equal "case-chat-db", @group_vars.fetch("DATABASE_URL").dig("fromDatabase", "name")
+    assert_equal "case-chat-claude-db", database.fetch("name")
+    assert_equal "case-chat-claude-db", @group_vars.fetch("DATABASE_URL").dig("fromDatabase", "name")
   end
 
   # Secrets live in the hand-managed `case_chat` group, so most are simply not

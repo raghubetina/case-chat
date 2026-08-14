@@ -16,14 +16,14 @@
 #      for Action Cable, while Solid Cache and Solid Queue stay on Postgres,
 #      where their access patterns are a good fit.
 databases:
-  - name: case-chat-db
+  - name: case-chat-claude-db
     plan: basic-1gb
     region: ohio
     postgresMajorVersion: "18"
 
 services:
   # Action Cable only. Cache and queue remain on Postgres.
-  - name: case-chat-cable
+  - name: case-chat-claude-cable
     type: keyvalue
     plan: starter
     region: ohio
@@ -31,14 +31,14 @@ services:
     maxmemoryPolicy: noeviction # dropping pub/sub state would silently break streams
 
   - type: web
-    name: case-chat
+    name: case-chat-claude
     runtime: docker
     plan: standard
     region: ohio
     autoDeployTrigger: checksPass
     healthCheckPath: /ready
     envVars:
-      - fromGroup: case-chat-runtime
+      - fromGroup: case-chat-claude-runtime
       # Secrets set by hand in the dashboard; see the note on the group below.
       - fromGroup: case-chat
       - key: PORT
@@ -65,7 +65,7 @@ services:
         value: "3000"
 
   - type: worker
-    name: case-chat-worker
+    name: case-chat-claude-worker
     runtime: docker
     plan: standard
     region: ohio
@@ -74,7 +74,7 @@ services:
     # migrations belong to one process, and that process is the web service.
     dockerCommand: ./bin/jobs
     envVars:
-      - fromGroup: case-chat-runtime
+      - fromGroup: case-chat-claude-runtime
       - fromGroup: case-chat
       # A reply job spends most of its life waiting on the model, so threads
       # are cheap here; this is IO-bound, not CPU-bound.
@@ -88,7 +88,7 @@ services:
 # dashboard and holds the secrets: CLOUDINARY_URL and the provider keys. Nothing appears in both, because a key declared twice resolves to
 # whichever group is listed last and that is not a thing to leave to ordering.
 envVarGroups:
-  - name: case-chat-runtime
+  - name: case-chat-claude-runtime
     envVars:
       - key: RAILS_ENV
         value: production
@@ -102,11 +102,11 @@ envVarGroups:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: case-chat-db
+          name: case-chat-claude-db
           property: connectionString
       - key: REDIS_URL
         fromService:
-          name: case-chat-cable
+          name: case-chat-claude-cable
           type: keyvalue
           property: connectionString
       # Which model answers as a stakeholder: anthropic | openai.
