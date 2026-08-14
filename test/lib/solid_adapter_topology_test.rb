@@ -32,9 +32,7 @@ class SolidAdapterTopologyTest < ActiveSupport::TestCase
     workers = yaml_with_erb("config/queue.yml").dig("production", "workers")
 
     assert_equal ["ai"], workers.first.fetch("queues")
-    assert_equal 5, workers.first.fetch("threads")
     assert_equal ["mailers", "default"], workers.second.fetch("queues")
-    assert_equal 2, workers.second.fetch("threads")
     assert workers.none? { |worker| worker.fetch("queues") == "*" }
   end
 

@@ -59,11 +59,11 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     shared_values = {
       "RAILS_ENV" => "production",
       "PORT" => "80",
-      "WEB_CONCURRENCY" => "2",
-      "RAILS_MAX_THREADS" => "5",
-      "DB_POOL" => "5",
-      "CACHE_DB_POOL" => "3",
-      "AI_JOB_THREADS" => "5",
+      "WEB_CONCURRENCY" => "1",
+      "RAILS_MAX_THREADS" => "3",
+      "DB_POOL" => "3",
+      "CACHE_DB_POOL" => "2",
+      "AI_JOB_THREADS" => "2",
       "DEFAULT_JOB_THREADS" => "2",
       "RACK_TIMEOUT_SERVICE_TIMEOUT" => "15",
       "RAILS_LOG_LEVEL" => "info",
@@ -75,8 +75,8 @@ class RenderBlueprintTest < ActiveSupport::TestCase
       assert_equal value, @worker_environment.fetch(key).fetch("value")
     end
 
-    assert_equal "3", @web_environment.fetch("CABLE_DB_POOL").fetch("value")
-    assert_equal "5", @worker_environment.fetch("CABLE_DB_POOL").fetch("value")
+    assert_equal "2", @web_environment.fetch("CABLE_DB_POOL").fetch("value")
+    assert_equal "2", @worker_environment.fetch("CABLE_DB_POOL").fetch("value")
   end
 
   test "configures queue capacity without an in-Puma worker" do
@@ -88,20 +88,44 @@ class RenderBlueprintTest < ActiveSupport::TestCase
 
     refute_includes all_environment_keys, "SOLID_QUEUE_IN_PUMA"
     refute_includes Rails.root.join("config/puma.rb").read, "plugin :solid_queue"
-    assert_equal 5, ai_threads
+    assert_equal 2, ai_threads
     assert_equal 2, default_threads
     assert_equal 2, web_queue_pool
-    assert_equal 7, worker_queue_pool
+    assert_equal 4, worker_queue_pool
     assert_operator worker_queue_pool, :>=, [ai_threads, default_threads].max + 2
+  end
+
+  test "keeps fallback queue capacity aligned with the deployed profile" do
+    with_environment("AI_JOB_THREADS" => nil, "DEFAULT_JOB_THREADS" => nil, "QUEUE_DB_POOL" => nil) do
+      workers = queue_configuration.fetch("workers")
+      ai_worker = workers.find do |worker|
+        worker.fetch("queues") == ["ai"]
+      end
+      default_worker = workers.find do |worker|
+        worker.fetch("queues") == ["mailers", "default"]
+      end
+      database_configuration = YAML.safe_load(
+        ERB.new(Rails.root.join("config/database.yml").read).result,
+        aliases: true
+      )
+
+      assert_equal 2, ai_worker.fetch("threads")
+      assert_equal 2, default_worker.fetch("threads")
+      assert_equal 4, database_configuration.dig("production", "queue", "max_connections")
+    end
   end
 
   test "pins the public port and keeps auxiliary connection ceilings bounded" do
     ai_threads = @worker_environment.fetch("AI_JOB_THREADS").fetch("value").to_i
+    web_threads = @web_environment.fetch("RAILS_MAX_THREADS").fetch("value").to_i
+    web_primary_pool = @web_environment.fetch("DB_POOL").fetch("value").to_i
+    web_cable_pool = @web_environment.fetch("CABLE_DB_POOL").fetch("value").to_i
     worker_cable_pool = @worker_environment.fetch("CABLE_DB_POOL").fetch("value").to_i
 
     assert_equal "80", @web_environment.fetch("PORT").fetch("value")
-    assert_equal "3", @web_environment.fetch("CABLE_DB_POOL").fetch("value")
-    assert_equal 5, worker_cable_pool
+    assert_equal 2, web_cable_pool
+    assert_operator web_primary_pool, :>=, web_threads
+    assert_operator web_cable_pool, :>=, 2
     assert_operator worker_cable_pool, :>=, ai_threads
   end
 
@@ -117,10 +141,10 @@ class RenderBlueprintTest < ActiveSupport::TestCase
     worker_ceiling = queue_only_processes * environment_value(@worker_environment, "QUEUE_DB_POOL").to_i +
       worker_entries * worker_pool_ceiling
     steady_state_ceiling = web_ceiling + worker_ceiling
-    usable_direct_connections = 200 - 10
+    usable_direct_connections = 100 - 10
 
-    assert_equal 80, steady_state_ceiling
-    assert_equal 30, usable_direct_connections - (2 * steady_state_ceiling)
+    assert_equal 39, steady_state_ceiling
+    assert_equal 12, usable_direct_connections - (2 * steady_state_ceiling)
   end
 
   private
@@ -140,5 +164,13 @@ class RenderBlueprintTest < ActiveSupport::TestCase
       ERB.new(Rails.root.join("config/queue.yml").read).result,
       aliases: true
     ).fetch("production")
+  end
+
+  def with_environment(overrides)
+    previous = overrides.to_h { |key, _value| [key, ENV[key]] }
+    overrides.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    yield
+  ensure
+    previous.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 end

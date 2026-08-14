@@ -8,18 +8,41 @@ Queue, and Solid Cable each use a separate logical PostgreSQL database.
 ## Provision PostgreSQL
 
 Create one current-generation PostgreSQL 18 instance named
-`case-chat-codex-postgres`, with at least 8 GB of RAM, in the same Render region
-as the services. The 8 GB tier supplies 200 direct
-connections; this profile keeps 30 available during a worst-case rolling deploy
-after reserving 10 for PostgreSQL and Render internals. Case Chat uses
-PostgreSQL's built-in `uuidv7()` function, which is not available on earlier
-major versions. On that instance create four fresh logical databases, for
-example:
+`case-chat-codex-postgres` on the paid Basic 1 GB tier in the same Render region
+as the services. That tier costs $19 per month for compute and supplies 100
+direct connections; storage is billed separately at the current dashboard rate
+of $0.30 per GB-month. Start this small experiment with a 1 GB disk, for an
+initial database estimate of $19.30 per month. Render permits increasing that
+disk later but not decreasing it, and case documents live in Cloudinary rather
+than PostgreSQL. Do not silently accept a larger dashboard default for this
+initial dataset.
 
-- `case_chat_codex_production`
+When ready to provision, the equivalent current CLI command is:
+
+```sh
+render pg create --confirm \
+  --workspace case-chat \
+  --name case-chat-codex-postgres \
+  --database-name case_chat_codex_production \
+  --plan basic_1gb \
+  --version 18 \
+  --region ohio \
+  --disk-size-gb 1
+```
+
+The command creates both the PostgreSQL instance and its primary logical
+database, `case_chat_codex_production`. The configured pool budget leaves 12
+connections available during a worst-case rolling deploy after reserving 10 for
+PostgreSQL and Render internals. Case Chat uses PostgreSQL's built-in `uuidv7()`
+function, which is not available on earlier major versions. On that instance,
+create only the three additional logical databases:
+
 - `case_chat_codex_production_cache`
 - `case_chat_codex_production_queue`
 - `case_chat_codex_production_cable`
+
+Together with the primary created by the CLI command, these are the four fresh
+logical databases Case Chat expects.
 
 Render Blueprints cannot declare additional logical databases or derive one
 database URL from another. Before the first deploy, paste the four direct
@@ -101,17 +124,19 @@ reference-only.
 
 The Blueprint starts two paid Standard services:
 
-- Web: two Puma processes, five request threads each, and no in-process job
+- Web: one Puma process, three request threads, and no in-process job
   supervisor.
 - Worker: Solid Queue's default forked supervisor and dispatcher, with an `ai`
-  worker at five threads and a `[mailers, default]` worker at two threads.
+  worker at two threads and a `[mailers, default]` worker at two threads.
 
 The web uses a two-connection Queue pool for short enqueue writes. The worker's
 `QUEUE_DB_POOL` must stay at least two larger than the larger worker thread
-count. Because Solid Queue forks one process per worker entry, each child owns
+count: Solid Queue 1.6 reserves one connection per execution thread, one for
+polling, and one for its heartbeat, so two threads require the configured pool
+of four. Because Solid Queue forks one process per worker entry, each child owns
 its connection pool; do not add both thread counts when sizing that one pool.
-The worker overrides `CABLE_DB_POOL` to five so all five concurrent AI streams
-can publish without competing for three Cable connections; the web keeps three.
+The worker's two Cable connections cover its two concurrent AI broadcasts. The
+web keeps two for Solid Cable's polling listener plus a concurrent write.
 `maxShutdownDelaySeconds` gives Render 60 seconds, while Rails configures Solid
 Queue to wait up to 50 seconds for its children before requesting an immediate
 stop.
@@ -121,13 +146,15 @@ inspection, while application-level model-run records provide durable provider
 history. The app therefore needs no recurring cleanup task and Solid Queue does
 not fork a scheduler solely to delete generated history.
 
-The configured steady-state pool ceiling is 80 direct connections: 26 across
-the two Puma processes and 54 across the Queue supervisor, dispatcher, and two
-worker processes. Pools open lazily, but independent zero-downtime deploys can
-briefly run both old and new service containers, raising the theoretical ceiling
-to 160. Against the tier's 200-connection headline limit, reserving 10 for
-PostgreSQL and Render internals still leaves 30 for migration, readiness, and
-operator sessions. Recalculate the whole budget before changing service counts,
+The configured steady-state pool ceiling is 39 direct connections. The Puma
+process can open 9 across primary, cache, queue, and cable. The Queue supervisor
+and dispatcher can open 8 Queue connections, and the two worker processes can
+open 11 each across all four databases, for a worker-service ceiling of 30.
+Pools open lazily, but independent zero-downtime deploys can briefly run both
+old and new service containers, raising the theoretical ceiling to 78. Against
+the Basic 1 GB tier's 100-connection limit, reserving 10 for PostgreSQL and
+Render internals still leaves 12 for migration, readiness, and operator
+sessions. Recalculate the whole budget before changing service counts,
 `WEB_CONCURRENCY`, worker entries, recurring tasks, or pool sizes.
 
 ## Environment keys
@@ -140,13 +167,13 @@ operator sessions. Recalculate the whole budget before changing service counts,
 | `CABLE_DATABASE_URL` | web prompt | Solid Cable |
 | `SECRET_KEY_BASE` | generated on web | Cookie/session/CSRF signing |
 | `PORT` | each service (`80`) | Thruster's public HTTP port |
-| `WEB_CONCURRENCY` | each service (`2`) | Puma processes |
-| `RAILS_MAX_THREADS` | each service (`5`) | Puma request threads |
-| `DB_POOL` | each service (`5`) | Product database connections per process |
-| `CACHE_DB_POOL` | each service (`3`) | Cache database connections per process |
-| `QUEUE_DB_POOL` | web (`2`), worker (`7`) | Queue connections per process |
-| `CABLE_DB_POOL` | web (`3`), worker (`5`) | Cable connections per process |
-| `AI_JOB_THREADS` | each service (`5`) | Concurrent provider streams |
+| `WEB_CONCURRENCY` | each service (`1`) | Puma processes |
+| `RAILS_MAX_THREADS` | each service (`3`) | Puma request threads |
+| `DB_POOL` | each service (`3`) | Product database connections per process |
+| `CACHE_DB_POOL` | each service (`2`) | Cache database connections per process |
+| `QUEUE_DB_POOL` | web (`2`), worker (`4`) | Queue connections per process |
+| `CABLE_DB_POOL` | web (`2`), worker (`2`) | Cable connections per process |
+| `AI_JOB_THREADS` | each service (`2`) | Concurrent provider streams |
 | `DEFAULT_JOB_THREADS` | each service (`2`) | Mailer and ordinary job concurrency |
 | `OPENAI_API_KEY` | group/dashboard | Platform-owned OpenAI credential |
 | `ANTHROPIC_API_KEY` | group/dashboard | Platform-owned Anthropic credential |

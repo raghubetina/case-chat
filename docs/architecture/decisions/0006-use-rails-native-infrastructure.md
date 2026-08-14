@@ -26,19 +26,25 @@ benefits more from fewer moving pieces than from speculative infrastructure.
   URLs: the adapter ignores Rails' URL expiry and download-disposition options.
 - Disable Active Storage's default routes until a case-scoped, authorized
   `CaseDocument` download controller owns delivery.
-- Run one Solid Queue service with an exact `ai` worker (five threads) and an
+- Run one Solid Queue service with an exact `ai` worker (two threads) and an
   exact `[mailers, default]` worker (two threads), configurable through
   `AI_JOB_THREADS` and `DEFAULT_JOB_THREADS`; do not let a wildcard worker
   consume the long-held streams. Keep `QUEUE_DB_POOL` at least two larger than
-  the larger worker's thread count.
+  the larger worker's thread count, so this two-thread profile uses four.
 - Run those workers through the dedicated Render worker in Solid Queue's
   default fork mode. Remove `SOLID_QUEUE_IN_PUMA` from production so web
   processes never start an additional in-process supervisor.
 - Delete successful Queue records as they complete and keep the production
   recurring schedule empty. Failed jobs remain inspectable, and the prototype
   does not fork a scheduler solely to clean generated success history.
-- Give the worker five Cable connections for its five concurrent stream jobs;
-  keep the web pool at three and account for both in the deployment budget.
+- Give both services two Cable connections. The worker pool covers its two
+  concurrent stream jobs; the web pool covers Solid Cable's listener and a
+  concurrent write. Account for both in the deployment budget.
+- Use one three-thread Puma process. Across web, Queue supervisor, dispatcher,
+  and two worker processes, the service-local pools have a conservative ceiling
+  of 39 steady-state connections and 78 during overlapping deploys. A paid
+  Basic 1 GB database's 100-connection limit leaves 12 after reserving 10 for
+  PostgreSQL and Render internals.
 - Let the web service alone run `db:prepare`. Because Render deploys services
   independently, gate each new worker deployment on a read-only check that all
   primary migrations and Solid schemas are ready; do not run a second,
@@ -59,7 +65,7 @@ benefits more from fewer moving pieces than from speculative infrastructure.
 - Streaming remains application-driven through Turbo/Action Cable; the database
   is not polled for each token.
 - Model streams cannot occupy the ordinary job pool; a side-by-side test drive
-  uses two of the pilot's five stream slots.
+  uses both pilot stream slots, so another model run waits until one finishes.
 - Separate Solid databases prevent framework tables from crowding the primary
   schema while keeping deployment straightforward.
 - Database preparation has one writer. A new worker waits for it without
@@ -110,6 +116,7 @@ deploying a replacement or reconfigured account.
 ## Revisit when
 
 A measured requirement needs richer JavaScript bundling, Redis-specific data
-structures, more than five simultaneous provider streams, materially higher
-ordinary-job throughput, revocable/expiring document URLs, stronger filename or
+structures, more than two simultaneous provider streams, side-by-side queueing
+that lasts an unacceptable duration, materially higher ordinary-job
+throughput, revocable/expiring document URLs, stronger filename or
 download-disposition control, or tighter service-level secret isolation.

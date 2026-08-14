@@ -132,9 +132,9 @@ runtime_environment_without_cloudinary=(
   --env CABLE_DATABASE_URL="${cable_database_url}"
   --env SECRET_KEY_BASE="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   --env DB_POOL=3
-  --env CACHE_DB_POOL=3
+  --env CACHE_DB_POOL=2
   --env RAILS_MAX_THREADS=3
-  --env AI_JOB_THREADS=5
+  --env AI_JOB_THREADS=2
   --env DEFAULT_JOB_THREADS=2
   --env RENDER_EXTERNAL_HOSTNAME=render.test
   --env SMOKE_TOKEN="${token}"
@@ -148,14 +148,14 @@ common_runtime_environment=(
 
 web_runtime_environment=(
   "${common_runtime_environment[@]}"
-  --env CABLE_DB_POOL=3
+  --env CABLE_DB_POOL=2
   --env QUEUE_DB_POOL=2
 )
 
 worker_runtime_environment=(
   "${common_runtime_environment[@]}"
-  --env CABLE_DB_POOL=5
-  --env QUEUE_DB_POOL=7
+  --env CABLE_DB_POOL=2
+  --env QUEUE_DB_POOL=4
 )
 
 if cloudinary_boot_output="$(docker run --rm --network "${network}" \

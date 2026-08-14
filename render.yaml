@@ -20,17 +20,17 @@ services:
       - key: PORT
         value: "80"
       - key: WEB_CONCURRENCY
-        value: "2"
+        value: "1"
       - key: RAILS_MAX_THREADS
-        value: "5"
+        value: "3"
       - key: DB_POOL
-        value: "5"
+        value: "3"
       - key: CACHE_DB_POOL
-        value: "3"
+        value: "2"
       - key: CABLE_DB_POOL
-        value: "3"
+        value: "2"
       - key: AI_JOB_THREADS
-        value: "5"
+        value: "2"
       - key: DEFAULT_JOB_THREADS
         value: "2"
       - key: RACK_TIMEOUT_SERVICE_TIMEOUT
@@ -68,17 +68,17 @@ services:
       - key: PORT
         value: "80"
       - key: WEB_CONCURRENCY
-        value: "2"
+        value: "1"
       - key: RAILS_MAX_THREADS
-        value: "5"
-      - key: DB_POOL
-        value: "5"
-      - key: CACHE_DB_POOL
         value: "3"
+      - key: DB_POOL
+        value: "3"
+      - key: CACHE_DB_POOL
+        value: "2"
       - key: CABLE_DB_POOL
-        value: "5"
+        value: "2"
       - key: AI_JOB_THREADS
-        value: "5"
+        value: "2"
       - key: DEFAULT_JOB_THREADS
         value: "2"
       - key: RACK_TIMEOUT_SERVICE_TIMEOUT
@@ -113,4 +113,4 @@ services:
           name: case-chat-codex-web
           envVarKey: CABLE_DATABASE_URL
       - key: QUEUE_DB_POOL
-        value: "7"
+        value: "4"
