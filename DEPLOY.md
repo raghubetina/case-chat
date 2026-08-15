@@ -17,7 +17,7 @@ Four resources, one region:
 
 | Resource | Why it is separate |
 |---|---|
-| `case-chat` (web, standard) | Serves requests and holds Action Cable connections. Runs migrations on boot. |
+| `case-chat-claude` (web, standard) | Serves requests and holds Action Cable connections. Runs migrations on boot. |
 | `case-chat-claude-worker` (worker, standard) | Runs reply and drafting jobs. A contact's answer streams for 10-60 seconds and a case draft takes about two minutes; in-Puma jobs would hold that time inside the web process and starve request threads, and drafting inline would exceed the request deadline outright. |
 | `case-chat-claude-db` (Postgres, basic-1gb) | Domain data, plus Solid Cache and Solid Queue, whose access patterns suit it. |
 | `case-chat-claude-cable` (Key Value, starter) | Action Cable only. Token streaming is many broadcasts per second per thread; Solid Cable polls Postgres, so each subscriber is a recurring query and each token a write. |
@@ -58,18 +58,40 @@ These are `sync: false` in the blueprint and must be set by hand:
   and the drafter that reads uploaded documents. An unrecognized value fails
   loudly on first use rather than falling back, because the fallback used to be
   a canned cast an author could accept believing a model had read their case.
+  A stakeholder whose author picked no model gets the catalogue's default,
+  `ModelCatalogue::DEFAULT_ID` at `DEFAULT_EFFORT`, as long as `RESPONDER` still
+  names that model's provider. Point `RESPONDER` at the other provider and you
+  get that provider's own defaults instead, because an effort chosen for one
+  model means nothing on another.
 - `ANTHROPIC_API_KEY` and/or `OPENAI_API_KEY` — whichever `RESPONDER` names.
-- `APPLICATION_HOST` — used for mailer links.
+- `APPLICATION_HOST` — used for mailer links, and **required** once
+  `RESEND_API_KEY` is set. See the ordering note below.
 - `CLOUDINARY_URL` — where document blobs live. Not optional: the container
   filesystem is ephemeral, so without it every document an author uploads
   survives until the next deploy and then has no blob behind it. The gem reads
   this variable itself, so no key material is stored in the app.
-- `RESEND_API_KEY` and `MAIL_FROM` — transactional mail stays dormant until both are set.
+- `RESEND_API_KEY`, `MAIL_FROM` and `APPLICATION_HOST` — transactional mail
+  stays dormant while `RESEND_API_KEY` is unset. **Set the other two first.**
+  With a key and no `MAIL_FROM` or `APPLICATION_HOST`, production raises on
+  boot rather than falling back to a placeholder sender, because a verification
+  link pointing at `example.com` is worse than a deploy that stops. Set them in
+  the wrong order and the failure is quiet: Render keeps the previous instance
+  serving a deploy that never booted, so the site answers 200 from old code
+  while the worker crash-loops and no reply is generated. Check the deploy's
+  status, not the health endpoint.
+
+  `MAIL_FROM` must sit on a domain verified in Resend, which means adding its
+  DKIM and SPF records to that domain's DNS and waiting for Resend to see them.
+  Account verification and password reset are the only mail this app sends, and
+  both are how a new person gets in, so an unverified domain reads to a
+  colleague as an app that will not let them sign up.
 - `SEED_DEMO_CASES` and `SEED_PASSWORD` — set both to load the teaching cases on
-  first boot. Seeding creates accounts that can be signed into, so it is opt-in,
-  and it refuses to run in production without a passphrase because the
-  development one is committed to this repository. `db:prepare` only seeds a
-  database it just created; afterwards use `bin/rails case_chat:seed_cases`.
+  first boot. The flag is read as a boolean, so `false` and `0` mean off rather
+  than "present, therefore on". Seeding creates accounts that can be signed
+  into, so it is opt-in, and it refuses to run in production without a
+  passphrase because the development one is committed to this repository.
+  `db:prepare` only seeds a database it just created; afterwards use
+  `bin/rails case_chat:seed_cases`.
 
 ## Turn on PDF delivery in Cloudinary
 
