@@ -10,10 +10,21 @@ class ModelCatalogue
   Entry = Data.define(:id, :provider, :label, :efforts, :input_price, :output_price, :cache_read_price)
 
   # Prices are dollars per million tokens, and they are here only so cost can be
-  # totalled without a second lookup. Anthropic's are the published list rates.
-  # OpenAI's are left nil deliberately: the 5.6 variants' rates were not
-  # verified when this was written, and a made-up price in a cost report is
-  # worse than a blank, because a blank prompts someone to go and find out.
+  # totalled without a second lookup. A blank stays blank until somebody reads
+  # the provider's own page: a made-up price in a cost report is worse than no
+  # price, because a blank prompts the reading and a number ends it.
+  #
+  # OpenAI's were filled in from https://developers.openai.com/api/docs/pricing
+  # and https://openai.com/api/pricing/, which agree. Their per-model doc pages
+  # do not: those still carry Terra and Luna at the rates that applied before
+  # the cut of 30 July 2026. The pricing pages are the billing rates.
+  #
+  # Two things these single scalars cannot express, so every total here reads
+  # low rather than high:
+  #   - Input above 272K tokens bills at 2x input and 1.5x output for the whole
+  #     request. A long interview against a 1M context window can cross that.
+  #   - Cache writes bill at 1.25x input on both providers and have no field
+  #     here at all, so a cold briefing is undercounted.
   ENTRIES = [
     Entry.new(id: "claude-opus-5", provider: "anthropic", label: "Claude Opus 5",
       efforts: %w[low medium high xhigh max],
@@ -23,13 +34,13 @@ class ModelCatalogue
       input_price: 3.00, output_price: 15.00, cache_read_price: 0.30),
     Entry.new(id: "gpt-5.6-sol", provider: "openai", label: "GPT-5.6 Sol",
       efforts: %w[minimal low medium high xhigh],
-      input_price: nil, output_price: nil, cache_read_price: nil),
+      input_price: 5.00, output_price: 30.00, cache_read_price: 0.50),
     Entry.new(id: "gpt-5.6-terra", provider: "openai", label: "GPT-5.6 Terra",
       efforts: %w[minimal low medium high xhigh],
-      input_price: nil, output_price: nil, cache_read_price: nil),
+      input_price: 2.00, output_price: 12.00, cache_read_price: 0.20),
     Entry.new(id: "gpt-5.6-luna", provider: "openai", label: "GPT-5.6 Luna",
       efforts: %w[minimal low medium high xhigh],
-      input_price: nil, output_price: nil, cache_read_price: nil)
+      input_price: 0.20, output_price: 1.20, cache_read_price: 0.02)
   ].freeze
 
   BY_ID = ENTRIES.index_by(&:id).freeze

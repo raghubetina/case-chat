@@ -57,10 +57,25 @@ class ModelCatalogueTest < ActiveSupport::TestCase
   end
 
   # A blank prompts someone to go and find the rate. An invented number is a
-  # wrong answer that looks right.
-  test "cost is nil rather than guessed when a price is unknown" do
-    assert_nil ModelCatalogue.find("gpt-5.6-luna").input_price
-    assert_nil ModelCatalogue.cost(model: "gpt-5.6-luna", input_tokens: 1000, output_tokens: 1000)
+  # wrong answer that looks right. Every catalogued model is priced today, so
+  # the surviving path is a model this app has never heard of -- which is what a
+  # stakeholder left on a retired id would report.
+  test "cost is nil rather than guessed for a model we do not know" do
+    assert_nil ModelCatalogue.find("not-a-model")
     assert_nil ModelCatalogue.cost(model: "not-a-model", input_tokens: 1000, output_tokens: 1000)
+  end
+
+  # Reading the provider's own page is what fills these in, so a new entry
+  # arrives unpriced and stays that way until someone does. Cost has to survive
+  # that rather than treat the blank as free.
+  test "an unpriced entry yields no cost rather than a zero" do
+    unpriced = ModelCatalogue::Entry.new(
+      id: "gpt-5.7-unreleased", provider: "openai", label: "Unreleased",
+      efforts: %w[low], input_price: nil, output_price: nil, cache_read_price: nil
+    )
+
+    stub_const(ModelCatalogue, :BY_ID, ModelCatalogue::BY_ID.merge(unpriced.id => unpriced)) do
+      assert_nil ModelCatalogue.cost(model: unpriced.id, input_tokens: 1000, output_tokens: 1000)
+    end
   end
 end

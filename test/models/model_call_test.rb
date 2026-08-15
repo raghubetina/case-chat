@@ -90,10 +90,19 @@ class ModelCallTest < ActiveSupport::TestCase
     assert_equal 0.0, call.cache_hit_rate
   end
 
-  test "cost is nil for a model whose price we have not verified" do
-    call = ModelCall.record(contact: @contact, reply: reply, provider: "openai", model: "gpt-5.6-terra")
+  # A stakeholder can be left on a model id the catalogue no longer carries, and
+  # the row still has to report something rather than invent a rate.
+  test "cost is nil for a model the catalogue does not carry" do
+    call = ModelCall.record(contact: @contact, reply: reply, provider: "openai", model: "gpt-5.6-retired")
 
     assert_nil call.cost
+  end
+
+  test "cost is a real figure for a catalogued model" do
+    call = ModelCall.record(contact: @contact, reply: reply(input: 1_000_000, output: 0, cache_read: 0),
+      provider: "openai", model: "gpt-5.6-sol")
+
+    assert_in_delta 5.00, call.cost, 0.001
   end
 
   test "a rehearsal is recorded against the stakeholder with no message" do

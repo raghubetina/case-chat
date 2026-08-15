@@ -41,22 +41,22 @@ en:
   author:
     cases:
       author_label: Author
-      cast: Cast
+      cast: Stakeholders
       cast_note: These people are in the case. Anyone not in the starting directory has to be introduced by someone.
       checklist: Checklist
       checklist_documents:
         one: 1 document
         other: "%{count} documents"
       checklist_starting:
-        one: 1 starting contact
-        other: "%{count} starting contacts"
+        one: 1 starting stakeholder
+        other: "%{count} starting stakeholders"
       checklist_unreachable:
-        one: 1 contact unreachable
-        other: "%{count} contacts unreachable"
+        one: 1 stakeholder unreachable
+        other: "%{count} stakeholders unreachable"
       create: Create case
-      created: Case created. Now build the cast.
+      created: Case created. Now add the stakeholders.
       draft_badge: Draft
-      empty_body: A case is a question, a cast of people who each know part of the answer, and the rules for who introduces whom.
+      empty_body: A case is a question, a set of stakeholders who each know part of the answer, and the rules for who introduces whom.
       empty_heading: You have not written a case yet
       fields:
         assignment: Assignment
@@ -75,35 +75,35 @@ en:
         one: Introduced by 1
         other: "Introduced by %{count}"
       new: New case
-      no_cast: Nobody in the cast yet.
+      no_cast: No stakeholders yet.
       preview: Preview as student
       publish: Publish
       publish_blocked: "Not published. Nobody can reach %{names}, so whatever they know can never enter a student's analysis."
-      publish_blocked_empty: Not published. A case with no cast has nobody to interview.
+      publish_blocked_empty: Not published. A case with no stakeholders has nobody to interview.
       published: Published. Students with the code can start.
       published_badge: Published
       reachability: Reachability
-      reachability_broken: "%{names} cannot be reached from the starting directory. No contact refers to them."
+      reachability_broken: "%{names} cannot be reached from the starting directory. No stakeholder refers to them."
       reachability_ok:
-        one: Every contact is reachable from the starting directory.
-        other: All %{count} contacts are reachable from the starting directory.
+        one: Every stakeholder is reachable from the starting directory.
+        other: All %{count} stakeholders are reachable from the starting directory.
       save: Save case
       saved: Saved.
       setup: Case setup
       unreachable: Unreachable
     cohort:
-      contacts: Contacts
+      contacts: Stakeholders
       documents: Documents
       empty_body: "Nobody has joined yet. Students enter %{code} to start."
       empty_heading: No one in the cohort yet
       last_active: Last active
-      median_contacts: Contacts found, median
+      median_contacts: Stakeholders found, median
       median_documents: Documents earned, median
       median_messages: Messages sent, median
       messages: Messages
       not_started: Not started
       reach: Who the cohort reached
-      reach_note: A contact almost nobody reaches is either buried behind a condition that never fires, or holds something the case gives students no reason to ask about.
+      reach_note: A stakeholder almost nobody reaches is either buried behind a condition that never fires, or holds something the case gives students no reason to ask about.
       runs: Runs
       started: Started
       student: Student
@@ -119,10 +119,10 @@ en:
       model_heading: Who answers as this person
       model_label: Model
       model_note: Costs are recorded per stakeholder
-      add: Add contact
+      add: Add stakeholder
       back: Back to case setup
-      create: Create contact
-      created: Contact created.
+      create: Create stakeholder
+      created: Stakeholder created.
       fields:
         description: Description
         full_name: Name
@@ -132,9 +132,9 @@ en:
       identity: Identity
       introduced_by_names: "Introduced by %{names}"
       never_shown: Never shown to students
-      orphan_warning: "No contact refers to %{name}, and they are not in the starting directory. As it stands, no student will ever meet them."
-      removed: Contact removed.
-      save: Save contact
+      orphan_warning: "No stakeholder refers to %{name}, and they are not in the starting directory. As it stands, no student will ever meet them."
+      removed: Stakeholder removed.
+      save: Save stakeholder
       saved: Saved.
       shown_in_directory: Shown to students in the directory
       system_prompt_note: Write the persona, what this person knows, and what they withhold. Do not write referral instructions here — those are generated from the rules below, and writing them twice is how the two drift apart.
@@ -154,18 +154,18 @@ en:
         given_at_start: Given to every student at the start
       no_description: No description
       no_file: No file
-      note: Anything given at the start is handed to every student. Anything else has to be earned from a contact who holds it — set that up on the contact.
+      note: Anything given at the start is handed to every student. Anything else has to be earned from a stakeholder who holds it — set that up on the stakeholder.
       remove: Remove
       remove_confirm: Remove this document? Any share rule pointing at it goes too.
       removed: Document removed.
       title: Documents
     imports:
-      accept: Create the cast
+      accept: Create the stakeholders
       accept_note: You can edit every prompt afterwards, and nothing is visible to students until you publish.
       accepted:
-        one: Created 1 contact from the draft. Read every system prompt before publishing.
-        other: "Created %{count} contacts from the draft. Read every system prompt before publishing."
-      accepted_with_orphans: "Created %{count} contacts, but nobody can reach %{names}. Add a referral before publishing."
+        one: Created 1 stakeholder from the draft. Read every system prompt before publishing.
+        other: "Created %{count} stakeholders from the draft. Read every system prompt before publishing."
+      accepted_with_orphans: "Created %{count} stakeholders, but nobody can reach %{names}. Add a referral before publishing."
       draft: Draft a case from these documents
       failed: The draft could not be produced.
       failed_note: Nothing was created. Check that the files are readable and try again.
@@ -190,14 +190,14 @@ en:
       what_was_read: What will be read
       working: Reading your documents
       working_note: This takes a couple of minutes on a full case. You can leave this page and come back.
-      will_overwrite: Replaces an existing contact
+      will_overwrite: Replaces an existing stakeholder
       will_read: Will be read
     referrals:
       add: Add referral
       added: Referral added.
-      empty: This contact introduces nobody.
+      empty: This stakeholder introduces nobody.
       heading: Can introduce
-      note: A referred contact arrives in the student's thread as a contact card.
+      note: A referred stakeholder arrives in the student's thread as a contact card.
       remove: Remove
       removed: Referral removed.
       when: When to introduce
@@ -206,7 +206,7 @@ en:
     share_rules:
       add: Add rule
       added: Share rule added.
-      empty: This contact hands over nothing.
+      empty: This stakeholder hands over nothing.
       heading: Can share
       note: A shared document arrives in the student's thread as a file card.
       remove: Remove
@@ -215,13 +215,13 @@ en:
       when: When to share
       when_placeholder: Once the student has asked to see the numbers.
     shell:
-      cast: Cast
+      cast: Stakeholders
       cohort: Cohort
       files: Case files
       import: Import
-      search_prompt: Search the cast, their prompts, and the case files.
+      search_prompt: Search the stakeholders, their prompts, and the case files.
       setup: Setup
-      sidebar_label: Case, cast and files
+      sidebar_label: Case, stakeholders and files
       unreachable: Unreachable
       your_cases: Your cases
     test_drive:
@@ -353,7 +353,7 @@ en:
   home:
     create_account: Create an account
     for_instructors: For instructors
-    for_instructors_body: Write the cast, decide who knows what, and watch where a cohort gets stuck.
+    for_instructors_body: Write the stakeholders, decide who knows what, and watch where a cohort gets stuck.
     for_students: For students
     for_students_body: Interview the people inside the case and build the picture yourself.
     get_started: Get started
