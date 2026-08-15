@@ -11,12 +11,16 @@
 # Table name: model_calls
 #
 #  id                 :uuid             not null, primary key
+#  cache_read_price   :decimal(12, 6)
 #  cache_read_tokens  :integer          default(0), not null
+#  cache_write_price  :decimal(12, 6)
 #  cache_write_tokens :integer          default(0), not null
 #  duration_ms        :integer
 #  effort             :string
+#  input_price        :decimal(12, 6)
 #  input_tokens       :integer          default(0), not null
 #  model              :string           not null
+#  output_price       :decimal(12, 6)
 #  output_tokens      :integer          default(0), not null
 #  provider           :string           not null
 #  raw                :jsonb
@@ -48,16 +52,30 @@ class ModelCall < ApplicationRecord
 
   scope :newest_first, -> { order(created_at: :desc) }
 
-  # Dollars, or nil when the model's price is not known. A blank total is a
-  # prompt to go and find the rate; an invented one is a wrong answer that
-  # looks right.
+  # Dollars, from the rate this call was billed at rather than today's rate.
+  # nil when no rate was stored, which is every call made before rates were
+  # recorded and any call on a model the catalogue did not know.
   def cost
-    ModelCatalogue.cost(
-      model: model,
-      input_tokens: input_tokens,
-      output_tokens: output_tokens,
-      cache_read_tokens: cache_read_tokens
+    self.class.price(
+      input_tokens: input_tokens, output_tokens: output_tokens,
+      cache_read_tokens: cache_read_tokens,
+      input_price: input_price, output_price: output_price, cache_read_price: cache_read_price
     )
+  end
+
+  def priced? = !cost.nil?
+
+  # Cached reads bill at their own lower rate, so they come out of input rather
+  # than adding to it. Cache writes are recorded but not billed here: both
+  # providers charge 1.25x input for them, so every total reads low.
+  def self.price(input_tokens:, output_tokens:, cache_read_tokens: 0,
+    input_price: nil, output_price: nil, cache_read_price: nil)
+    return nil if input_price.nil? || output_price.nil?
+
+    fresh_input = [input_tokens - cache_read_tokens, 0].max
+    cached = cache_read_price.nil? ? 0 : cache_read_tokens * cache_read_price.to_f
+
+    (fresh_input * input_price.to_f + cached + output_tokens * output_price.to_f) / 1_000_000.0
   end
 
   # What the briefing cache actually bought on this call.
@@ -67,14 +85,20 @@ class ModelCall < ApplicationRecord
     cache_read_tokens.to_f / input_tokens
   end
 
+  # The rate is looked up now and written down, because it is a fact about this
+  # request. Derived later from whatever the catalogue happens to say, a
+  # correction to one number would silently re-price every call ever made.
   def self.record(contact:, reply:, model:, provider:, effort: nil, message: nil, duration_ms: nil)
     usage = reply.usage
+    entry = ModelCatalogue.find(model)
 
     create!(
       contact: contact, message: message,
       provider: provider, model: model, effort: effort,
       input_tokens: usage.input_tokens, output_tokens: usage.output_tokens,
       cache_read_tokens: usage.cache_read_tokens, cache_write_tokens: usage.cache_write_tokens,
+      input_price: entry&.input_price, output_price: entry&.output_price,
+      cache_read_price: entry&.cache_read_price, cache_write_price: entry&.cache_write_price,
       duration_ms: duration_ms, raw: reply.raw
     )
   end

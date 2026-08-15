@@ -75,11 +75,27 @@ module Responder
       params
     end
 
+    # A contact's own turn goes back as the blocks the provider produced, not as
+    # the text we showed the student. Thinking blocks carry a signature, and
+    # handing them back unmodified is the only way this person keeps reasoning
+    # from one question to the next -- Anthropic holds no state to remember it
+    # for us. Turns recorded before that was stored, and every student turn,
+    # fall back to plain text.
     def serialize(message)
-      {
-        role: message.from_contact? ? "assistant" : "user",
-        content: message.body.to_s
-      }
+      role = message.from_contact? ? "assistant" : "user"
+      blocks = message.from_contact? ? blocks_for(message) : nil
+
+      {role: role, content: blocks.presence || message.body.to_s}
+    end
+
+    # Only this model's own reasoning is worth returning. Blocks made by another
+    # model are not rejected, they are ignored, so a person moved between models
+    # would appear to keep continuity while silently losing it.
+    def blocks_for(message)
+      reasoning = message.try(:reasoning)
+      return nil if reasoning.nil? || reasoning.provider != "anthropic" || reasoning.model != model
+
+      reasoning.blocks
     end
 
     # `accumulated_message` drains the stream and returns the assembled
@@ -96,6 +112,9 @@ module Responder
 
       Reply.new(
         text: text,
+        # Kept whole rather than filtered to thinking: the API asks for the turn
+        # as it produced it, and validates the order it comes back in.
+        reasoning_blocks: MessageReasoning.clean(message.to_h[:content] || message.to_h["content"]),
         introduced_contact_ids: values_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :contact_id),
         shared_document_ids: values_from(tool_uses, ContactBriefing::SHARE_TOOL, :document_ids),
         introduction_reasons: values_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :reason),

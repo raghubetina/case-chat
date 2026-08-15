@@ -32,6 +32,7 @@ class ContactReply
 
     message = ApplicationRecord.transaction do
       saved = persist_message(reply)
+      record_reasoning(reply, adapter, saved)
       record_introductions(reply, briefing, saved)
       record_shares(reply, briefing, saved)
       touch_enrollment
@@ -77,8 +78,10 @@ class ContactReply
 
   def enrollment = conversation.enrollment
 
+  # Eager-loads the reasoning because the adapter reads it off every contact
+  # turn to rebuild the request, and strict loading would refuse it there.
   def history
-    conversation.messages.order(:sent_at, :created_at).to_a
+    conversation.messages.includes(:reasoning).order(:sent_at, :created_at).to_a
   end
 
   def persist_message(reply)
@@ -98,6 +101,20 @@ class ContactReply
     return "" if reply.introduced_contact_ids.any? || reply.shared_document_ids.any?
 
     I18n.t("threads.no_answer")
+  end
+
+  # Inside the transaction with the message, because a turn whose reasoning was
+  # not saved is one the next turn cannot continue from -- better to have
+  # neither than a message that silently lost its thread.
+  def record_reasoning(reply, adapter, message)
+    return if reply.reasoning_blocks.blank?
+
+    MessageReasoning.create!(
+      message: message,
+      provider: Responder.provider_name(adapter),
+      model: adapter.try(:model).presence || Responder.provider_name(adapter),
+      blocks: reply.reasoning_blocks
+    )
   end
 
   # A contact may only introduce someone the author actually gave them, and a

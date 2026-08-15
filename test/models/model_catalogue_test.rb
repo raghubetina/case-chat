@@ -1,11 +1,13 @@
 require "test_helper"
 
 # The catalogue is the only place that knows which model ids are real and which
-# provider answers for each. Every id here was checked against the provider's
-# own models endpoint; a typo would fail at the provider, mid-reply, in a job.
+# provider answers for each; a typo would fail at the provider, mid-reply, in a
+# job. The list now comes from ModelFeed, and these assertions run against
+# FALLBACK, which is what answers when the feed cannot be reached and therefore
+# the one list that has to be right without a network.
 class ModelCatalogueTest < ActiveSupport::TestCase
   test "every catalogued model names a provider we have an adapter for" do
-    ModelCatalogue::ENTRIES.each do |entry|
+    ModelCatalogue::FALLBACK.each do |entry|
       assert_includes Responder::ADAPTERS.keys, entry.provider,
         "#{entry.id} names a provider with no adapter"
     end
@@ -30,13 +32,21 @@ class ModelCatalogueTest < ActiveSupport::TestCase
     assert_equal "openai", ModelCatalogue.find("gpt-5.6-luna").provider
   end
 
-  # The providers do not offer the same levels: OpenAI has minimal, Anthropic
-  # has max. A stakeholder validates its effort against its own model.
+  # The providers do not share a vocabulary. OpenAI's floor is "none";
+  # Anthropic's is "low" and it has no "none" at all. Both reach "max" on these
+  # models. A person validates their effort against their own model.
+  #
+  # This test used to assert the opposite -- that gpt-5.6 offered "minimal" and
+  # not "max" -- which came from reading OpenAI's family-wide union page rather
+  # than the per-model one. It was green, and it was holding the bug in place:
+  # "minimal" is rejected by every 5.6 model, so an author who picked it got a
+  # provider error mid-reply, which is exactly what a closed list exists to stop.
   test "effort levels are per model, not shared" do
-    assert_includes ModelCatalogue.efforts_for("gpt-5.6-sol"), "minimal"
-    assert_not_includes ModelCatalogue.efforts_for("gpt-5.6-sol"), "max"
+    assert_includes ModelCatalogue.efforts_for("gpt-5.6-sol"), "none"
+    assert_includes ModelCatalogue.efforts_for("gpt-5.6-sol"), "max"
+    assert_not_includes ModelCatalogue.efforts_for("gpt-5.6-sol"), "minimal"
     assert_includes ModelCatalogue.efforts_for("claude-opus-5"), "max"
-    assert_not_includes ModelCatalogue.efforts_for("claude-opus-5"), "minimal"
+    assert_not_includes ModelCatalogue.efforts_for("claude-opus-5"), "none"
   end
 
   test "an unknown model is simply not found" do
@@ -71,10 +81,11 @@ class ModelCatalogueTest < ActiveSupport::TestCase
   test "an unpriced entry yields no cost rather than a zero" do
     unpriced = ModelCatalogue::Entry.new(
       id: "gpt-5.7-unreleased", provider: "openai", label: "Unreleased",
-      efforts: %w[low], input_price: nil, output_price: nil, cache_read_price: nil
+      efforts: %w[low], input_price: nil, output_price: nil,
+      cache_read_price: nil, cache_write_price: nil
     )
 
-    stub_const(ModelCatalogue, :BY_ID, ModelCatalogue::BY_ID.merge(unpriced.id => unpriced)) do
+    stub_const(ModelCatalogue, :FALLBACK, ModelCatalogue::FALLBACK + [unpriced]) do
       assert_nil ModelCatalogue.cost(model: unpriced.id, input_tokens: 1000, output_tokens: 1000)
     end
   end

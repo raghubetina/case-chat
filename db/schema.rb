@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_060000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -141,6 +141,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_060000) do
     t.index ["message_id"], name: "index_introductions_on_message_id"
   end
 
+  create_table "message_reasonings", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.jsonb "blocks", default: [], null: false
+    t.datetime "created_at", null: false
+    t.uuid "message_id", null: false
+    t.string "model", null: false
+    t.string "provider", null: false
+    t.datetime "updated_at", null: false
+    t.index ["message_id"], name: "index_message_reasonings_on_message_id", unique: true
+  end
+
   create_table "messages", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
     t.text "body", null: false
     t.uuid "conversation_id", null: false
@@ -152,15 +162,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_060000) do
   end
 
   create_table "model_calls", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.decimal "cache_read_price", precision: 12, scale: 6
     t.integer "cache_read_tokens", default: 0, null: false
+    t.decimal "cache_write_price", precision: 12, scale: 6
     t.integer "cache_write_tokens", default: 0, null: false
     t.uuid "contact_id", null: false
     t.datetime "created_at", null: false
     t.integer "duration_ms"
     t.string "effort"
+    t.decimal "input_price", precision: 12, scale: 6
     t.integer "input_tokens", default: 0, null: false
     t.uuid "message_id"
     t.string "model", null: false
+    t.decimal "output_price", precision: 12, scale: 6
     t.integer "output_tokens", default: 0, null: false
     t.string "provider", null: false
     t.jsonb "raw"
@@ -389,6 +403,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_060000) do
   add_foreign_key "introductions", "contacts", on_delete: :cascade
   add_foreign_key "introductions", "enrollments", on_delete: :cascade
   add_foreign_key "introductions", "messages", on_delete: :nullify
+  add_foreign_key "message_reasonings", "messages", on_delete: :cascade
   add_foreign_key "messages", "conversations", on_delete: :cascade
   add_foreign_key "model_calls", "contacts", on_delete: :cascade
   add_foreign_key "model_calls", "messages", on_delete: :nullify

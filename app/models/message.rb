@@ -24,6 +24,9 @@ class Message < ApplicationRecord
   # Everyone the student met on this turn. A contact may introduce more than
   # one person in a single answer, and each arrives as its own card.
   has_many :introductions, class_name: "Introduction", dependent: :nullify
+  # What the provider produced for this turn, kept off the record a view renders
+  # so reasoning bytes cannot reach a student by accident.
+  has_one :reasoning, class_name: "MessageReasoning", dependent: :destroy
 
   # A student must say something; a contact may answer by handing over a
   # document or making an introduction, and the cards on the message are then

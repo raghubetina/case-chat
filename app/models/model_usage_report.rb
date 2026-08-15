@@ -75,13 +75,25 @@ class ModelUsageReport
 
   private
 
-  Bucket = Data.define(:contact_id, :model, :rehearsal, :totals)
+  Bucket = Data.define(:contact_id, :model, :rehearsal, :totals, :cost)
 
   def contacts
     @contacts ||= Contact.where(case_study_id: @case_study.id).order(:full_name).to_a
   end
 
   def sum_of(buckets) = buckets.map(&:totals).sum(Totals.zero)
+
+  # Each call carries the rate it was billed at, so cost is summed row by row in
+  # the database rather than reconstructed here from a rate that may since have
+  # moved. That also keeps this one grouped query: no rate in the grouping key,
+  # no bucket per price change.
+  COST = <<~SQL.squish
+    SUM(
+      (GREATEST(input_tokens - cache_read_tokens, 0) * input_price
+        + cache_read_tokens * COALESCE(cache_read_price, 0)
+        + output_tokens * output_price) / 1000000.0
+    )
+  SQL
 
   # One row per stakeholder, model and kind. A case is bounded by its cast
   # times the catalogue, so this is tens of rows at worst and the rest folds in
@@ -94,30 +106,23 @@ class ModelUsageReport
       .pluck(Arel.sql(<<~SQL.squish))
         contact_id, model, (message_id IS NULL),
         COUNT(*), SUM(input_tokens), SUM(output_tokens),
-        SUM(cache_read_tokens), SUM(cache_write_tokens)
+        SUM(cache_read_tokens), SUM(cache_write_tokens),
+        #{COST}, BOOL_OR(input_price IS NULL OR output_price IS NULL)
       SQL
-      .map do |contact_id, model, rehearsal, calls, input, output, cache_read, cache_write|
+      .map do |contact_id, model, rehearsal, calls, input, output, cache_read, cache_write, cost, unpriced|
         Bucket.new(
           contact_id: contact_id, model: model, rehearsal: rehearsal,
+          # A bucket holding one unpriced call reports nothing rather than a
+          # partial sum wearing the word "total".
+          cost: unpriced ? nil : cost&.to_f,
           totals: Totals.new(calls: calls, input: input, output: output,
             cache_read: cache_read, cache_write: cache_write)
         )
       end
   end
 
-  # Priced per model and then summed: rates differ per model, so a stakeholder
-  # whose model changed mid-case cannot be priced in one call.
   def cost_for(buckets_for_row)
-    per_model = buckets_for_row.group_by(&:model).map do |model, group|
-      totals = sum_of(group)
-      ModelCatalogue.cost(
-        model: model,
-        input_tokens: totals.input,
-        output_tokens: totals.output,
-        cache_read_tokens: totals.cache_read
-      )
-    end
-
-    per_model.any?(&:nil?) ? nil : per_model.sum
+    costs = buckets_for_row.map(&:cost)
+    costs.any?(&:nil?) ? nil : costs.sum
   end
 end

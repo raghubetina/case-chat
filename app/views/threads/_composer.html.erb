@@ -23,7 +23,14 @@
         </div>
       <% end %>
     <% else %>
-      <p class="text-sm text-mute"><%= t("threads.run_closed") %></p>
+      <%# The only way back to a live composer, and until now the copy named it
+          without offering it. Restarting is a write, so it is a button. %>
+      <div class="flex flex-wrap items-center gap-3">
+        <p class="text-sm text-mute"><%= t("threads.run_closed") %></p>
+        <%= button_to t("cases.restart.action"), restart_case_path(conversation.enrollment.case_study_id),
+              form: {data: {turbo_confirm: t("cases.restart.confirm")}},
+              class: "btn btn-outline btn-sm" %>
+      </div>
     <% end %>
   </div>
 </div>

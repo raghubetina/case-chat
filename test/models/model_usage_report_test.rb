@@ -95,7 +95,10 @@ class ModelUsageReportTest < ActiveSupport::TestCase
     record(contact: @dana, model: "claude-opus-5", input: 1_000_000, output: 0)
     record(contact: @dana, model: "claude-sonnet-5", input: 1_000_000, output: 0)
 
-    assert_in_delta 8.00, ModelUsageReport.new(@case_study).cost, 0.001
+    # Opus at $5 plus Sonnet at $2. Sonnet was $3 until Anthropic made its
+    # introductory rate permanent, which is the change that motivated pricing
+    # each call from the rate it was billed at.
+    assert_in_delta 7.00, ModelUsageReport.new(@case_study).cost, 0.001
   end
 
   # A partial sum wearing the word "total" is the failure the blank prices exist

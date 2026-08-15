@@ -17,14 +17,16 @@ module Responder
   # The id lists are normalized here so no adapter can hand the pipeline a nil,
   # and every caller can iterate without guarding.
   Reply = Data.define(:text, :introduced_contact_ids, :shared_document_ids,
-    :introduction_reasons, :usage, :raw) do
+    :introduction_reasons, :reasoning_blocks, :usage, :raw) do
     def initialize(text:, introduced_contact_ids: [], shared_document_ids: [],
-      introduction_reasons: [], usage: NULL_USAGE, raw: nil)
+      introduction_reasons: [], reasoning_blocks: [], usage: NULL_USAGE, raw: nil)
       super(
         text: text.to_s,
         introduced_contact_ids: Array(introduced_contact_ids).compact.uniq,
         shared_document_ids: Array(shared_document_ids).compact.uniq,
         introduction_reasons: Array(introduction_reasons).map { |line| line.to_s.strip }.reject(&:empty?),
+        # The turn as the provider produced it, for the next turn to hand back.
+        reasoning_blocks: Array(reasoning_blocks),
         usage: usage,
         raw: raw
       )

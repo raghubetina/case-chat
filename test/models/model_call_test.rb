@@ -6,12 +6,16 @@ require_relative "domain_test_helper"
 # Table name: model_calls
 #
 #  id                 :uuid             not null, primary key
+#  cache_read_price   :decimal(12, 6)
 #  cache_read_tokens  :integer          default(0), not null
+#  cache_write_price  :decimal(12, 6)
 #  cache_write_tokens :integer          default(0), not null
 #  duration_ms        :integer
 #  effort             :string
+#  input_price        :decimal(12, 6)
 #  input_tokens       :integer          default(0), not null
 #  model              :string           not null
+#  output_price       :decimal(12, 6)
 #  output_tokens      :integer          default(0), not null
 #  provider           :string           not null
 #  raw                :jsonb

@@ -103,6 +103,32 @@ class StudentExperienceTest < ActionDispatch::IntegrationTest
     assert_match(/Denny Vasquez/, response.body)
   end
 
+  # An old thread's composer says the run is closed and offers a new one. The
+  # offer was copy for a control that did not exist, so a student reading a past
+  # run had no way back to a live composer.
+  test "a closed run offers a way to start a new one" do
+    post join_cases_path, params: {join_code: "VESTA-01"}
+    post case_threads_path(@case_study, contact_id: @marco.id)
+    conversation = Conversation.order(:created_at).last
+    post restart_case_path(@case_study)
+
+    get thread_path(conversation)
+
+    assert_response :success
+    assert_match I18n.t("threads.run_closed"), response.body
+    assert_match restart_case_path(@case_study), response.body
+  end
+
+  test "starting a new run from a closed thread works" do
+    post join_cases_path, params: {join_code: "VESTA-01"}
+    post case_threads_path(@case_study, contact_id: @marco.id)
+    post restart_case_path(@case_study)
+
+    assert_difference "Enrollment.count", 1 do
+      post restart_case_path(@case_study)
+    end
+  end
+
   test "the transcript never carries a contact's system prompt" do
     post join_cases_path, params: {join_code: "VESTA-01"}
     post case_threads_path(@case_study, contact_id: @marco.id)
