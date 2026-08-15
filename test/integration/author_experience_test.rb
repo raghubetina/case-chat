@@ -6,6 +6,7 @@ require_relative "../models/domain_test_helper"
 # assertions are about it.
 class AuthorExperienceTest < ActionDispatch::IntegrationTest
   include DomainTestHelper
+  include ActionView::Helpers::NumberHelper
 
   setup do
     CaseSeeder::Vesta.new.call
@@ -134,6 +135,69 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     assert_match(/Denny Vasquez/, response.body)
   end
 
+  # The usage pane reports what students' activity cost, so it is author-only
+  # for the same reason the system prompts are.
+  test "only the case's author can read its usage" do
+    stranger = register_user(full_name: "Someone Else")
+    sign_in_as stranger
+
+    get author_case_usage_path(@case_study)
+
+    assert_response :forbidden
+  end
+
+  test "the usage page reports tokens per stakeholder" do
+    record_call(@marco, input: 4000, output: 400)
+    record_call(@denny, input: 100, output: 10)
+    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+
+    get author_case_usage_path(@case_study)
+
+    assert_response :success
+    assert_match(/Marco Devlin/, response.body)
+    assert_match(number_with_delimiter(4400), response.body)
+  end
+
+  test "the usage page separates a rehearsal from a student's reply" do
+    record_call(@marco, input: 1000, output: 0, message: student_reply_message)
+    record_call(@marco, input: 7000, output: 0)
+    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+
+    get author_case_usage_path(@case_study)
+
+    assert_match number_with_delimiter(1000), response.body
+    assert_match number_with_delimiter(7000), response.body
+  end
+
+  # The catalogue's blanks are deliberate, and a regression here invents money.
+  test "a stakeholder on a model with no price shows no dollar figure" do
+    record_call(@marco, model: "gpt-5.6-retired", input: 1_000_000, output: 0)
+    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+
+    get author_case_usage_path(@case_study)
+
+    assert_match I18n.t("author.usage.cost_unknown"), response.body
+  end
+
+  test "a case run entirely on priced models shows its cost" do
+    record_call(@marco, model: "claude-opus-5", input: 1_000_000, output: 0)
+    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+
+    get author_case_usage_path(@case_study)
+
+    assert_match(/\$5\.00/, response.body)
+  end
+
+  # Every case is in this state until somebody runs it.
+  test "the usage page loads for a case nobody has run" do
+    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+
+    get author_case_usage_path(@case_study)
+
+    assert_response :success
+    assert_match I18n.t("author.usage.empty_heading"), response.body
+  end
+
   test "only the case's author can read its cohort" do
     stranger = register_user(full_name: "Someone Else")
     sign_in_as stranger
@@ -167,6 +231,23 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     assert_raises(ActiveRecord::RecordNotFound) do
       get case_path(@case_study, run: SecureRandom.uuid)
     end
+  end
+
+  def record_call(contact, model: "claude-opus-5", input: 1000, output: 100, message: nil)
+    ModelCall.record(
+      contact: contact, message: message, provider: "anthropic", model: model,
+      reply: Responder::Reply.new(
+        text: "Answering.",
+        usage: Responder::Usage.new(input_tokens: input, output_tokens: output,
+          cache_read_tokens: 0, cache_write_tokens: 0)
+      )
+    )
+  end
+
+  def student_reply_message
+    enrollment = Enrollment.create!(user: register_user(full_name: "A Student"), case_study: @case_study)
+    conversation = Conversation.create!(enrollment: enrollment, contact: @marco)
+    Message.create!(conversation: conversation, body: "Answering.", sent_at: Time.current, from_contact: true)
   end
 
   test "the cast editor warns about an orphaned contact" do

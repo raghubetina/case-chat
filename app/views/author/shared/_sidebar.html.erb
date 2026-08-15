@@ -54,6 +54,7 @@
         <%= sidebar_row t("author.shell.files"), author_case_documents_path(@case_study), count: authoring_documents.size %>
         <%= sidebar_row t("author.shell.import"), new_author_case_import_path(@case_study) %>
         <%= sidebar_row t("author.shell.cohort"), author_case_cohort_path(@case_study), count: authoring_enrollment_count %>
+        <%= sidebar_row t("author.shell.usage"), author_case_usage_path(@case_study) %>
       </div>
 
       <div class="flex flex-col gap-1">

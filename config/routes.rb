@@ -65,6 +65,7 @@ Rails.application.routes.draw do
         get :search
       end
       resource :cohort, only: :show, module: :cases
+      resource :usage, only: :show, module: :cases
       resources :documents, only: %i[index new create destroy], module: :cases
       resource :import, only: %i[new create], module: :cases
       resources :contacts, only: %i[new create edit update destroy] do

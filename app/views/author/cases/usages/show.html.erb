@@ -1,0 +1,93 @@
+<% content_for :title, t("author.usage.title") %>
+
+<%= render layout: "shared/shell", locals: author_shell do %>
+  <%= render "shared/pane_header", title: t("author.usage.title") %>
+
+  <div class="scroll-y flex-1 p-6 lg:p-8">
+    <div class="mx-auto flex w-full max-w-[1120px] flex-col gap-8">
+      <% if @report.any_calls? %>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+            <span class="kick text-xs text-mute"><%= t("author.usage.replies") %></span>
+            <span class="font-head text-xl font-semibold"><%= number_with_delimiter(@report.reply_totals.tokens) %></span>
+            <span class="text-xs text-faint"><%= t("author.usage.calls", count: @report.reply_totals.calls) %></span>
+          </div>
+          <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+            <span class="kick text-xs text-mute"><%= t("author.usage.rehearsals") %></span>
+            <span class="font-head text-xl font-semibold"><%= number_with_delimiter(@report.rehearsal_totals.tokens) %></span>
+            <span class="text-xs text-faint"><%= t("author.usage.calls", count: @report.rehearsal_totals.calls) %></span>
+          </div>
+          <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+            <span class="kick text-xs text-mute"><%= t("author.usage.tokens_per_run") %></span>
+            <span class="font-head text-xl font-semibold">
+              <%= @report.tokens_per_run ? number_with_delimiter(@report.tokens_per_run) : "—" %>
+            </span>
+          </div>
+          <div class="flex flex-col gap-1 rounded-lg border border-line bg-surface p-4">
+            <span class="kick text-xs text-mute"><%= t("author.usage.cost") %></span>
+            <span class="font-head text-xl font-semibold">
+              <%= money(@report.cost, unknown: t("author.usage.cost_unknown")) %>
+            </span>
+          </div>
+        </div>
+
+        <p class="max-w-prose text-sm text-mute"><%= t("author.usage.rehearsals_note") %></p>
+
+        <section class="flex flex-col gap-4">
+          <div class="overflow-x-auto rounded-lg border border-line bg-surface">
+            <table class="w-full border-collapse text-sm">
+              <caption class="sr-only"><%= t("author.usage.table_caption") %></caption>
+              <thead>
+                <tr class="border-b border-line">
+                  <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.stakeholder") %></th>
+                  <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.model") %></th>
+                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.replies") %></th>
+                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.rehearsals") %></th>
+                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cache_rate") %></th>
+                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cost") %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @report.rows.each do |row| %>
+                  <tr class="border-b border-line last:border-0">
+                    <td class="px-4 py-3">
+                      <span class="block font-semibold"><%= row.contact.full_name %></span>
+                      <span class="block text-xs text-mute"><%= row.contact.role_title %></span>
+                    </td>
+                    <td class="px-4 py-3 text-mute">
+                      <%= row.models.map { |id| ModelCatalogue.find(id)&.label || id }.join(", ") %>
+                    </td>
+                    <td class="px-4 py-3 text-right"><%= number_with_delimiter(row.replies.tokens) %></td>
+                    <td class="px-4 py-3 text-right text-mute"><%= number_with_delimiter(row.rehearsals.tokens) %></td>
+                    <td class="px-4 py-3 text-right"><%= (row.total.cache_hit_rate * 100).round %>%</td>
+                    <td class="px-4 py-3 text-right">
+                      <%= money(row.cost, unknown: "—") %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+              <tfoot>
+                <tr class="border-t border-line font-semibold">
+                  <td class="px-4 py-3" colspan="2"><%= t("author.usage.total") %></td>
+                  <td class="px-4 py-3 text-right"><%= number_with_delimiter(@report.reply_totals.tokens) %></td>
+                  <td class="px-4 py-3 text-right text-mute"><%= number_with_delimiter(@report.rehearsal_totals.tokens) %></td>
+                  <td class="px-4 py-3 text-right"><%= (@report.grand_totals.cache_hit_rate * 100).round %>%</td>
+                  <td class="px-4 py-3 text-right">
+                    <%= money(@report.cost, unknown: t("author.usage.cost_unknown")) %>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <p class="max-w-prose text-sm text-mute"><%= t("author.usage.cost_note") %></p>
+        </section>
+      <% else %>
+        <div class="flex flex-col items-center gap-2 rounded-lg border border-dashed border-line p-10 text-center">
+          <h2 class="font-head text-lg font-semibold"><%= t("author.usage.empty_heading") %></h2>
+          <p class="max-w-prose text-sm text-mute"><%= t("author.usage.empty_body") %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

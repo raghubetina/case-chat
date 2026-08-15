@@ -3,6 +3,16 @@ module ApplicationHelper
     [content_for(:title).presence, t("app_name")].compact.join(" · ")
   end
 
+  # A few thousand tokens on a cheap model costs a fraction of a cent, and
+  # rounding that to $0.00 tells an author the case was free. Anything that
+  # rounds to nothing at two places says so instead.
+  def money(amount, unknown: nil)
+    return unknown if amount.nil?
+    return number_to_currency(0) if amount.zero?
+
+    (amount < 0.005) ? t("money.under_a_cent") : number_to_currency(amount, precision: 2)
+  end
+
   def rodauth_field_error_id(param_name)
     "#{param_name.to_s.tr("_", "-")}-error"
   end

@@ -27,6 +27,7 @@ class AuthoringShellTest < ApplicationSystemTestCase
       [I18n.t("author.shell.files"), author_case_documents_path(@case_study)],
       [I18n.t("author.shell.import"), new_author_case_import_path(@case_study)],
       [I18n.t("author.shell.cohort"), author_case_cohort_path(@case_study)],
+      [I18n.t("author.shell.usage"), author_case_usage_path(@case_study)],
       [I18n.t("author.shell.setup"), edit_author_case_path(@case_study)]
     ].each do |label, path|
       within("#workspace-sidebar") { click_on label }

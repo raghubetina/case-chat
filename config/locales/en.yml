@@ -223,7 +223,29 @@ en:
       setup: Setup
       sidebar_label: Case, stakeholders and files
       unreachable: Unreachable
+      usage: Usage
       your_cases: Your cases
+    usage:
+      cache_rate: Cache hit rate
+      calls:
+        one: 1 call
+        other: "%{count} calls"
+      cost: Cost
+      cost_note: Cache writes are not priced here, and a request over 272K tokens bills at a higher rate, so a total reads low rather than high.
+      cost_unknown: Not priced
+      cost_unknown_note: "%{models} has no price on file, so this case has no total. Add the rate to the catalogue once you have read the provider's own page."
+      empty_body: Rehearse a stakeholder, or publish the case and let somebody run it, and the count starts here.
+      empty_heading: Nothing has been spent on this case yet
+      model: Model
+      rehearsals: Your rehearsals
+      rehearsals_note: What you spent writing the case. It does not scale with the class.
+      replies: Students' replies
+      stakeholder: Stakeholder
+      table_caption: What each stakeholder has cost to answer as
+      title: Usage
+      tokens: Tokens
+      tokens_per_run: Tokens per run
+      total: Total
     test_drive:
       blank: Ask something first.
       compose_label: "Ask %{name} something, as a student would"
@@ -350,6 +372,8 @@ en:
       heading: Change rejected
   flash:
     dismiss: Dismiss
+  money:
+    under_a_cent: Under $0.01
   home:
     create_account: Create an account
     for_instructors: For instructors
