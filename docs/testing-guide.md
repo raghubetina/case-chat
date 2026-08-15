@@ -17,10 +17,10 @@ Please author a case you already teach.
 
 ## Start with the seeded case
 
-Sign in as **alice@example.com** with the passphrase sent alongside this note, then choose
-**Authoring**. One case is already loaded: **Meridian: The Friday Allocation**. It has seven
-people, two of them in the student's starting directory, and two files every student gets. Its join
-code is `MERIDIAN-01`, so you can also join it as a student.
+The link above opens a sign-in form. Sign in as **alice@example.com** with the passphrase sent
+alongside this note, then choose **Authoring**. One case is already loaded: **Meridian: The Friday
+Allocation**. It has seven people, two of them in the student's starting directory, and two files
+every student gets. Its join code is `MERIDIAN-01`, so you can also join it as a student.
 
 The screenshots in this note come from Meridian. Its structure shows what a case is made of: who
 holds what, and who introduces whom on what condition.
@@ -31,8 +31,8 @@ write your own prose.
 ## Create your own account
 
 Author under your own account, not alice's. Colleagues who share a login share the same cases and
-can edit each other's work. Create an account at the link above; a verification email arrives from
-`no-reply@notifications.booth.school`. Then choose **Authoring**.
+can edit each other's work. Choose **Create an account** under the sign-in form; a verification
+email arrives from `no-reply@notifications.booth.school`. Then choose **Authoring**.
 
 A small case, four or five people and a document or two, took us about an hour. We have not
 timed anyone else.
