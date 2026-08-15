@@ -104,28 +104,24 @@ class ContactReply
   # student meets each contact once per run. Both are enforced here rather than
   # trusted from the model: the tool enum narrows what can be asked for, this
   # narrows what can be recorded.
+  #
+  # That once-per-run uniqueness is also what decides the cards. An introduction
+  # is created on the turn it happens and carries that message, so re-naming
+  # somebody the student already knows finds the existing row, leaves it on its
+  # original turn, and draws nothing here — which is right, because nothing was
+  # earned.
   def record_introductions(reply, briefing, message)
     allowed = briefing.referable_contacts.index_by(&:id)
-    newly_met = []
-    first_named = nil
 
     reply.introduced_contact_ids.each do |contact_id|
       introduced = allowed[contact_id]
       raise RuleViolation, "#{contact.full_name} cannot introduce #{contact_id}" if introduced.nil?
 
-      first_named ||= introduced
-      introduction = Introduction.find_or_create_by!(enrollment: enrollment, contact: introduced) do |row|
+      Introduction.find_or_create_by!(enrollment: enrollment, contact: introduced) do |row|
         row.introducing_contact = contact
+        row.message = message
       end
-      newly_met << introduced if introduction.previously_new_record?
     end
-
-    # The message carries one contact card, so it should name somebody the
-    # student has not already met. Naming whoever came first drew a card for an
-    # old colleague and none for the new one on any turn that mentioned both,
-    # which reads as though nothing was earned.
-    card = newly_met.first || first_named
-    message.update!(introduced_contact: card) if card
   end
 
   def record_shares(reply, briefing, message)

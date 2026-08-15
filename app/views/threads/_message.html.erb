@@ -16,28 +16,32 @@
       <p class="max-w-prose whitespace-pre-wrap break-words text-base"><%= message.body %></p>
     <% end %>
 
-    <%# A contact card: someone the student has just earned access to. %>
-    <% if message.introduced_contact %>
-      <div class="@container flex max-w-[440px] flex-col gap-2">
+    <%# Contact cards: people the student has just earned access to. A contact
+        can hand over more than one person in a turn, so the label heads the
+        group rather than repeating above every card. %>
+    <% if message.introductions.any? %>
+      <div class="flex max-w-[440px] flex-col gap-2">
         <span class="kick flex items-center gap-2 text-xs text-mute">
           <%= t("threads.contact_shared") %>
         </span>
-        <div class="@max-[380px]:flex-col @max-[380px]:items-stretch flex flex-wrap items-center gap-3 rounded-lg border border-line bg-bg p-3">
-          <div class="flex min-w-0 flex-1 items-center gap-3">
-            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface font-mono text-[13px] font-semibold tracking-normal text-accent">
-              <%= initials_for(message.introduced_contact.full_name) %>
-            </span>
-            <span class="flex min-w-0 flex-col gap-1">
-              <span class="truncate text-base font-semibold leading-tight"><%= message.introduced_contact.full_name %></span>
-              <span class="truncate text-base leading-tight text-mute"><%= message.introduced_contact.role_title %></span>
-            </span>
+        <% message.introductions.each do |introduction| %>
+          <div class="@container @max-[380px]:flex-col @max-[380px]:items-stretch flex flex-wrap items-center gap-3 rounded-lg border border-line bg-bg p-3">
+            <div class="flex min-w-0 flex-1 items-center gap-3">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface font-mono text-[13px] font-semibold tracking-normal text-accent">
+                <%= initials_for(introduction.contact.full_name) %>
+              </span>
+              <span class="flex min-w-0 flex-col gap-1">
+                <span class="truncate text-base font-semibold leading-tight"><%= introduction.contact.full_name %></span>
+                <span class="truncate text-base leading-tight text-mute"><%= introduction.contact.role_title %></span>
+              </span>
+            </div>
+            <%# The introduced contact already carries the case id; going through
+                the enrollment for it would be a second hop for the same value. %>
+            <%= button_to t("threads.open_thread"),
+                  case_threads_path(introduction.contact.case_study_id, contact_id: introduction.contact.id),
+                  class: "btn btn-primary btn-sm" %>
           </div>
-          <%# The introduced contact already carries the case id; going through
-              the enrollment for it would be a second hop for the same value. %>
-          <%= button_to t("threads.open_thread"),
-                case_threads_path(message.introduced_contact.case_study_id, contact_id: message.introduced_contact.id),
-                class: "btn btn-primary btn-sm" %>
-        </div>
+        <% end %>
       </div>
     <% end %>
 

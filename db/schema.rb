@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_14_194500) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_040000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -133,10 +133,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_194500) do
     t.datetime "created_at", null: false
     t.uuid "enrollment_id", null: false
     t.uuid "introducing_contact_id"
+    t.uuid "message_id"
     t.datetime "updated_at", null: false
     t.index ["contact_id"], name: "index_introductions_on_contact_id"
     t.index ["enrollment_id", "contact_id"], name: "index_introductions_on_enrollment_id_and_contact_id", unique: true
     t.index ["introducing_contact_id"], name: "index_introductions_on_introducing_contact_id"
+    t.index ["message_id"], name: "index_introductions_on_message_id"
   end
 
   create_table "messages", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -388,6 +390,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_194500) do
   add_foreign_key "introductions", "contacts", column: "introducing_contact_id", on_delete: :nullify
   add_foreign_key "introductions", "contacts", on_delete: :cascade
   add_foreign_key "introductions", "enrollments", on_delete: :cascade
+  add_foreign_key "introductions", "messages", on_delete: :nullify
   add_foreign_key "messages", "contacts", column: "introduced_contact_id", on_delete: :nullify
   add_foreign_key "messages", "conversations", on_delete: :cascade
   add_foreign_key "model_calls", "contacts", on_delete: :cascade

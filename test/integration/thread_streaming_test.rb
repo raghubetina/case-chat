@@ -44,7 +44,7 @@ class ThreadStreamingTest < ActionDispatch::IntegrationTest
   def settled
     ApplicationController.render(
       partial: "threads/message",
-      locals: {message: Message.includes(:introduced_contact, {conversation: :contact},
+      locals: {message: Message.includes({introductions: :contact}, {conversation: :contact},
         {document_shares: :document}).find(@message.id), streaming: false}
     )
   end

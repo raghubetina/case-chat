@@ -39,7 +39,7 @@ module Threads
     # that Turbo swallows.
     def render_sent(conversation, message)
       rendered = Message
-        .includes(:introduced_contact, {conversation: :contact}, {document_shares: :document})
+        .includes({introductions: :contact}, {conversation: :contact}, {document_shares: :document})
         .find(message.id)
 
       render turbo_stream: [

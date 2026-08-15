@@ -158,7 +158,7 @@ class ContactReplyTest < ActiveSupport::TestCase
     message = ContactReply.new(@conversation, responder: wordless(introduced_contact_ids: [@priya.id])).generate!
 
     assert_predicate message.body, :blank?
-    assert_equal @priya, message.introduced_contact
+    assert_equal [@priya], cards_on(message)
   end
 
   # The introduce tool asks for a sentence in the contact's own voice, and a
@@ -174,15 +174,29 @@ class ContactReplyTest < ActiveSupport::TestCase
     message = ContactReply.new(@conversation, responder: responder).generate!
 
     assert_equal "Priya ran the plant when this started; go and ask her.", message.body
-    assert_equal @priya, message.introduced_contact
+    assert_equal [@priya], cards_on(message)
   end
 
-  # Contacts re-name people the student already knows all the time, and a turn
-  # that does both has one card to spend. Spending it on the colleague already
-  # in the directory hides the only thing that was actually earned.
-  test "the card names somebody new rather than somebody already met" do
-    marcus = Contact.create!(full_name: "Marcus Bell", role_title: "Director of Community Health Equity",
-      system_prompt: "You know who gets left short.", case_study: @case_study)
+  # A contact who names two people in one answer used to hand over one card,
+  # and the second person joined the directory with nothing in the transcript
+  # saying where they came from.
+  test "a turn that introduces two people draws a card for each" do
+    marcus = build_marcus
+    Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "When asked.")
+    Referral.create!(referring_contact: @dana, referred_contact: marcus, condition: "When fairness comes up.")
+    ask "Who else should I be talking to?"
+
+    responder = wordless(introduced_contact_ids: [@priya.id, marcus.id])
+    message = ContactReply.new(@conversation, responder: responder).generate!
+
+    assert_equal [@priya, marcus].to_set, cards_on(message).to_set
+  end
+
+  # Contacts re-name people the student already knows constantly. Drawing a card
+  # for somebody already in the directory says something was earned when nothing
+  # was, and on a turn that also introduced a stranger it hid the stranger.
+  test "re-naming somebody already met draws no card" do
+    marcus = build_marcus
     Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "When asked.")
     Referral.create!(referring_contact: @dana, referred_contact: marcus, condition: "When fairness comes up.")
     Introduction.create!(enrollment: @conversation.enrollment, contact: @priya, introducing_contact: @dana)
@@ -191,8 +205,20 @@ class ContactReplyTest < ActiveSupport::TestCase
     responder = wordless(introduced_contact_ids: [@priya.id, marcus.id])
     message = ContactReply.new(@conversation, responder: responder).generate!
 
-    assert_equal marcus, message.introduced_contact,
+    assert_equal [marcus], cards_on(message),
       "Priya was already in the directory; Marcus is what this turn earned"
+  end
+
+  test "an introduction stays on the turn it happened, not the one that repeats it" do
+    Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "When asked.")
+    ask "Who else?"
+    first = ContactReply.new(@conversation, responder: wordless(introduced_contact_ids: [@priya.id])).generate!
+
+    ask "And Priya again?"
+    second = ContactReply.new(@conversation, responder: wordless(introduced_contact_ids: [@priya.id])).generate!
+
+    assert_equal [@priya], cards_on(first)
+    assert_empty cards_on(second)
   end
 
   test "prose the contact wrote wins over the tool's reason" do
@@ -216,6 +242,17 @@ class ContactReplyTest < ActiveSupport::TestCase
   end
 
   private
+
+  # The views reach these through the message's eager-loaded association;
+  # strict loading means a test cannot read it off a freshly saved record.
+  def cards_on(message)
+    Introduction.where(message_id: message.id).includes(:contact).map(&:contact)
+  end
+
+  def build_marcus
+    Contact.create!(full_name: "Marcus Bell", role_title: "Director of Community Health Equity",
+      system_prompt: "You know who gets left short.", case_study: @case_study)
+  end
 
   def wordless(introduced_contact_ids: [], shared_document_ids: [], introduction_reasons: [])
     spoken("", introduced_contact_ids: introduced_contact_ids,

@@ -11,18 +11,21 @@ require_relative "domain_test_helper"
 #  contact_id             :uuid             not null
 #  enrollment_id          :uuid             not null
 #  introducing_contact_id :uuid
+#  message_id             :uuid
 #
 # Indexes
 #
 #  index_introductions_on_contact_id                    (contact_id)
 #  index_introductions_on_enrollment_id_and_contact_id  (enrollment_id,contact_id) UNIQUE
 #  index_introductions_on_introducing_contact_id        (introducing_contact_id)
+#  index_introductions_on_message_id                    (message_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (contact_id => contacts.id) ON DELETE => cascade
 #  fk_rails_...  (enrollment_id => enrollments.id) ON DELETE => cascade
 #  fk_rails_...  (introducing_contact_id => contacts.id) ON DELETE => nullify
+#  fk_rails_...  (message_id => messages.id) ON DELETE => nullify
 #
 class IntroductionTest < ActiveSupport::TestCase
   include DomainTestHelper

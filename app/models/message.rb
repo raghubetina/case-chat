@@ -22,9 +22,17 @@
 #  fk_rails_...  (introduced_contact_id => contacts.id) ON DELETE => nullify
 #
 class Message < ApplicationRecord
+  # Replaced by the introductions association below, which can hold more than
+  # one. Ignored rather than dropped in the same change: the column has to stop
+  # being read by running code before a later migration removes it, or a box
+  # still serving the old code meets a table that no longer has it.
+  self.ignored_columns += %w[introduced_contact_id]
+
   belongs_to :conversation, class_name: "Conversation", optional: false
-  belongs_to :introduced_contact, class_name: "Contact", optional: true
   has_many :document_shares, class_name: "DocumentShare", dependent: :destroy
+  # Everyone the student met on this turn. A contact may introduce more than
+  # one person in a single answer, and each arrives as its own card.
+  has_many :introductions, class_name: "Introduction", dependent: :nullify
 
   # A student must say something; a contact may answer by handing over a
   # document or making an introduction, and the cards on the message are then

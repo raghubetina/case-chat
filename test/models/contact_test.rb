@@ -45,8 +45,6 @@ class ContactTest < ActiveSupport::TestCase
   # the people they introduced.
   should have_many(:introductions_made).class_name("Introduction")
     .with_foreign_key("introducing_contact_id").dependent(:nullify)
-  should have_many(:introducing_messages).class_name("Message")
-    .with_foreign_key("introduced_contact_id").dependent(:nullify)
 
   should validate_presence_of(:full_name)
   should validate_presence_of(:role_title)

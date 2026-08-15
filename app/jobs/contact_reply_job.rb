@@ -86,7 +86,7 @@ class ContactReplyJob < ApplicationJob
   # discover them one lazy query at a time.
   def finish(conversation, question, message)
     rendered = Message
-      .includes(:introduced_contact, {conversation: :contact}, {document_shares: :document})
+      .includes({introductions: :contact}, {conversation: :contact}, {document_shares: :document})
       .find(message.id)
 
     Turbo::StreamsChannel.broadcast_replace_to(

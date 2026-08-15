@@ -17,7 +17,7 @@ class ThreadsController < ApplicationController
 
     @contact = @conversation.contact
     @messages = @conversation.messages
-      .includes(:introduced_contact, document_shares: :document)
+      .includes({introductions: :contact}, document_shares: :document)
       .order(:sent_at, :created_at)
 
     load_workspace(@conversation.enrollment)

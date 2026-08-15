@@ -28,7 +28,7 @@ class MessageTest < ActiveSupport::TestCase
   include DomainTestHelper
 
   should belong_to(:conversation)
-  should belong_to(:introduced_contact).optional
+  should have_many(:introductions).class_name("Introduction").dependent(:nullify)
   should have_many(:document_shares).dependent(:destroy)
 
   should validate_presence_of(:sent_at)

@@ -1,6 +1,36 @@
 require "test_helper"
 require_relative "domain_test_helper"
 
+# == Schema Information
+#
+# Table name: model_calls
+#
+#  id                 :uuid             not null, primary key
+#  cache_read_tokens  :integer          default(0), not null
+#  cache_write_tokens :integer          default(0), not null
+#  duration_ms        :integer
+#  effort             :string
+#  input_tokens       :integer          default(0), not null
+#  model              :string           not null
+#  output_tokens      :integer          default(0), not null
+#  provider           :string           not null
+#  raw                :jsonb
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  contact_id         :uuid             not null
+#  message_id         :uuid
+#
+# Indexes
+#
+#  index_model_calls_on_contact_id            (contact_id)
+#  index_model_calls_on_message_id            (message_id)
+#  index_model_calls_on_model_and_created_at  (model,created_at)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (contact_id => contacts.id) ON DELETE => cascade
+#  fk_rails_...  (message_id => messages.id) ON DELETE => nullify
+#
 class ModelCallTest < ActiveSupport::TestCase
   include DomainTestHelper
 
