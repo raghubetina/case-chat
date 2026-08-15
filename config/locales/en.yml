@@ -40,7 +40,6 @@ en:
       lede: Request another verification message for an unverified account.
   author:
     cases:
-      author_label: Author
       cast: People
       cast_note: Anyone not in the starting directory has to be introduced by someone else in the case.
       checklist: Checklist
@@ -380,9 +379,8 @@ en:
     for_instructors_body: You write each person and set what opens an introduction. The cohort screen shows which of them students reached.
     for_students: For students
     for_students_body: You start with the situation and two or three names. You meet everyone else by earning an introduction.
-    get_started: Get started
     join_note: Once you are signed in, enter the case code your instructor posted with the assignment.
-    lede: A case is a group of people who each know part of it. Students interview them by chat, and the right question earns an introduction to someone new, or a document.
+    lede: A case is a brief, a few files, and people who each know part of it. Students are handed some of it at the start, and earn the rest by interviewing the people they can reach.
     quote: A problem well-stated is a problem half-solved.
     quote_source: Charles Kettering
     rationale: Now that AI can do the analysis, this is deliberate practice at extracting the constraints.

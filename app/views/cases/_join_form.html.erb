@@ -1,7 +1,10 @@
 <%# The only way into a case. Rendered as a pane when the student already has
     one, and as the whole page when this is their first. %>
 <div class="flex flex-col gap-3">
-  <span class="kick text-xs text-accent"><%= t("cases.join.heading") %></span>
+  <%# Skipped when the pane header above already carries this title. %>
+  <% if local_assigns.fetch(:heading, true) %>
+    <span class="kick text-xs text-accent"><%= t("cases.join.heading") %></span>
+  <% end %>
   <p class="max-w-prose text-base text-mute"><%= t("cases.join.note") %></p>
 </div>
 
