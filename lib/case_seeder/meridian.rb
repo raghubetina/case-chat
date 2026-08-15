@@ -449,7 +449,7 @@ module CaseSeeder
     # Nothing is shared in conversation. That is the real package: Meridian
     # hands every student the same two files on day one and holds nothing back,
     # so inventing documents for stakeholders to release would be inventing the
-    # case. What is earned here is testimony. Vesta exercises document sharing.
+    # case. What is earned here is testimony rather than paper.
     def share_rules(_contacts, _documents)
       []
     end

@@ -1,7 +1,7 @@
 require "test_helper"
 require_relative "../models/domain_test_helper"
 
-# Drives the student loop against the real seeded Vesta case: join by code,
+# Drives the student loop against the real seeded Meridian case: join by code,
 # read the directory, interview a contact, earn an introduction, and start a
 # fresh run. The case is real teaching material, so these assertions are also
 # a check that the seed still expresses the case's structure.
@@ -9,18 +9,22 @@ class StudentExperienceTest < ActionDispatch::IntegrationTest
   include DomainTestHelper
 
   setup do
-    CaseSeeder::Vesta.new.call
+    CaseSeeder::Meridian.new.call
 
-    @case_study = CaseStudy.find_by!(join_code: "VESTA-01")
-    @marco = Contact.find_by!(case_study: @case_study, full_name: "Marco Devlin")
-    @denny = Contact.find_by!(case_study: @case_study, full_name: "Denny Vasquez")
+    @case_study = CaseStudy.find_by!(join_code: "MERIDIAN-01")
+    @lena = Contact.find_by!(case_study: @case_study, full_name: "Dr. Lena Ortiz")
+    @marcus = Contact.find_by!(case_study: @case_study, full_name: "Marcus Bell")
+    # Two hops from the starting directory, through Priya or Marcus. Nobody in
+    # the opening directory refers to him, which is what makes him the test of
+    # whether a chain is walked at all.
+    @ray = Contact.find_by!(case_study: @case_study, full_name: "Ray Coleman")
     @student = register_user(full_name: "Sasha Everly")
     sign_in_as @student
   end
 
   test "a student joins with the code the instructor posted" do
     assert_difference "Enrollment.count", 1 do
-      post join_cases_path, params: {join_code: "vesta-01"}
+      post join_cases_path, params: {join_code: "meridian-01"}
     end
 
     assert_redirected_to case_path(@case_study)
@@ -36,23 +40,23 @@ class StudentExperienceTest < ActionDispatch::IntegrationTest
   end
 
   test "the directory starts with only the people you begin with" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
     get case_path(@case_study)
 
     assert_response :success
-    assert_match(/June Ellery/, response.body)
-    assert_match(/Marco Devlin/, response.body)
-    # Denny is reachable only through Marco — that is the case's central gap.
-    assert_no_match(/Denny Vasquez/, response.body)
+    assert_match(/Samuel Adeyemi/, response.body)
+    assert_match(/Dr. Lena Ortiz/, response.body)
+    # Ray is two referrals out; a student who has just joined cannot see him.
+    assert_no_match(/Ray Coleman/, response.body)
   end
 
   test "a student can interview a contact and the reply is persisted" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
-    post case_threads_path(@case_study, contact_id: @marco.id)
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
+    post case_threads_path(@case_study, contact_id: @lena.id)
     conversation = Conversation.order(:created_at).last
 
     assert_difference "Message.count", 1 do
-      post thread_messages_path(conversation), params: {message: {body: "What happens at eight o'clock on a Friday?"}}
+      post thread_messages_path(conversation), params: {message: {body: "What are you optimizing for here?"}}
     end
 
     assert_enqueued_with(job: ContactReplyJob)
@@ -62,53 +66,56 @@ class StudentExperienceTest < ActionDispatch::IntegrationTest
     assert conversation.messages.order(:created_at).last.from_contact
   end
 
+  # Marcus is Lena's referral for fairness, and asking about it is how a student
+  # earns him. The condition describes a question worth asking, so the question
+  # here has to be that question.
   test "earning an introduction puts the new contact in the directory" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
-    post case_threads_path(@case_study, contact_id: @marco.id)
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
+    post case_threads_path(@case_study, contact_id: @lena.id)
     conversation = Conversation.order(:created_at).last
 
     perform_enqueued_jobs do
       post thread_messages_path(conversation),
-        params: {message: {body: "You admitted you do not know what the expediter does at eight o'clock."}}
+        params: {message: {body: "On fairness: who would be left short under your rule?"}}
     end
 
-    assert Introduction.exists?(contact_id: @denny.id), "Marco should have handed off to the expediter"
+    assert Introduction.exists?(contact_id: @marcus.id), "Lena should have handed off on fairness"
 
     get case_path(@case_study)
-    assert_match(/Denny Vasquez/, response.body)
+    assert_match(/Marcus Bell/, response.body)
   end
 
   test "a student cannot open a thread with someone they have not met" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
 
-    post case_threads_path(@case_study, contact_id: @denny.id)
+    post case_threads_path(@case_study, contact_id: @ray.id)
 
     assert_response :forbidden
   end
 
   test "starting a new run resets the directory but keeps the old run readable" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
     first_run = Enrollment.order(:started_at).last
-    Introduction.create!(enrollment: first_run, contact: @denny, introducing_contact: @marco)
+    Introduction.create!(enrollment: first_run, contact: @ray, introducing_contact: @lena)
 
     assert_difference "Enrollment.count", 1 do
       post restart_case_path(@case_study)
     end
 
     get case_path(@case_study)
-    assert_no_match(/Denny Vasquez/, response.body)
+    assert_no_match(/Ray Coleman/, response.body)
 
     get case_path(@case_study, run: first_run.id)
     assert_response :success
-    assert_match(/Denny Vasquez/, response.body)
+    assert_match(/Ray Coleman/, response.body)
   end
 
   # An old thread's composer says the run is closed and offers a new one. The
   # offer was copy for a control that did not exist, so a student reading a past
   # run had no way back to a live composer.
   test "a closed run offers a way to start a new one" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
-    post case_threads_path(@case_study, contact_id: @marco.id)
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
+    post case_threads_path(@case_study, contact_id: @lena.id)
     conversation = Conversation.order(:created_at).last
     post restart_case_path(@case_study)
 
@@ -120,8 +127,8 @@ class StudentExperienceTest < ActionDispatch::IntegrationTest
   end
 
   test "starting a new run from a closed thread works" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
-    post case_threads_path(@case_study, contact_id: @marco.id)
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
+    post case_threads_path(@case_study, contact_id: @lena.id)
     post restart_case_path(@case_study)
 
     assert_difference "Enrollment.count", 1 do
@@ -130,13 +137,13 @@ class StudentExperienceTest < ActionDispatch::IntegrationTest
   end
 
   test "the transcript never carries a contact's system prompt" do
-    post join_cases_path, params: {join_code: "VESTA-01"}
-    post case_threads_path(@case_study, contact_id: @marco.id)
+    post join_cases_path, params: {join_code: "MERIDIAN-01"}
+    post case_threads_path(@case_study, contact_id: @lena.id)
     conversation = Conversation.order(:created_at).last
 
     get thread_path(conversation)
 
     assert_response :success
-    assert_no_match(/nobody has ever told the expediter/i, response.body)
+    assert_no_match(/you will not tell the student what to maximize/i, response.body)
   end
 end

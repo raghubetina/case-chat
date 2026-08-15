@@ -9,17 +9,17 @@ class AuthenticatedPagesTest < ApplicationSystemTestCase
   THEMES = %w[ledger bureau dusk chicago]
 
   setup do
-    CaseSeeder::Vesta.new.call
-    @case_study = CaseStudy.includes(:author).find_by!(join_code: "VESTA-01")
+    CaseSeeder::Meridian.new.call
+    @case_study = CaseStudy.includes(:author).find_by!(join_code: "MERIDIAN-01")
     @author = @case_study.author
     @student = User.find_by!(email: "bob@example.com")
-    @contact = Contact.find_by!(case_study: @case_study, full_name: "June Ellery")
+    @contact = Contact.find_by!(case_study: @case_study, full_name: "Samuel Adeyemi")
   end
 
   def sign_in(user)
     visit "/login"
     fill_in "email", with: user.email
-    fill_in "password", with: CaseSeeder::Vesta::PASSWORD
+    fill_in "password", with: CaseSeeder::Meridian::PASSWORD
     find("form input[type=submit], form button[type=submit]").click
     wait_for_turbo
     assert_no_current_path "/login", wait: 5

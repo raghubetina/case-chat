@@ -21,9 +21,9 @@ class StudentLoopTest < ApplicationSystemTestCase
     @queue_adapter_before = ActiveJob::Base.queue_adapter
     ActiveJob::Base.queue_adapter = :async
 
-    CaseSeeder::Vesta.new.call
-    @case_study = CaseStudy.find_by!(join_code: CaseSeeder::Vesta::JOIN_CODE)
-    @june = Contact.find_by!(case_study: @case_study, full_name: "June Ellery")
+    CaseSeeder::Meridian.new.call
+    @case_study = CaseStudy.find_by!(join_code: CaseSeeder::Meridian::JOIN_CODE)
+    @june = Contact.find_by!(case_study: @case_study, full_name: "Samuel Adeyemi")
     @student = User.find_by!(email: "bob@example.com")
     sign_in @student
   end
@@ -35,7 +35,7 @@ class StudentLoopTest < ApplicationSystemTestCase
   def sign_in(user)
     visit "/login"
     fill_in "email", with: user.email
-    fill_in "password", with: CaseSeeder::Vesta::PASSWORD
+    fill_in "password", with: CaseSeeder::Meridian::PASSWORD
     find("form input[type=submit], form button[type=submit]").click
     # Signing in lands you in your case, not on a list of them.
     assert_selector "#workspace-sidebar", text: @case_study.title
@@ -56,7 +56,7 @@ class StudentLoopTest < ApplicationSystemTestCase
     # The student's own message renders from the response...
     assert_text "Why are we considering takeout at all?"
     # ...and the contact's answer arrives over the Turbo Stream broadcast.
-    assert_text(/June Ellery/, wait: 10)
+    assert_text(/Samuel Adeyemi/, wait: 10)
     assert_selector "#transcript > div", minimum: 2, wait: 10
 
     assert_equal 2, Conversation.last.messages.count

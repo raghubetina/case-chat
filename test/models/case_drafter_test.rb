@@ -9,7 +9,7 @@ class CaseDrafterTest < ActiveSupport::TestCase
 
   def payload(**overrides)
     {
-      "title" => "Vesta",
+      "title" => "Meridian",
       "contacts" => [
         {"full_name" => "June", "role_title" => "GM", "system_prompt" => "You are June.", "in_starting_directory" => true},
         {"full_name" => "Marco", "role_title" => "Chef", "system_prompt" => "You are Marco.", "in_starting_directory" => false}

@@ -28,7 +28,7 @@ invent a colleague or leak an exhibit it was never given.
 ```
 bin/setup            # deps, database, boot check
 bin/dev              # serve on :3000
-bin/rails db:seed    # the Vesta case: 5 contacts, 5 referrals, 7 documents
+bin/rails db:seed    # the Meridian case: 7 contacts, 8 referrals, 2 documents
 bin/ci               # tests, lint, audits, reproducibility
 bin/production-smoke # production image against fresh Postgres
 ```

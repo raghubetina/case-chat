@@ -102,11 +102,14 @@ Watch the reachability panel as you add rows.
 
 Every document is uploaded under **Case files**, earned ones included.
 
-![Can share: a document, and the condition under which they hand it over](images/share-rules.jpg)
+![Case files: the two documents Meridian gives every student, and the form for adding one](images/case-files.jpg)
 
 Tick "Given to every student at the start" on the files everyone should have. Left unticked, a file
-has to be earned, so attach it to whoever holds it under **Can share**, with a
-condition written the same way as a referral's.
+has to be earned: open the person who holds it and add it under **Can share**, with a condition
+written the same way as a referral's.
+
+Meridian gives both its files to everyone, so it has no earned document to copy. Its people hold
+testimony rather than paper.
 
 ## 5. Test drive
 
@@ -141,8 +144,9 @@ Seven people in this case; the student starts with two.
 
 ![An introduction arriving in the thread: a reason, then a contact card](images/earned-introduction.jpg)
 
-Here the student asked who signs the recommendation, and Dr. Ortiz sent them to the Governor's
-office.
+Here the student asked who gets left short. Dr. Ortiz volunteered the thing her prompt tells her to
+keep back unless pushed — that she could not sign a plan leaving a county at zero — and then handed
+over the person whose job it is.
 
 ## What to send back
 

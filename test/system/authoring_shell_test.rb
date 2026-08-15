@@ -6,16 +6,16 @@ require "application_system_test_case"
 # request tests already cover.
 class AuthoringShellTest < ApplicationSystemTestCase
   setup do
-    CaseSeeder::Vesta.new.call
-    @case_study = CaseStudy.includes(:author).find_by!(join_code: CaseSeeder::Vesta::JOIN_CODE)
-    @june = Contact.find_by!(case_study: @case_study, full_name: "June Ellery")
+    CaseSeeder::Meridian.new.call
+    @case_study = CaseStudy.includes(:author).find_by!(join_code: CaseSeeder::Meridian::JOIN_CODE)
+    @june = Contact.find_by!(case_study: @case_study, full_name: "Samuel Adeyemi")
     sign_in @case_study.author
   end
 
   def sign_in(user)
     visit "/login"
     fill_in "email", with: user.email
-    fill_in "password", with: CaseSeeder::Vesta::PASSWORD
+    fill_in "password", with: CaseSeeder::Meridian::PASSWORD
     find("form input[type=submit], form button[type=submit]").click
     assert_no_current_path "/login", wait: 5
   end

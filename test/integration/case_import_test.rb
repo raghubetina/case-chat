@@ -7,10 +7,10 @@ class CaseImportTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
   setup do
-    CaseSeeder::Vesta.new.call
-    @case_study = CaseStudy.includes(:author).find_by!(join_code: "VESTA-01")
+    CaseSeeder::Meridian.new.call
+    @case_study = CaseStudy.includes(:author).find_by!(join_code: "MERIDIAN-01")
     @author = @case_study.author
-    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
     @drafted = CaseDrafter::Fake.new.draft(documents: [])
   end
 

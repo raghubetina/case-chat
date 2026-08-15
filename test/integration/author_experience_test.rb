@@ -1,7 +1,7 @@
 require "test_helper"
 require_relative "../models/domain_test_helper"
 
-# The authoring side, driven against the real Vesta case. The reachability
+# The authoring side, driven against the real Meridian case. The reachability
 # check is the point of the whole structured-referral design, so most of these
 # assertions are about it.
 class AuthorExperienceTest < ActionDispatch::IntegrationTest
@@ -9,61 +9,62 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
   include ActionView::Helpers::NumberHelper
 
   setup do
-    CaseSeeder::Vesta.new.call
-    @case_study = CaseStudy.includes(:author).find_by!(join_code: "VESTA-01")
+    CaseSeeder::Meridian.new.call
+    @case_study = CaseStudy.includes(:author).find_by!(join_code: "MERIDIAN-01")
     @author = @case_study.author
-    @marco = Contact.find_by!(case_study: @case_study, full_name: "Marco Devlin")
-    @denny = Contact.find_by!(case_study: @case_study, full_name: "Denny Vasquez")
-    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    @lena = Contact.find_by!(case_study: @case_study, full_name: "Dr. Lena Ortiz")
+    @ray = Contact.find_by!(case_study: @case_study, full_name: "Ray Coleman")
+    sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
   end
 
   test "the case setup page shows the cast and its reachability" do
     get edit_author_case_path(@case_study)
 
     assert_response :success
-    assert_match(/Marco Devlin/, response.body)
-    assert_match(/Denny Vasquez/, response.body)
+    assert_match(/Dr. Lena Ortiz/, response.body)
+    assert_match(/Ray Coleman/, response.body)
   end
 
   test "a seeded case is fully reachable" do
     result = CaseReachability.new(@case_study).call
 
-    assert result.complete?, "expected every Vesta contact to be reachable"
-    assert_equal 3, result.starting.size
+    assert result.complete?, "expected every Meridian contact to be reachable"
+    assert_equal ["Dr. Lena Ortiz", "Samuel Adeyemi"], result.starting.map(&:full_name).sort,
+      "the two people a student opens the case with"
   end
 
   test "removing the only referral to a contact makes them unreachable" do
-    Referral.where(referred_contact_id: @denny.id).destroy_all
+    Referral.where(referred_contact_id: @ray.id).destroy_all
 
     result = CaseReachability.new(@case_study).call
 
     assert_not result.complete?
-    assert_equal ["Denny Vasquez"], result.unreachable.map(&:full_name)
+    assert_equal ["Ray Coleman"], result.unreachable.map(&:full_name)
   end
 
   test "a disabled referral does not count as a path" do
-    Referral.where(referred_contact_id: @denny.id).update_all(enabled: false)
+    Referral.where(referred_contact_id: @ray.id).update_all(enabled: false)
 
     result = CaseReachability.new(@case_study).call
 
     assert_not result.complete?
-    assert_includes result.unreachable.map(&:full_name), "Denny Vasquez"
+    assert_includes result.unreachable.map(&:full_name), "Ray Coleman"
   end
 
   test "reachability follows a chain, not just the starting directory" do
     # Denny is two hops out: starting -> Marco -> Denny.
-    assert_not @denny.in_starting_directory?
-    assert CaseReachability.new(@case_study).call.reachable.map(&:full_name).include?("Denny Vasquez")
+    assert_not @ray.in_starting_directory?
+    assert CaseReachability.new(@case_study).call.reachable.map(&:full_name).include?("Ray Coleman")
   end
 
   test "publishing refuses while anyone is unreachable" do
-    Referral.where(referred_contact_id: @denny.id).destroy_all
+    Referral.where(referred_contact_id: @ray.id).destroy_all
     @case_study.update!(published: false)
 
     post publish_author_case_path(@case_study)
 
     assert_not @case_study.reload.published?
-    assert_match(/Denny Vasquez/, flash[:alert])
+    assert_match(/Ray Coleman/, flash[:alert])
   end
 
   test "publishing succeeds once every contact can be reached" do
@@ -83,10 +84,10 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
   end
 
   test "an author adds a referral with its condition" do
-    tessa = Contact.find_by!(case_study: @case_study, full_name: "Tessa Kimura")
+    tessa = Contact.find_by!(case_study: @case_study, full_name: "Rosa Delgado")
 
     assert_difference "Referral.count", 1 do
-      post author_contact_referrals_path(@marco), params: {
+      post author_contact_referrals_path(@lena), params: {
         referral: {referred_contact_id: tessa.id, condition: "If the student asks about the door."}
       }
     end
@@ -100,7 +101,7 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     document = Document.where(case_study_id: @case_study.id).first
 
     assert_difference "ShareRule.count", 1 do
-      post author_contact_share_rules_path(@marco), params: {
+      post author_contact_share_rules_path(@lena), params: {
         share_rule: {document_id: document.id, condition: "Once the student asks about the line."}
       }
     end
@@ -114,8 +115,8 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
 
     assert_no_difference "Referral.count" do
-      post author_contact_referrals_path(@marco), params: {
-        referral: {referred_contact_id: @denny.id, condition: "anything"}
+      post author_contact_referrals_path(@lena), params: {
+        referral: {referred_contact_id: @ray.id, condition: "anything"}
       }
     end
     assert_response :forbidden
@@ -124,15 +125,15 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
   test "the cohort page reports what the class earned" do
     student = register_user(full_name: "Lena Ahmed")
     enrollment = Enrollment.create!(user: student, case_study: @case_study)
-    conversation = Conversation.create!(enrollment: enrollment, contact: @marco)
+    conversation = Conversation.create!(enrollment: enrollment, contact: @lena)
     Message.create!(conversation: conversation, body: "Why?", sent_at: Time.current, from_contact: false)
-    Introduction.create!(enrollment: enrollment, contact: @denny, introducing_contact: @marco)
+    Introduction.create!(enrollment: enrollment, contact: @ray, introducing_contact: @lena)
 
     get author_case_cohort_path(@case_study)
 
     assert_response :success
     assert_match(/Lena Ahmed/, response.body)
-    assert_match(/Denny Vasquez/, response.body)
+    assert_match(/Ray Coleman/, response.body)
   end
 
   # The usage pane reports what students' activity cost, so it is author-only
@@ -147,21 +148,21 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
   end
 
   test "the usage page reports tokens per stakeholder" do
-    record_call(@marco, input: 4000, output: 400)
-    record_call(@denny, input: 100, output: 10)
-    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    record_call(@lena, input: 4000, output: 400)
+    record_call(@ray, input: 100, output: 10)
+    sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
 
     get author_case_usage_path(@case_study)
 
     assert_response :success
-    assert_match(/Marco Devlin/, response.body)
+    assert_match(/Dr. Lena Ortiz/, response.body)
     assert_match(number_with_delimiter(4400), response.body)
   end
 
   test "the usage page separates a rehearsal from a student's reply" do
-    record_call(@marco, input: 1000, output: 0, message: student_reply_message)
-    record_call(@marco, input: 7000, output: 0)
-    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    record_call(@lena, input: 1000, output: 0, message: student_reply_message)
+    record_call(@lena, input: 7000, output: 0)
+    sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
 
     get author_case_usage_path(@case_study)
 
@@ -171,8 +172,8 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
 
   # The catalogue's blanks are deliberate, and a regression here invents money.
   test "a stakeholder on a model with no price shows no dollar figure" do
-    record_call(@marco, model: "gpt-5.6-retired", input: 1_000_000, output: 0)
-    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    record_call(@lena, model: "gpt-5.6-retired", input: 1_000_000, output: 0)
+    sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
 
     get author_case_usage_path(@case_study)
 
@@ -180,8 +181,8 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
   end
 
   test "a case run entirely on priced models shows its cost" do
-    record_call(@marco, model: "claude-opus-5", input: 1_000_000, output: 0)
-    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    record_call(@lena, model: "claude-opus-5", input: 1_000_000, output: 0)
+    sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
 
     get author_case_usage_path(@case_study)
 
@@ -190,7 +191,7 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
 
   # Every case is in this state until somebody runs it.
   test "the usage page loads for a case nobody has run" do
-    sign_in_as @author, password: CaseSeeder::Vesta::PASSWORD
+    sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
 
     get author_case_usage_path(@case_study)
 
@@ -246,14 +247,14 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
 
   def student_reply_message
     enrollment = Enrollment.create!(user: register_user(full_name: "A Student"), case_study: @case_study)
-    conversation = Conversation.create!(enrollment: enrollment, contact: @marco)
+    conversation = Conversation.create!(enrollment: enrollment, contact: @lena)
     Message.create!(conversation: conversation, body: "Answering.", sent_at: Time.current, from_contact: true)
   end
 
   test "the cast editor warns about an orphaned contact" do
-    Referral.where(referred_contact_id: @denny.id).destroy_all
+    Referral.where(referred_contact_id: @ray.id).destroy_all
 
-    get edit_author_case_contact_path(@case_study, @denny)
+    get edit_author_case_contact_path(@case_study, @ray)
 
     assert_response :success
     assert_match(/no student will ever meet them/i, response.body)
