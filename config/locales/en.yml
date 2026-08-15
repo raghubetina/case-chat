@@ -377,14 +377,17 @@ en:
   home:
     create_account: Create an account
     for_instructors: For instructors
-    for_instructors_body: Write the people, decide who knows what, and watch where a cohort gets stuck.
+    for_instructors_body: You write each person and set what opens an introduction. The cohort screen shows which of them students reached.
     for_students: For students
-    for_students_body: Interview the people inside the case and build the picture yourself.
+    for_students_body: You start with the situation and two or three names. You meet everyone else by earning an introduction.
     get_started: Get started
     join_note: Once you are signed in, enter the case code your instructor posted with the assignment.
-    lede: You will not be handed the case. The people inside it each know part of it. Interview them, collect what they will give you, and build the picture yourself.
+    lede: A case is a group of people who each know part of it. Students interview them by chat, and the right question earns an introduction to someone new, or a document.
+    quote: A problem well-stated is a problem half-solved.
+    quote_source: Charles Kettering
+    rationale: Now that AI can do the analysis, this is deliberate practice at extracting the constraints.
     sign_in_heading: Sign in to your cases
-    tagline: Case interviews you have to actually conduct
+    tagline: Case studies students interview
   mailers:
     rodauth:
       greeting: Hello %{name},

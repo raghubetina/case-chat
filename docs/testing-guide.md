@@ -5,6 +5,14 @@
 Case Chat turns a written case into a set of people a student interviews. The student starts with a
 thin situation and two or three names, and earns the rest by asking someone the right question.
 
+The question behind it: now that AI can do the analysis, can we give students deliberate practice at
+extracting constraints? A written case hands those over on page one. Here they sit with people who
+will not volunteer them.
+
+> "A problem well-stated is a problem half-solved."
+>
+> — Charles Kettering
+
 Please author a case you already teach.
 
 ## Start with the seeded case
