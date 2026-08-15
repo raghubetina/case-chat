@@ -92,9 +92,14 @@
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="flex flex-col gap-2">
             <%= form.label :model, t("author.contacts.model_label"), class: "kick text-xs text-mute" %>
+            <%# Shown resolved rather than blank. A contact with nothing stored
+                answers on the deployment default, so naming it is what is
+                actually true; a blank option beside it would mean the same
+                thing under a vaguer label. Saving writes the value down. %>
             <%= form.select :model,
-                  grouped_options_for_select(ModelCatalogue.grouped_for_select, @contact.model),
-                  {include_blank: t("author.contacts.model_default")},
+                  grouped_options_for_select(ModelCatalogue.grouped_for_select,
+                    @contact.model.presence || ModelCatalogue::DEFAULT_ID),
+                  {},
                   class: "select select-bordered w-full" %>
           </div>
           <div class="flex flex-col gap-2">
@@ -102,8 +107,9 @@
             <%# Every level any catalogued model offers; the model validates that
                 the one chosen is offered by the model chosen. %>
             <%= form.select :effort,
-                  options_for_select(ModelCatalogue.all_efforts, @contact.effort),
-                  {include_blank: t("author.contacts.effort_default")},
+                  options_for_select(ModelCatalogue.all_efforts,
+                    @contact.effort.presence || ModelCatalogue::DEFAULT_EFFORT),
+                  {},
                   class: "select select-bordered w-full" %>
           </div>
         </div>

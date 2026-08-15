@@ -41,22 +41,22 @@ en:
   author:
     cases:
       author_label: Author
-      cast: Stakeholders
+      cast: People
       cast_note: These people are in the case. Anyone not in the starting directory has to be introduced by someone.
       checklist: Checklist
       checklist_documents:
         one: 1 document
         other: "%{count} documents"
       checklist_starting:
-        one: 1 starting stakeholder
-        other: "%{count} starting stakeholders"
+        one: 1 person to start with
+        other: "%{count} people to start with"
       checklist_unreachable:
-        one: 1 stakeholder unreachable
-        other: "%{count} stakeholders unreachable"
+        one: 1 person unreachable
+        other: "%{count} people unreachable"
       create: Create case
-      created: Case created. Now add the stakeholders.
+      created: Case created. Now add the people.
       draft_badge: Draft
-      empty_body: A case is a question, a set of stakeholders who each know part of the answer, and the rules for who introduces whom.
+      empty_body: A case is a question, a set of people who each know part of the answer, and the rules for who introduces whom.
       empty_heading: You have not written a case yet
       fields:
         assignment: Assignment
@@ -75,35 +75,35 @@ en:
         one: Introduced by 1
         other: "Introduced by %{count}"
       new: New case
-      no_cast: No stakeholders yet.
+      no_cast: Nobody in the case yet.
       preview: Preview as student
       publish: Publish
       publish_blocked: "Not published. Nobody can reach %{names}, so whatever they know can never enter a student's analysis."
-      publish_blocked_empty: Not published. A case with no stakeholders has nobody to interview.
+      publish_blocked_empty: Not published. An empty case has nobody to interview.
       published: Published. Students with the code can start.
       published_badge: Published
       reachability: Reachability
-      reachability_broken: "%{names} cannot be reached from the starting directory. No stakeholder refers to them."
+      reachability_broken: "%{names} cannot be reached from the starting directory. Nobody refers to them."
       reachability_ok:
-        one: Every stakeholder is reachable from the starting directory.
-        other: All %{count} stakeholders are reachable from the starting directory.
+        one: Everyone is reachable from the starting directory.
+        other: All %{count} people are reachable from the starting directory.
       save: Save case
       saved: Saved.
       setup: Case setup
       unreachable: Unreachable
     cohort:
-      contacts: Stakeholders
+      contacts: People
       documents: Documents
       empty_body: "Nobody has joined yet. Students enter %{code} to start."
       empty_heading: No one in the cohort yet
       last_active: Last active
-      median_contacts: Stakeholders found, median
+      median_contacts: People found, median
       median_documents: Documents earned, median
       median_messages: Messages sent, median
       messages: Messages
       not_started: Not started
       reach: Who the cohort reached
-      reach_note: A stakeholder almost nobody reaches is either buried behind a condition that never fires, or holds something the case gives students no reason to ask about.
+      reach_note: Someone almost nobody reaches is either buried behind a condition that never fires, or holds something the case gives students no reason to ask about.
       runs: Runs
       started: Started
       student: Student
@@ -111,18 +111,16 @@ en:
       table_caption: Each student's progress through the case
       title: Cohort progress
     contacts:
-      effort_default: Model's own default
       effort_label: Reasoning effort
       knows_background: Knows the case background
       knows_background_note: Off for an outsider whose value is that they only see their own end of it.
-      model_default: Deployment default
       model_heading: Who answers as this person
       model_label: Model
-      model_note: Costs are recorded per stakeholder
-      add: Add stakeholder
+      model_note: Answers from this contact use the model and effort below. Token use is recorded per person.
+      add: Add person
       back: Back to case setup
-      create: Create stakeholder
-      created: Stakeholder created.
+      create: Create person
+      created: Person added.
       fields:
         description: Description
         full_name: Name
@@ -132,9 +130,9 @@ en:
       identity: Identity
       introduced_by_names: "Introduced by %{names}"
       never_shown: Never shown to students
-      orphan_warning: "No stakeholder refers to %{name}, and they are not in the starting directory. As it stands, no student will ever meet them."
-      removed: Stakeholder removed.
-      save: Save stakeholder
+      orphan_warning: "Nobody refers to %{name}, and they are not in the starting directory. As it stands, no student will ever meet them."
+      removed: Person removed.
+      save: Save person
       saved: Saved.
       shown_in_directory: Shown to students in the directory
       system_prompt_note: Write the persona, what this person knows, and what they withhold. Do not write referral instructions here — those are generated from the rules below, and writing them twice is how the two drift apart.
@@ -154,18 +152,20 @@ en:
         given_at_start: Given to every student at the start
       no_description: No description
       no_file: No file
-      note: Anything given at the start is handed to every student. Anything else has to be earned from a stakeholder who holds it — set that up on the stakeholder.
+      note: Anything given at the start is handed to every student. Anything else has to be earned from whoever holds it; set that up on their page.
       remove: Remove
       remove_confirm: Remove this document? Any share rule pointing at it goes too.
       removed: Document removed.
       title: Documents
     imports:
-      accept: Create the stakeholders
+      accept: Create the people
       accept_note: You can edit every prompt afterwards, and nothing is visible to students until you publish.
       accepted:
-        one: Created 1 stakeholder from the draft. Read every system prompt before publishing.
-        other: "Created %{count} stakeholders from the draft. Read every system prompt before publishing."
-      accepted_with_orphans: "Created %{count} stakeholders, but nobody can reach %{names}. Add a referral before publishing."
+        one: Created 1 person from the draft. Read every system prompt before publishing.
+        other: "Created %{count} people from the draft. Read every system prompt before publishing."
+      accepted_with_orphans:
+        one: "Created 1 person, but nobody can reach %{names}. Add a referral before publishing."
+        other: "Created %{count} people, but nobody can reach %{names}. Add a referral before publishing."
       draft: Draft a case from these documents
       failed: The draft could not be produced.
       failed_note: Nothing was created. Check that the files are readable and try again.
@@ -190,14 +190,14 @@ en:
       what_was_read: What will be read
       working: Reading your documents
       working_note: This takes a couple of minutes on a full case. You can leave this page and come back.
-      will_overwrite: Replaces an existing stakeholder
+      will_overwrite: Replaces someone already in the case
       will_read: Will be read
     referrals:
       add: Add referral
       added: Referral added.
-      empty: This stakeholder introduces nobody.
+      empty: This person introduces nobody.
       heading: Can introduce
-      note: A referred stakeholder arrives in the student's thread as a contact card.
+      note: A referred person arrives in the student's thread as a contact card.
       remove: Remove
       removed: Referral removed.
       when: When to introduce
@@ -206,7 +206,7 @@ en:
     share_rules:
       add: Add rule
       added: Share rule added.
-      empty: This stakeholder hands over nothing.
+      empty: This person hands over nothing.
       heading: Can share
       note: A shared document arrives in the student's thread as a file card.
       remove: Remove
@@ -215,13 +215,13 @@ en:
       when: When to share
       when_placeholder: Once the student has asked to see the numbers.
     shell:
-      cast: Stakeholders
+      cast: People
       cohort: Cohort
       files: Case files
       import: Import
-      search_prompt: Search the stakeholders, their prompts, and the case files.
+      search_prompt: Search the people, their prompts, and the case files.
       setup: Setup
-      sidebar_label: Case, stakeholders and files
+      sidebar_label: Case, people and files
       unreachable: Unreachable
       usage: Usage
       your_cases: Your cases
@@ -234,14 +234,14 @@ en:
       cost_note: Cache writes are not priced here, and a request over 272K tokens bills at a higher rate, so a total reads low rather than high.
       cost_unknown: Not priced
       cost_unknown_note: "%{models} has no price on file, so this case has no total. Add the rate to the catalogue once you have read the provider's own page."
-      empty_body: Rehearse a stakeholder, or publish the case and let somebody run it, and the count starts here.
+      empty_body: Rehearse someone, or publish the case and let somebody run it, and the count starts here.
       empty_heading: Nothing has been spent on this case yet
       model: Model
       rehearsals: Your rehearsals
       rehearsals_note: What you spent writing the case. It does not scale with the class.
       replies: Students' replies
-      stakeholder: Stakeholder
-      table_caption: What each stakeholder has cost to answer as
+      stakeholder: Person
+      table_caption: What each person has cost to answer as
       title: Usage
       tokens: Tokens
       tokens_per_run: Tokens per run
@@ -377,7 +377,7 @@ en:
   home:
     create_account: Create an account
     for_instructors: For instructors
-    for_instructors_body: Write the stakeholders, decide who knows what, and watch where a cohort gets stuck.
+    for_instructors_body: Write the people, decide who knows what, and watch where a cohort gets stuck.
     for_students: For students
     for_students_body: Interview the people inside the case and build the picture yourself.
     get_started: Get started
