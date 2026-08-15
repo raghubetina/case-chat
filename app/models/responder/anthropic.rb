@@ -18,6 +18,10 @@ module Responder
     # that matters is in the briefing, not in the sampling budget.
     EFFORT = "medium".freeze
 
+    # What a replayed tool call is told. The pipeline raises rather than
+    # persisting a call it would not allow, so a stored turn is one that ran.
+    TOOL_APPLIED = "Done. The student has it.".freeze
+
     def initialize(client: nil, model: MODEL, effort: nil)
       @client = client
       @model = model
@@ -68,7 +72,7 @@ module Responder
         system_: [
           {type: "text", text: briefing.system_text, cache_control: {type: "ephemeral", ttl: "1h"}}
         ],
-        messages: history.map { |message| serialize(message) }
+        messages: serialize_history(history)
       }
       tools = briefing.tools
       params[:tools] = tools if tools.any?
@@ -81,11 +85,41 @@ module Responder
     # from one question to the next -- Anthropic holds no state to remember it
     # for us. Turns recorded before that was stored, and every student turn,
     # fall back to plain text.
-    def serialize(message)
-      role = message.from_contact? ? "assistant" : "user"
-      blocks = message.from_contact? ? blocks_for(message) : nil
+    #
+    # Replaying a turn that used a tool means answering it. A tool_use block
+    # sent back without a matching tool_result is rejected outright, and the
+    # result is worth sending on its own account: the app applies an
+    # introduction and the contact is otherwise never told whether it landed.
+    def serialize_history(history)
+      history.each_with_object([]) do |message, turns|
+        blocks = message.from_contact? ? blocks_for(message) : nil
 
-      {role: role, content: blocks.presence || message.body.to_s}
+        turns << if message.from_contact?
+          {role: "assistant", content: blocks.presence || message.body.to_s}
+        else
+          {role: "user", content: student_turn(message, turns.last)}
+        end
+      end
+    end
+
+    # Answers whatever the previous assistant turn asked for, ahead of what the
+    # student said. Anthropic requires the results first in the same turn.
+    def student_turn(message, previous)
+      results = tool_results_for(previous)
+      return message.body.to_s if results.empty?
+
+      results + [{type: "text", text: message.body.to_s}]
+    end
+
+    def tool_results_for(previous)
+      blocks = previous.is_a?(Hash) ? previous[:content] : nil
+      return [] unless blocks.is_a?(Array)
+
+      blocks.filter_map do |block|
+        next unless block["type"] == "tool_use" || block[:type] == "tool_use"
+
+        {type: "tool_result", tool_use_id: block["id"] || block[:id], content: TOOL_APPLIED}
+      end
     end
 
     # Only this model's own reasoning is worth returning. Blocks made by another
@@ -114,7 +148,12 @@ module Responder
         text: text,
         # Kept whole rather than filtered to thinking: the API asks for the turn
         # as it produced it, and validates the order it comes back in.
-        reasoning_blocks: MessageReasoning.clean(message.to_h[:content] || message.to_h["content"]),
+        #
+        # deep_to_h, not to_h. `to_h` returns the shallow @data, so the blocks
+        # inside stay SDK objects and serialize with their own bookkeeping --
+        # which the API rejects with "tool_use.caller_: Extra inputs are not
+        # permitted" on the turn after next, long after the mistake.
+        reasoning_blocks: MessageReasoning.clean(message.deep_to_h[:content]),
         introduced_contact_ids: values_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :contact_id),
         shared_document_ids: values_from(tool_uses, ContactBriefing::SHARE_TOOL, :document_ids),
         introduction_reasons: values_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :reason),

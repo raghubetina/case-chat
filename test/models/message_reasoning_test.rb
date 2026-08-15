@@ -95,10 +95,43 @@ class MessageReasoningTest < ActiveSupport::TestCase
     assert_not_includes message.reload.body, THINKING["signature"]
   end
 
+  # A tool_use block handed back without a matching tool_result is rejected
+  # outright: "tool_use ids were found without tool_result". Replaying a turn
+  # therefore means answering what it asked for, and the contact is told its
+  # introduction landed -- which it otherwise never learns.
+  test "a replayed tool call is answered in the next student turn" do
+    tool_use = {"type" => "tool_use", "id" => "toolu_1",
+                "name" => "introduce_contact", "input" => {"contact_id" => "abc"}}
+    contact_turn([THINKING, tool_use])
+    student = Message.create!(conversation: @conversation, body: "Say more.",
+      sent_at: Time.current, from_contact: false)
+    history = Message.includes(:reasoning).where(conversation_id: @conversation.id).order(:created_at).to_a
+
+    turns = Responder::Anthropic.new(model: "claude-opus-5").send(:serialize_history, history)
+    answering = turns.last[:content]
+
+    assert_equal "user", turns.last[:role]
+    assert_equal "tool_result", answering.first[:type]
+    assert_equal "toolu_1", answering.first[:tool_use_id]
+    assert_equal student.body, answering.last[:text], "the question follows the results"
+  end
+
+  test "a turn that used no tool leaves the student's turn as plain text" do
+    contact_turn([THINKING, SPEECH])
+    Message.create!(conversation: @conversation, body: "Say more.",
+      sent_at: Time.current, from_contact: false)
+    history = Message.includes(:reasoning).where(conversation_id: @conversation.id).order(:created_at).to_a
+
+    turns = Responder::Anthropic.new(model: "claude-opus-5").send(:serialize_history, history)
+
+    assert_equal "Say more.", turns.last[:content]
+  end
+
   # Loaded the way ContactReply#history loads it. Strict loading refuses a lazy
   # read here, which is the point: a caller that forgets the includes finds out
   # in a test rather than mid-reply.
   def serialize(adapter, message)
-    adapter.send(:serialize, Message.includes(:reasoning).find(message.id))
+    history = [Message.includes(:reasoning).find(message.id)]
+    adapter.send(:serialize_history, history).first
   end
 end
