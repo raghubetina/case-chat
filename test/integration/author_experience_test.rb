@@ -143,6 +143,32 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  # "Preview as student" points an author at the student workspace, which they
+  # have no run in. Sending them to join with their own code is a next step; a
+  # 500 in the middle of authoring is not.
+  test "previewing as a student without a run offers the join screen" do
+    get case_path(@case_study)
+
+    assert_redirected_to new_join_cases_path
+    assert_equal I18n.t("cases.not_enrolled"), flash[:alert]
+  end
+
+  test "previewing does not quietly enrol the author in their own case" do
+    assert_no_difference "Enrollment.count" do
+      get case_path(@case_study)
+    end
+  end
+
+  # A run id that names nothing is a bad link rather than a missing join, and
+  # the two must not collapse into the same redirect.
+  test "an unknown run is still not found" do
+    Enrollment.create!(user: @author, case_study: @case_study)
+
+    assert_raises(ActiveRecord::RecordNotFound) do
+      get case_path(@case_study, run: SecureRandom.uuid)
+    end
+  end
+
   test "the cast editor warns about an orphaned contact" do
     Referral.where(referred_contact_id: @denny.id).destroy_all
 

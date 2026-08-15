@@ -95,17 +95,24 @@ class CasesController < ApplicationController
 
   private
 
+  # Somebody with no run here is not an error, they are somebody who has not
+  # joined yet -- most often the author, who reaches this from "Preview as
+  # student" and holds the code they need. Joining stays an explicit act: an
+  # author who is enrolled behind their own back turns up in their own cohort.
   def load_case
-    enrollment = current_run!
+    enrollment = current_run
+    return redirect_to(new_join_cases_path, alert: t("cases.not_enrolled")) if enrollment.nil?
+
     authorize! enrollment.case_study, to: :show?
     load_workspace(enrollment)
   end
 
-  # `run` selects an older enrollment; without it you get the live one.
-  def current_run!
+  # `run` selects an older enrollment; without it you get the live one. A run id
+  # that names nothing is still a 404 -- that is a bad link, not a missing join.
+  def current_run
     runs = Enrollment.where(user_id: current_user.id, case_study_id: params[:id]).newest_first
     enrollment = params[:run].present? ? runs.find(params[:run]) : runs.first
-    raise ActiveRecord::RecordNotFound if enrollment.nil?
+    return nil if enrollment.nil?
 
     Enrollment.includes(case_study: :author).find(enrollment.id)
   end

@@ -265,6 +265,7 @@ en:
       note: Your instructor posts the code with the assignment.
       unknown_code: We do not recognise that code.
     no_documents: Nothing yet. Documents arrive when someone hands them to you.
+    not_enrolled: Join with the case code to see this case the way a student does.
     restart:
       action: Start a new run
       confirm: Start over? Your current run stays readable as history.

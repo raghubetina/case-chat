@@ -158,10 +158,18 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
   test "a stranger sees nothing of a case they are not in" do
     sign_in_as @stranger
 
-    # No enrollment, so there is no run to read. The case does not resolve at
-    # all rather than resolving and then refusing, which is the right answer:
-    # a 403 would confirm the case exists.
-    assert_raises(ActiveRecord::RecordNotFound) { get case_path(@case_study) }
+    # No enrollment, so there is no run to read, and the answer is the join
+    # screen. What has to hold is that it is byte-for-byte the answer an
+    # imaginary case gives: a 403, or any reply that differs between the two,
+    # would confirm this case exists.
+    get case_path(@case_study)
+    answer_for_a_real_case = [response.status, response.location]
+
+    get case_path(SecureRandom.uuid)
+
+    assert_redirected_to new_join_cases_path
+    assert_equal answer_for_a_real_case, [response.status, response.location],
+      "a case the stranger cannot see must not be distinguishable from one that does not exist"
 
     get cases_path
     assert_response :success
