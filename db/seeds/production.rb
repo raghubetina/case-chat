@@ -8,6 +8,6 @@
 # db:prepare only seeds a database it just created, so this runs once on first
 # boot. To load a case into a database that already exists, run
 # `bin/rails case_chat:seed_cases` from a shell on the service.
-return if ENV["SEED_DEMO_CASES"].blank?
+return unless CaseSeeder.requested?
 
 Rake::Task["case_chat:seed_cases"].invoke
