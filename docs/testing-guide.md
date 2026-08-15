@@ -3,7 +3,7 @@
 **https://cc.booth.school**
 
 Case Chat turns a written case into a set of people a student interviews. The student starts with a
-thin situation and two or three names, and earns the rest by asking someone the right question.
+thin situation and two or three names, and gets the rest by asking someone the right question.
 
 The question behind it: now that AI can do the analysis, can we give students deliberate practice at
 extracting constraints? A written case hands those over on page one. Here they sit with people who
@@ -43,7 +43,7 @@ timed anyone else.
 
 **Background** is handed to every student for free. So are the **Assignment**, everyone you put in
 the starting directory, and any file you tick "Given to every student at the start". Everything
-else has to be earned, so keep Background thin: where the student is, what is due, and when.
+else has to be asked for, so keep Background thin: where the student is, what is due, and when.
 
 The **Join code** arrives pre-filled. Keep it or type your own, but do not clear it: a case with an
 empty code will publish and still cannot be joined. Post it with the assignment.
@@ -118,15 +118,15 @@ Watch the reachability panel as you add rows.
 
 ## 4. Case files, and who hands them over
 
-Every document is uploaded under **Case files**, earned ones included.
+Every document is uploaded under **Case files**, including the ones a student has to ask for.
 
 ![Case files: the two documents Meridian gives every student, and the form for adding one](images/case-files.jpg)
 
 Tick "Given to every student at the start" on the files everyone should have. Left unticked, a file
-has to be earned: open the person who holds it and add it under **Can share**, with a condition
+has to be asked for: open the person who holds it and add it under **Can share**, with a condition
 written the same way as a referral's.
 
-Meridian gives both its files to everyone, so it has no earned document to copy.
+Meridian gives both its files to everyone, so it has no example of a file a student has to ask for.
 
 ## 5. Test drive
 

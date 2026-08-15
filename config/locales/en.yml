@@ -97,7 +97,7 @@ en:
       empty_heading: No one in the cohort yet
       last_active: Last active
       median_contacts: People found, median
-      median_documents: Documents earned, median
+      median_documents: Documents received, median
       median_messages: Messages sent, median
       messages: Messages
       not_started: Not started
@@ -138,7 +138,7 @@ en:
     documents:
       add: Add document
       added: Document added.
-      earned: Must be earned
+      earned: Must be asked for
       empty: No documents yet.
       fields:
         description: Description
@@ -151,7 +151,7 @@ en:
         given_at_start: Given to every student at the start
       no_description: No description
       no_file: No file
-      note: "Anything given at the start is handed to every student. Anything else is earned: open the person who holds it and add it under Can share."
+      note: "Anything given at the start is handed to every student. Anything else is handed over only when a student asks for it: open the person who holds it and add it under Can share."
       remove: Remove
       remove_confirm: Remove this document? Any share rule pointing at it goes too.
       removed: Document removed.
@@ -377,9 +377,9 @@ en:
     for_instructors: For instructors
     for_instructors_body: You write each person and set what opens an introduction. The cohort screen shows which of them students reached.
     for_students: For students
-    for_students_body: You start with the situation and two or three names. You meet everyone else by earning an introduction.
+    for_students_body: You start with the situation and two or three names. Asking the right question is how you meet everyone else.
     join_note: Once you are signed in, enter the case code your instructor posted with the assignment.
-    lede: A case is a brief, a few files, and people who each know part of it. Students are handed some of it at the start, and earn the rest by interviewing the people they can reach.
+    lede: A case is a brief, a few files, and people who each know part of it. Students are handed some of it at the start. The rest comes out of the questions they ask.
     quote: A problem well-stated is a problem half-solved.
     quote_source: Charles Kettering
     rationale: Now that AI can do the analysis, this is deliberate practice at extracting the constraints.
