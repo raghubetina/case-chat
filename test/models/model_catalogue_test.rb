@@ -5,7 +5,7 @@ require "test_helper"
 # own models endpoint; a typo would fail at the provider, mid-reply, in a job.
 class ModelCatalogueTest < ActiveSupport::TestCase
   test "every catalogued model names a provider we have an adapter for" do
-    ModelCatalogue.all.each do |entry|
+    ModelCatalogue::ENTRIES.each do |entry|
       assert_includes Responder::ADAPTERS.keys, entry.provider,
         "#{entry.id} names a provider with no adapter"
     end

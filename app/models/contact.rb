@@ -47,6 +47,7 @@ class Contact < ApplicationRecord
 
   has_many :model_calls, class_name: "ModelCall", dependent: :destroy
   validates :in_starting_directory, inclusion: {in: [true, false]}
+  validates :knows_case_background, inclusion: {in: [true, false]}
 
   private
 

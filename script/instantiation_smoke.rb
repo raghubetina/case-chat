@@ -65,7 +65,11 @@ Dir.mktmpdir("foundation-instantiation-") do |temporary_root|
 
   blueprint = YAML.safe_load_file(File.join(target_root, "render.yaml"))
   web_service = blueprint.fetch("services").find { |service| service["type"] == "web" }
-  raise "Render web service was not instantiated" unless web_service.fetch("name") == TARGET_SLUG
+  # Derived from the stem, not equal to it: an app sharing a Render workspace
+  # with another deployment suffixes its services to keep them apart. What must
+  # hold is that the name is lowered from the app slug, which the leftover scan
+  # below proves for every identity in the file.
+  raise "Render web service was not instantiated" unless web_service.fetch("name").start_with?(TARGET_SLUG)
 
   # Web, worker, Key Value, database, and env group all hang off one stem, so
   # any surviving mention is an identity the Compiler could not lower.

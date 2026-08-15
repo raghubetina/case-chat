@@ -43,7 +43,7 @@ class SchemaCompletenessTest < ActiveSupport::TestCase
   # A migration that has run but left nothing in the schema file is the shape of
   # the bug above, and it is invisible from either file alone.
   test "the schema file is not behind the migrations" do
-    latest = Dir[Rails.root.join("db/migrate/*.rb")].map { |path| File.basename(path)[/\A\d+/] }.max
+    latest = Rails.root.glob("db/migrate/*.rb").map { |path| path.basename.to_s[/\A\d+/] }.max
     version = SCHEMA.read[/define\(version: ([\d_]+)\)/, 1].to_s.delete("_")
 
     assert_operator version, :>=, latest,

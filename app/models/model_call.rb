@@ -42,6 +42,9 @@ class ModelCall < ApplicationRecord
 
   validates :provider, presence: true
   validates :model, presence: true
+  # A provider that reports no usage field at all leaves these nil, which the
+  # NOT NULL columns would reject at the database instead of here.
+  validates :input_tokens, :output_tokens, :cache_read_tokens, :cache_write_tokens, presence: true
 
   scope :newest_first, -> { order(created_at: :desc) }
 

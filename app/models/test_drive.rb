@@ -16,7 +16,7 @@ class TestDrive
   # A contact's answer may fire the introduce or share tool. Those are the
   # interesting events for an author — the condition either matched or it did
   # not — so they are carried alongside the text rather than being applied.
-  Turn = Struct.new(:role, :text, :introduced_ids, :shared_ids, keyword_init: true) do
+  Turn = Struct.new(:role, :text, :introduced_ids, :shared_ids) do
     def from_contact? = role.to_s == "contact"
   end
 

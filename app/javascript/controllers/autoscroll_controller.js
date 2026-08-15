@@ -39,7 +39,9 @@ export default class extends Controller {
 
       this.scrolling = true
       this.element.scrollTop = this.element.scrollHeight
-      requestAnimationFrame(() => { this.scrolling = false })
+      requestAnimationFrame(() => {
+        this.scrolling = false
+      })
     })
   }
 }
