@@ -113,8 +113,12 @@ wait_for_health "${app}" 120 || exit 1
 
 host_port="$(docker port "${app}" 80/tcp | head -1 | awk -F: '{print $NF}')"
 base_url="http://127.0.0.1:${host_port}"
-assert_http_status 200 "${base_url}/" --header 'Host: render.test'
-assert_http_status 200 "${base_url}/" --header 'Host: attacker.test'
+# Root sends a signed-out visitor to the sign-in form, so it proves routing
+# rather than rendering. /privacy is the page that proves the layout renders,
+# and the second call proves an unknown Host is served rather than refused.
+assert_http_status 302 "${base_url}/" --header 'Host: render.test'
+assert_http_status 200 "${base_url}/privacy" --header 'Host: render.test'
+assert_http_status 200 "${base_url}/privacy" --header 'Host: attacker.test'
 assert_http_status 200 "${base_url}/up" --header 'Host: internal-probe'
 assert_http_status 200 "${base_url}/ready" --header 'Host: internal-probe'
 assert_http_status 404 "${base_url}/production-smoke-missing" --header 'Host: render.test'
