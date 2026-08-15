@@ -68,8 +68,12 @@ docker build --tag "${image}" .
 
 runtime_user="$(docker run --rm --entrypoint id "${image}" -u)"
 [[ "${runtime_user}" == "1000" ]] || { echo "Expected runtime UID 1000, got ${runtime_user}" >&2; exit 1; }
+# `bundle show` matches on a prefix: with cloudinary in the bundle it resolves
+# `standard` to standardwebhooks, a legitimate runtime dependency, and reports
+# the linter as leaked. Match the installed list exactly instead.
+installed_gems="$(docker run --rm --entrypoint bundle "${image}" list)"
 for excluded_gem in brakeman foreman image_processing ruby-vips selenium-webdriver standard; do
-  if docker run --rm --entrypoint bundle "${image}" show "${excluded_gem}" >/dev/null 2>&1; then
+  if grep -qE "^[[:space:]]*\* ${excluded_gem} \(" <<<"${installed_gems}"; then
     echo "Production image unexpectedly contains ${excluded_gem}" >&2
     exit 1
   fi
