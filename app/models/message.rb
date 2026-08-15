@@ -2,32 +2,23 @@
 #
 # Table name: messages
 #
-#  id                    :uuid             not null, primary key
-#  body                  :text             not null
-#  from_contact          :boolean          not null
-#  sent_at               :datetime         not null
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  conversation_id       :uuid             not null
-#  introduced_contact_id :uuid
+#  id              :uuid             not null, primary key
+#  body            :text             not null
+#  from_contact    :boolean          not null
+#  sent_at         :datetime         not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  conversation_id :uuid             not null
 #
 # Indexes
 #
-#  index_messages_on_conversation_id        (conversation_id)
-#  index_messages_on_introduced_contact_id  (introduced_contact_id)
+#  index_messages_on_conversation_id  (conversation_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (conversation_id => conversations.id) ON DELETE => cascade
-#  fk_rails_...  (introduced_contact_id => contacts.id) ON DELETE => nullify
 #
 class Message < ApplicationRecord
-  # Replaced by the introductions association below, which can hold more than
-  # one. Ignored rather than dropped in the same change: the column has to stop
-  # being read by running code before a later migration removes it, or a box
-  # still serving the old code meets a table that no longer has it.
-  self.ignored_columns += %w[introduced_contact_id]
-
   belongs_to :conversation, class_name: "Conversation", optional: false
   has_many :document_shares, class_name: "DocumentShare", dependent: :destroy
   # Everyone the student met on this turn. A contact may introduce more than
