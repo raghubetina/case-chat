@@ -161,6 +161,52 @@ class ContactReplyTest < ActiveSupport::TestCase
     assert_equal @priya, message.introduced_contact
   end
 
+  # The introduce tool asks for a sentence in the contact's own voice, and a
+  # model that introduces someone often writes no prose beside it. Dropping that
+  # sentence is what left a contact card sitting under an empty bubble, as
+  # though the handoff arrived from nobody.
+  test "an introduction with no prose speaks the reason the contact gave" do
+    Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "When asked.")
+    ask "Who else?"
+
+    responder = wordless(introduced_contact_ids: [@priya.id],
+      introduction_reasons: ["Priya ran the plant when this started; go and ask her."])
+    message = ContactReply.new(@conversation, responder: responder).generate!
+
+    assert_equal "Priya ran the plant when this started; go and ask her.", message.body
+    assert_equal @priya, message.introduced_contact
+  end
+
+  # Contacts re-name people the student already knows all the time, and a turn
+  # that does both has one card to spend. Spending it on the colleague already
+  # in the directory hides the only thing that was actually earned.
+  test "the card names somebody new rather than somebody already met" do
+    marcus = Contact.create!(full_name: "Marcus Bell", role_title: "Director of Community Health Equity",
+      system_prompt: "You know who gets left short.", case_study: @case_study)
+    Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "When asked.")
+    Referral.create!(referring_contact: @dana, referred_contact: marcus, condition: "When fairness comes up.")
+    Introduction.create!(enrollment: @conversation.enrollment, contact: @priya, introducing_contact: @dana)
+    ask "Who is left short?"
+
+    responder = wordless(introduced_contact_ids: [@priya.id, marcus.id])
+    message = ContactReply.new(@conversation, responder: responder).generate!
+
+    assert_equal marcus, message.introduced_contact,
+      "Priya was already in the directory; Marcus is what this turn earned"
+  end
+
+  test "prose the contact wrote wins over the tool's reason" do
+    Referral.create!(referring_contact: @dana, referred_contact: @priya, condition: "When asked.")
+    ask "Who else?"
+
+    responder = spoken("Margin fell because we changed over more often.",
+      introduced_contact_ids: [@priya.id], introduction_reasons: ["Go and ask Priya."])
+    message = ContactReply.new(@conversation, responder: responder).generate!
+
+    assert_equal "Margin fell because we changed over more often.", message.body,
+      "saying it twice reads worse than either on its own"
+  end
+
   test "a turn that carried nothing at all still says so" do
     ask "Anything?"
 
@@ -171,13 +217,19 @@ class ContactReplyTest < ActiveSupport::TestCase
 
   private
 
-  def wordless(introduced_contact_ids: [], shared_document_ids: [])
+  def wordless(introduced_contact_ids: [], shared_document_ids: [], introduction_reasons: [])
+    spoken("", introduced_contact_ids: introduced_contact_ids,
+      shared_document_ids: shared_document_ids, introduction_reasons: introduction_reasons)
+  end
+
+  def spoken(text, introduced_contact_ids: [], shared_document_ids: [], introduction_reasons: [])
     Class.new {
       def initialize(reply) = @reply = reply
 
       def reply(briefing:, history:, on_delta: nil) = @reply
     }.new(Responder::Reply.new(
-      text: "", introduced_contact_ids: introduced_contact_ids, shared_document_ids: shared_document_ids
+      text: text, introduced_contact_ids: introduced_contact_ids,
+      shared_document_ids: shared_document_ids, introduction_reasons: introduction_reasons
     ))
   end
 end

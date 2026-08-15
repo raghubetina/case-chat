@@ -13,7 +13,10 @@ module Responder
   #   whose `arguments` is a JSON *string*.
   # - Cached tokens live at `usage.input_tokens_details.cached_tokens`.
   class OpenAI
-    MODEL = "gpt-5.6".freeze
+    # Only reached by a caller that builds this adapter without naming a model;
+    # the deployment default comes from the catalogue. Kept in step with it so
+    # no path can land on an id no entry describes.
+    MODEL = ModelCatalogue::DEFAULT_ID
 
     def initialize(client: nil, model: MODEL, effort: nil)
       @client = client
@@ -94,14 +97,15 @@ module Responder
 
       Reply.new(
         text: response.output_text.to_s.strip,
-        introduced_contact_ids: ids_from(calls, ContactBriefing::INTRODUCE_TOOL, :contact_id),
-        shared_document_ids: ids_from(calls, ContactBriefing::SHARE_TOOL, :document_ids),
+        introduced_contact_ids: values_from(calls, ContactBriefing::INTRODUCE_TOOL, :contact_id),
+        shared_document_ids: values_from(calls, ContactBriefing::SHARE_TOOL, :document_ids),
+        introduction_reasons: values_from(calls, ContactBriefing::INTRODUCE_TOOL, :reason),
         usage: usage_from(response.usage),
         raw: response.to_h
       )
     end
 
-    def ids_from(calls, tool_name, key)
+    def values_from(calls, tool_name, key)
       calls
         .select { |call| call.name.to_s == tool_name }
         .flat_map { |call| Array(arguments_for(call)[key]) }

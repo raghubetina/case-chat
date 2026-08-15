@@ -34,10 +34,22 @@ class ModelCatalogue
 
   BY_ID = ENTRIES.index_by(&:id).freeze
 
+  # What answers as a stakeholder whose author has not picked anything.
+  #
+  # It lives here rather than in an adapter because the deployment default is a
+  # model like any other: it should have a known price, a checked id, and an
+  # effort the catalogue agrees that model accepts. The previous default was a
+  # bare id no entry described, so the commonest case in the app was the one
+  # nothing could report on.
+  DEFAULT_ID = "gpt-5.6-sol".freeze
+  DEFAULT_EFFORT = "high".freeze
+
   class << self
     def all = ENTRIES
 
     def find(id) = BY_ID[id.to_s]
+
+    def default = find(DEFAULT_ID)
 
     def ids = BY_ID.keys
 

@@ -11,6 +11,20 @@ class ModelCatalogueTest < ActiveSupport::TestCase
     end
   end
 
+  # Most stakeholders will never have a model picked for them, so the default is
+  # the entry that answers most often. A default naming an id no entry describes
+  # is one the cost report cannot price and the effort list cannot validate.
+  test "the deployment default is a real catalogued model" do
+    assert_not_nil ModelCatalogue.default, "#{ModelCatalogue::DEFAULT_ID} is not in the catalogue"
+    assert_equal Responder::DEFAULT_ADAPTER, ModelCatalogue.default.provider,
+      "RESPONDER's default provider and the default model must not drift apart"
+  end
+
+  test "the default effort is one the default model accepts" do
+    assert_includes ModelCatalogue.efforts_for(ModelCatalogue::DEFAULT_ID),
+      ModelCatalogue::DEFAULT_EFFORT
+  end
+
   test "the model implies its provider, so the two cannot disagree" do
     assert_equal "anthropic", ModelCatalogue.find("claude-opus-5").provider
     assert_equal "openai", ModelCatalogue.find("gpt-5.6-luna").provider

@@ -96,14 +96,15 @@ module Responder
 
       Reply.new(
         text: text,
-        introduced_contact_ids: ids_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :contact_id),
-        shared_document_ids: ids_from(tool_uses, ContactBriefing::SHARE_TOOL, :document_ids),
+        introduced_contact_ids: values_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :contact_id),
+        shared_document_ids: values_from(tool_uses, ContactBriefing::SHARE_TOOL, :document_ids),
+        introduction_reasons: values_from(tool_uses, ContactBriefing::INTRODUCE_TOOL, :reason),
         usage: usage_from(message.usage),
         raw: message.to_h
       )
     end
 
-    def ids_from(tool_uses, tool_name, key)
+    def values_from(tool_uses, tool_name, key)
       tool_uses
         .select { |block| block.name.to_s == tool_name }
         .flat_map { |block| Array(symbolize(block.input)[key]) }

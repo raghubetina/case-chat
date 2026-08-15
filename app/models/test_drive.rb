@@ -38,7 +38,7 @@ class TestDrive
   def answer(reply)
     append(
       role: "contact",
-      text: reply.text,
+      text: reply.spoken_text,
       introduced_ids: reply.introduced_contact_ids,
       shared_ids: reply.shared_document_ids
     )

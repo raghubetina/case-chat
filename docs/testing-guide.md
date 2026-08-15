@@ -96,9 +96,10 @@ them the whole situation, and outsiders who know everything are why cases feel f
 
 ![Model and reasoning effort, the case-background toggle, and the list of people this stakeholder can introduce](images/who-answers-and-referrals.jpg)
 
-**Who answers as this person** is per stakeholder. Leave it on the deployment default unless you
-are deliberately comparing — a sharper model for the one stakeholder who has to hold a difficult
-line, a cheaper one for a gatekeeper. Cost is recorded per stakeholder either way.
+**Who answers as this person** is per stakeholder. The deployment default is GPT-5.6 Sol at high
+reasoning effort; leave it there unless you are deliberately comparing — a different model for the
+one stakeholder who has to hold a difficult line, say. Cost is recorded per stakeholder either
+way, so a comparison is answerable afterwards.
 
 ---
 
@@ -166,10 +167,12 @@ Publish, then use **Preview as student** and join with your own case code.
 
 Seven people in the cast; the student starts with two. The rest is the case.
 
-![An introduction arriving in the thread as a contact card](images/earned-introduction.jpg)
+![An introduction arriving in the thread: the stakeholder says why, then a contact card](images/earned-introduction.jpg)
 
-That card is the whole design in one frame: the student asked how to compare a dose in one county
-against a dose in another, and got handed the person who can answer it.
+That is the whole design in one frame. The student asked whether the Authority could announce a
+floor and who signs the recommendation; Dr. Ortiz said why the Governor's office is the place to
+take that, and the card followed. The directory went from two people to five over the course of
+the conversation, and every one of them was earned by a question.
 
 ---
 
@@ -195,8 +198,6 @@ whether this is worth class time.
 
 Please do not spend time reporting these — they are on the list already.
 
-- **An introduction can arrive with no words.** The stakeholder is asked for a one-sentence
-  reason when they introduce someone; nothing displays it yet, so the card can turn up bare.
 - **`/privacy` and `/terms` are placeholder text.** Do not read anything into them.
 - **No error tracking yet.** If you hit an error page, screenshot it — we will not see it
   otherwise.

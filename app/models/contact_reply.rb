@@ -94,7 +94,7 @@ class ContactReply
   # file card tells the student the reply failed when they just got what they
   # asked for. Only a turn that carried nothing at all gets that.
   def body_for(reply)
-    return reply.text if reply.text.present?
+    return reply.spoken_text if reply.spoken_text.present?
     return "" if reply.introduced_contact_ids.any? || reply.shared_document_ids.any?
 
     I18n.t("threads.no_answer")
@@ -106,16 +106,26 @@ class ContactReply
   # narrows what can be recorded.
   def record_introductions(reply, briefing, message)
     allowed = briefing.referable_contacts.index_by(&:id)
+    newly_met = []
+    first_named = nil
 
     reply.introduced_contact_ids.each do |contact_id|
       introduced = allowed[contact_id]
       raise RuleViolation, "#{contact.full_name} cannot introduce #{contact_id}" if introduced.nil?
 
-      Introduction.find_or_create_by!(enrollment: enrollment, contact: introduced) do |introduction|
-        introduction.introducing_contact = contact
+      first_named ||= introduced
+      introduction = Introduction.find_or_create_by!(enrollment: enrollment, contact: introduced) do |row|
+        row.introducing_contact = contact
       end
-      message.update!(introduced_contact: introduced) if message.introduced_contact_id.nil?
+      newly_met << introduced if introduction.previously_new_record?
     end
+
+    # The message carries one contact card, so it should name somebody the
+    # student has not already met. Naming whoever came first drew a card for an
+    # old colleague and none for the new one on any turn that mentioned both,
+    # which reads as though nothing was earned.
+    card = newly_met.first || first_named
+    message.update!(introduced_contact: card) if card
   end
 
   def record_shares(reply, briefing, message)

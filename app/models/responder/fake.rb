@@ -42,10 +42,13 @@ module Responder
       # including the join behavior that decides whether spaces survive.
       text.scan(/\S+\s*/).each { |chunk| on_delta.call(chunk) } if on_delta
 
+      referrals = triggered_referrals(briefing, prompt)
+
       Reply.new(
         text: text,
-        introduced_contact_ids: triggered_referral_ids(briefing, prompt),
+        introduced_contact_ids: referrals.map(&:referred_contact_id),
         shared_document_ids: triggered_document_ids(briefing, prompt),
+        introduction_reasons: referrals.map { |r| "You want #{r.referred_contact.full_name} for that." },
         usage: Usage.new(
           input_tokens: 100, output_tokens: 40,
           cache_read_tokens: (history.size > 1) ? 80 : 0,
@@ -62,10 +65,8 @@ module Responder
       "Let me take that one."
     end
 
-    def triggered_referral_ids(briefing, prompt)
-      briefing.send(:referrals).filter_map do |referral|
-        referral.referred_contact_id if matches?(referral.condition, prompt)
-      end
+    def triggered_referrals(briefing, prompt)
+      briefing.send(:referrals).select { |referral| matches?(referral.condition, prompt) }
     end
 
     def triggered_document_ids(briefing, prompt)

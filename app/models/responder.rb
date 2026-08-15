@@ -16,15 +16,33 @@ module Responder
   # What a contact said, plus the structured things they did while saying it.
   # The id lists are normalized here so no adapter can hand the pipeline a nil,
   # and every caller can iterate without guarding.
-  Reply = Data.define(:text, :introduced_contact_ids, :shared_document_ids, :usage, :raw) do
-    def initialize(text:, introduced_contact_ids: [], shared_document_ids: [], usage: NULL_USAGE, raw: nil)
+  Reply = Data.define(:text, :introduced_contact_ids, :shared_document_ids,
+    :introduction_reasons, :usage, :raw) do
+    def initialize(text:, introduced_contact_ids: [], shared_document_ids: [],
+      introduction_reasons: [], usage: NULL_USAGE, raw: nil)
       super(
         text: text.to_s,
         introduced_contact_ids: Array(introduced_contact_ids).compact.uniq,
         shared_document_ids: Array(shared_document_ids).compact.uniq,
+        introduction_reasons: Array(introduction_reasons).map { |line| line.to_s.strip }.reject(&:empty?),
         usage: usage,
         raw: raw
       )
+    end
+
+    # What this person actually said out loud.
+    #
+    # Introducing someone is a tool call, and a model that makes one often
+    # writes no prose alongside it — which used to reach the student as a
+    # contact card under an empty bubble, as though the handoff came from
+    # nowhere. The tool asks for a sentence in the contact's own voice for
+    # exactly this reason, so when there is no prose, that sentence is the
+    # reply. Prose wins when there is any: saying it twice is worse than
+    # either.
+    def spoken_text
+      return text if text.present?
+
+      introduction_reasons.join("\n\n")
     end
   end
 
@@ -40,13 +58,25 @@ module Responder
     "fake" => ->(**) { Fake.new }
   }.freeze
 
-  DEFAULT_ADAPTER = "anthropic".freeze
+  DEFAULT_ADAPTER = "openai".freeze
 
   class << self
     attr_writer :current
 
+    # The deployment default: the catalogue's default model at its stated
+    # effort, as long as RESPONDER still names that model's provider. Flipping
+    # RESPONDER to the other provider is a wholesale escape hatch, and it gets
+    # that provider's own defaults rather than an effort chosen for a different
+    # model.
     def current
-      @current ||= build(configured_name)
+      @current ||= begin
+        entry = ModelCatalogue.default
+        if entry && configured_name == entry.provider
+          build(entry.provider, model: entry.id, effort: ModelCatalogue::DEFAULT_EFFORT)
+        else
+          build(configured_name)
+        end
+      end
     end
 
     # Swap the responder for the duration of a block. Used by tests that want
