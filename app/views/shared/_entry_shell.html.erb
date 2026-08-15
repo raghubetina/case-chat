@@ -1,0 +1,16 @@
+<%# The two-pane way in: the pitch on the left, the form on the right. Sign-in
+    and account creation both use it, so moving between them changes only the
+    right-hand pane even though each is an ordinary page load. %>
+<% content_for :full_bleed, true %>
+
+<div class="grid min-h-[calc(100dvh-41px)] md:grid-cols-2">
+  <%= render "shared/entry_pitch" %>
+
+  <%# Same card as shared/rodauth/_panel, which the auth pages that keep their
+      own single-column layout still use. %>
+  <section class="flex items-center justify-center px-6 py-10">
+    <div class="w-full max-w-md rounded-box border border-base-300 bg-base-100 p-8">
+      <%= yield %>
+    </div>
+  </section>
+</div>

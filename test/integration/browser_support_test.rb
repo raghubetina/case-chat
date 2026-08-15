@@ -10,19 +10,21 @@ class BrowserSupportTest < ActionDispatch::IntegrationTest
     "(KHTML, like Gecko) Chrome/80.0.3987.149 Mobile Safari/537.36"
 
   test "an outdated ordinary web browser is rejected" do
-    get root_path, headers: {"User-Agent" => OLD_SAFARI_USER_AGENT}
+    get "/privacy", headers: {"User-Agent" => OLD_SAFARI_USER_AGENT}
 
     assert_response :not_acceptable
   end
 
+  # Any ordinary page will do, but not root: it redirects a signed-out
+  # visitor, and a 302 is not the success these assert.
   test "a Hotwire Native iOS shell is exempt from the web browser floor" do
-    get root_path, headers: {"User-Agent" => HOTWIRE_NATIVE_IOS_USER_AGENT}
+    get "/privacy", headers: {"User-Agent" => HOTWIRE_NATIVE_IOS_USER_AGENT}
 
     assert_response :success
   end
 
   test "a Hotwire Native Android shell is exempt from the web browser floor" do
-    get root_path, headers: {"User-Agent" => HOTWIRE_NATIVE_ANDROID_USER_AGENT}
+    get "/privacy", headers: {"User-Agent" => HOTWIRE_NATIVE_ANDROID_USER_AGENT}
 
     assert_response :success
   end

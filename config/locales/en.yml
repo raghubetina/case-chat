@@ -374,7 +374,6 @@ en:
   money:
     under_a_cent: Under $0.01
   home:
-    create_account: Create an account
     for_instructors: For instructors
     for_instructors_body: You write each person and set what opens an introduction. The cohort screen shows which of them students reached.
     for_students: For students
@@ -384,7 +383,6 @@ en:
     quote: A problem well-stated is a problem half-solved.
     quote_source: Charles Kettering
     rationale: Now that AI can do the analysis, this is deliberate practice at extracting the constraints.
-    sign_in_heading: Sign in to your cases
     tagline: Case studies students interview
   mailers:
     rodauth:

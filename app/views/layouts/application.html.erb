@@ -58,7 +58,8 @@
           <%= button_to t("nav.sign_out"), rodauth.logout_path, method: :post,
                 class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs pill-off",
                 form: {data: {turbo: false}} %>
-        <% else %>
+        <% elsif !current_page?(rodauth.login_path) %>
+          <%# Not on the sign-in page itself, where it would point at itself. %>
           <%= link_to t("nav.sign_in"), rodauth.login_path,
                 class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs pill-off" %>
         <% end %>

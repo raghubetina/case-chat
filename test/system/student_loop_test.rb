@@ -154,15 +154,31 @@ class StudentLoopTest < ApplicationSystemTestCase
     assert_no_text "secret from another run"
   end
 
-  test "the signed-out landing page offers a way in" do
+  # The way in is the form itself. A landing page whose only control was a
+  # button reading "Sign in" put a click in front of the thing it named.
+  test "a signed-out visitor lands on the sign-in form, beside the pitch" do
     # Sign out lives in the rail's account menu now, not the header.
     find("[data-controller='theme'] button", match: :first).click
     click_on I18n.t("nav.sign_out")
     visit "/"
 
-    assert_text I18n.t("home.tagline")
-    assert_link I18n.t("nav.sign_in")
+    assert_current_path "/login"
+    assert_field "email"
+    assert_field "password"
+    assert_text I18n.t("home.tagline"), count: 1
     assert_no_text "It works."
+  end
+
+  test "the pitch stays put while the pane beside it swaps to account creation" do
+    find("[data-controller='theme'] button", match: :first).click
+    click_on I18n.t("nav.sign_out")
+    visit "/"
+
+    # rodauth supplies this link's text, so it is matched by where it goes.
+    find("a[href='/create-account']").click
+
+    assert_field "password-confirm"
+    assert_text I18n.t("home.tagline"), count: 1
   end
 
   test "a signed-in visitor is sent into their case rather than the landing page" do

@@ -1,0 +1,27 @@
+<%# What the app is, shown beside every way in. Signed-out visitors land on
+    the sign-in form itself, so this rail is the only place the pitch is made. %>
+<section class="flex flex-col justify-between gap-8 bg-rail p-6 text-railink md:p-8 lg:p-12">
+  <div class="flex flex-col gap-4">
+    <%# Not an h1: the page's heading is the form beside this, and the tagline
+        is a brand line rather than the document's title. %>
+    <p class="font-head text-xl font-semibold"><%= t("home.tagline") %></p>
+    <p class="max-w-prose text-base text-railmute"><%= t("home.lede") %></p>
+    <p class="max-w-prose text-base text-railmute"><%= t("home.rationale") %></p>
+
+    <figure class="max-w-prose border-l-2 border-railmute pl-4">
+      <blockquote class="text-base text-railink"><%= t("home.quote") %></blockquote>
+      <figcaption class="kick mt-1 text-xs text-railmute"><%= t("home.quote_source") %></figcaption>
+    </figure>
+  </div>
+
+  <dl class="grid grid-cols-2 gap-4 text-sm">
+    <div class="flex flex-col gap-1">
+      <dt class="kick text-xs text-railmute"><%= t("home.for_students") %></dt>
+      <dd><%= t("home.for_students_body") %></dd>
+    </div>
+    <div class="flex flex-col gap-1">
+      <dt class="kick text-xs text-railmute"><%= t("home.for_instructors") %></dt>
+      <dd><%= t("home.for_instructors_body") %></dd>
+    </div>
+  </dl>
+</section>

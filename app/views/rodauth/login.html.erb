@@ -1,4 +1,4 @@
-<%= render "panel" do %>
+<%= render layout: "shared/entry_shell" do %>
   <%= render "header", lede: t("auth.login.lede") %>
 
   <%= form_with url: rodauth.login_path, method: :post, data: {turbo: false}, class: "space-y-5" do |form| %>
@@ -38,4 +38,8 @@
     <%= link_to rodauth.reset_password_request_link_text, rodauth.reset_password_request_path, class: "link link-hover" %>
     <%= link_to rodauth.create_account_link_text, rodauth.create_account_path, class: "link link-hover" %>
   </div>
+
+  <%# A student arriving with a code from an assignment needs to know the code
+      is entered after signing in, not here. %>
+  <p class="mt-6 text-sm text-base-content/70"><%= t("home.join_note") %></p>
 <% end %>

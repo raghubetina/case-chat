@@ -1,4 +1,4 @@
-<%= render "panel" do %>
+<%= render layout: "shared/entry_shell" do %>
   <%= render "header", lede: t("auth.create_account.lede") %>
 
   <%= form_with url: rodauth.create_account_path, method: :post, data: {turbo: false}, class: "space-y-5" do |form| %>
