@@ -18,10 +18,6 @@ module Responder
     # that matters is in the briefing, not in the sampling budget.
     EFFORT = "medium".freeze
 
-    # What a replayed tool call is told. The pipeline raises rather than
-    # persisting a call it would not allow, so a stored turn is one that ran.
-    TOOL_APPLIED = "Done. The student has it.".freeze
-
     def initialize(client: nil, model: MODEL, effort: nil)
       @client = client
       @model = model

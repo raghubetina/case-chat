@@ -107,13 +107,14 @@ class ContactReply
   # not saved is one the next turn cannot continue from -- better to have
   # neither than a message that silently lost its thread.
   def record_reasoning(reply, adapter, message)
-    return if reply.reasoning_blocks.blank?
+    return if reply.reasoning_blocks.blank? && reply.response_id.blank?
 
     MessageReasoning.create!(
       message: message,
       provider: Responder.provider_name(adapter),
       model: adapter.try(:model).presence || Responder.provider_name(adapter),
-      blocks: reply.reasoning_blocks
+      blocks: reply.reasoning_blocks,
+      response_id: reply.response_id
     )
   end
 

@@ -8,15 +8,42 @@
 # payload, so a block that looks empty is the thing worth keeping.
 #
 # OpenAI calls it the output array. Same idea, echoed back in the next input.
+# == Schema Information
+#
+# Table name: message_reasonings
+#
+#  id          :uuid             not null, primary key
+#  blocks      :jsonb            not null
+#  model       :string           not null
+#  provider    :string           not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  message_id  :uuid             not null
+#  response_id :string
+#
+# Indexes
+#
+#  index_message_reasonings_on_message_id  (message_id) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (message_id => messages.id) ON DELETE => cascade
+#
 class MessageReasoning < ApplicationRecord
   belongs_to :message, class_name: "Message", optional: false
 
   validates :provider, presence: true
   validates :model, presence: true
-  # An empty array would be a row claiming to hold a turn and holding nothing,
-  # which the next turn would replay as an empty assistant message. The caller
-  # skips writing a row at all when there is nothing to keep.
-  validates :blocks, presence: true
+  # A row has to carry something the next turn can use. Anthropic supplies
+  # blocks to echo; OpenAI supplies an id for state it kept itself. A row with
+  # neither is one the next turn would read and learn nothing from.
+  validate :carries_something
+
+  def carries_something
+    return if blocks.present? || response_id.present?
+
+    errors.add(:base, "a reasoning row must carry blocks or a response id")
+  end
 
   # SDK response objects carry bookkeeping the API will not accept back --
   # streaming buffers and a reference to the client that built them. What goes

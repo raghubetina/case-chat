@@ -48,9 +48,14 @@ ActiveRecordDoctor.configure do
   global :ignore_models, framework_models + rodauth_models
 
   detector :incorrect_dependent_option, ignore_associations: rodauth_associations
+  # message_reasonings.blocks is NOT NULL with a [] default, and an empty array
+  # is a legitimate value: an OpenAI turn that called no tool carries only a
+  # response id. A presence validator would reject a row the app is right to
+  # write. MessageReasoning validates instead that a row carries blocks OR a
+  # response id, which is the rule that actually matters.
   detector :missing_presence_validation, ignore_attributes: rodauth_models.flat_map { |model|
     %w[key password_hash requested_at email_last_sent deadline number].map { |attr| "#{model}.#{attr}" }
-  }
+  } + ["MessageReasoning.blocks"]
 
   # contacts.case_study_id is indexed, by
   # index_contacts_on_case_study_id_and_lower_full_name, which leads with it.

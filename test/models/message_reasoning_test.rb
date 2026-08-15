@@ -4,6 +4,27 @@ require_relative "domain_test_helper"
 # A person has to hold a position across six or eight questions. Anthropic keeps
 # no state to help with that: the signature on a thinking block is the only
 # thread between one answer and the next, and it only works if we hand it back.
+# == Schema Information
+#
+# Table name: message_reasonings
+#
+#  id          :uuid             not null, primary key
+#  blocks      :jsonb            not null
+#  model       :string           not null
+#  provider    :string           not null
+#  created_at  :datetime         not null
+#  updated_at  :datetime         not null
+#  message_id  :uuid             not null
+#  response_id :string
+#
+# Indexes
+#
+#  index_message_reasonings_on_message_id  (message_id) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (message_id => messages.id) ON DELETE => cascade
+#
 class MessageReasoningTest < ActiveSupport::TestCase
   include DomainTestHelper
 
@@ -125,6 +146,54 @@ class MessageReasoningTest < ActiveSupport::TestCase
     turns = Responder::Anthropic.new(model: "claude-opus-5").send(:serialize_history, history)
 
     assert_equal "Say more.", turns.last[:content]
+  end
+
+  # OpenAI keeps the turn, so the next request carries its id instead of the
+  # transcript. What must not happen is a chain onto another model's state.
+  test "openai resumes from the id it was given" do
+    message = Message.create!(conversation: @conversation, body: "An answer.",
+      sent_at: Time.current, from_contact: true)
+    MessageReasoning.create!(message: message, provider: "openai", model: "gpt-5.6-sol",
+      response_id: "resp_abc", blocks: [{"call_id" => "call_1", "name" => "introduce_contact"}])
+    Message.create!(conversation: @conversation, body: "Say more.",
+      sent_at: Time.current, from_contact: false)
+
+    request = openai_request("gpt-5.6-sol")
+
+    assert_equal "resp_abc", request[:previous_response_id]
+    assert_equal :function_call_output, request[:input].first[:type]
+    assert_equal "call_1", request[:input].first[:call_id]
+    assert_equal "Say more.", request[:input].last[:content], "only the new turn, not the transcript"
+  end
+
+  test "openai starts a fresh chain rather than resuming another model's" do
+    message = Message.create!(conversation: @conversation, body: "An answer.",
+      sent_at: Time.current, from_contact: true)
+    MessageReasoning.create!(message: message, provider: "openai", model: "gpt-5.6-luna",
+      response_id: "resp_abc", blocks: [])
+    Message.create!(conversation: @conversation, body: "Say more.",
+      sent_at: Time.current, from_contact: false)
+
+    request = openai_request("gpt-5.6-sol")
+
+    assert_nil request[:previous_response_id]
+    assert_equal 2, request[:input].size, "the transcript is replayed instead"
+  end
+
+  test "openai replays the transcript when there is nothing to resume from" do
+    Message.create!(conversation: @conversation, body: "First question.",
+      sent_at: Time.current, from_contact: false)
+
+    request = openai_request("gpt-5.6-sol")
+
+    assert_nil request[:previous_response_id]
+    assert_equal "First question.", request[:input].first[:content]
+  end
+
+  def openai_request(model)
+    history = Message.includes(:reasoning).where(conversation_id: @conversation.id).order(:created_at).to_a
+    Responder::OpenAI.new(model: model)
+      .send(:request_for, briefing: ContactBriefing.new(@dana), history: history)
   end
 
   # Loaded the way ContactReply#history loads it. Strict loading refuses a lazy

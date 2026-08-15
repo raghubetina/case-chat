@@ -13,13 +13,19 @@ module Responder
 
   NULL_USAGE = Usage.new(input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_write_tokens: 0)
 
+  # What a replayed tool call is told, on either provider. Both refuse a turn
+  # that leaves one unanswered, and the pipeline raises rather than persisting a
+  # call it would not allow -- so a stored call is one that ran.
+  TOOL_APPLIED = "Done. The student has it.".freeze
+
   # What a contact said, plus the structured things they did while saying it.
   # The id lists are normalized here so no adapter can hand the pipeline a nil,
   # and every caller can iterate without guarding.
   Reply = Data.define(:text, :introduced_contact_ids, :shared_document_ids,
-    :introduction_reasons, :reasoning_blocks, :usage, :raw) do
+    :introduction_reasons, :reasoning_blocks, :response_id, :usage, :raw) do
     def initialize(text:, introduced_contact_ids: [], shared_document_ids: [],
-      introduction_reasons: [], reasoning_blocks: [], usage: NULL_USAGE, raw: nil)
+      introduction_reasons: [], reasoning_blocks: [], response_id: nil,
+      usage: NULL_USAGE, raw: nil)
       super(
         text: text.to_s,
         introduced_contact_ids: Array(introduced_contact_ids).compact.uniq,
@@ -27,6 +33,8 @@ module Responder
         introduction_reasons: Array(introduction_reasons).map { |line| line.to_s.strip }.reject(&:empty?),
         # The turn as the provider produced it, for the next turn to hand back.
         reasoning_blocks: Array(reasoning_blocks),
+        # OpenAI keeps the turn and hands back an id; Anthropic keeps nothing.
+        response_id: response_id.presence,
         usage: usage,
         raw: raw
       )
