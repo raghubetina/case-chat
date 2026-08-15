@@ -9,22 +9,21 @@ Please author a case you already teach.
 
 ## Start with the seeded case
 
-Sign in as **alice@example.com**, with the passphrase sent alongside this note, and choose
-**Authoring**. One case is already loaded: **Meridian: The Friday Allocation** — seven people, two
-of them in the student's starting directory, and two files every student gets. Its join code is
-`MERIDIAN-01` if you want to walk it as a student first.
+Sign in as **alice@example.com** with the passphrase sent alongside this note, then choose
+**Authoring**. One case is already loaded: **Meridian: The Friday Allocation**. It has seven
+people, two of them in the student's starting directory, and two files every student gets. Its join
+code is `MERIDIAN-01`, so you can also join it as a student.
 
-Open it for the shape of a case: who holds what, who introduces whom, and how a referral condition
-is written. The screenshots in this note come from it.
+The screenshots in this note come from Meridian. Its structure shows what a case is made of: who
+holds what, and who introduces whom on what condition.
 
-Its prose is placeholder text. Meridian was written to exercise the app rather than to teach, and
-it has not had the editing a case you assign would get, so treat its wording as a stand-in rather
-than a model.
+Meridian's wording was not carefully authored. Treat it as placeholder text: copy the structure and
+write your own prose.
 
 ## Create your own account
 
-Author under your own account rather than alice's, so that several people can work at once without
-editing each other's cases. Create an account at the link above; a verification email arrives from
+Author under your own account, not alice's. Colleagues who share a login share the same cases and
+can edit each other's work. Create an account at the link above; a verification email arrives from
 `no-reply@notifications.booth.school`. Then choose **Authoring**.
 
 A small case, four or five people and a document or two, took us about an hour. We have not
