@@ -157,3 +157,8 @@ envVarGroups:
         sync: false
       - key: MAIL_FROM
         sync: false
+      # Error reporting. Declared here, rather than left as a key added by hand,
+      # so a blueprint sync of this group cannot drop it. Reporting also
+      # requires production: a token anywhere else is inert by design.
+      - key: ROLLBAR_ACCESS_TOKEN
+        sync: false

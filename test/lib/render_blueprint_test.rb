@@ -123,7 +123,7 @@ class RenderBlueprintTest < ActiveSupport::TestCase
   # group ends up owning it.
   SECRET_KEYS = %w[
     ANTHROPIC_API_KEY OPENAI_API_KEY RESEND_API_KEY CLOUDINARY_URL
-    SECRET_KEY_BASE SEED_PASSWORD
+    SECRET_KEY_BASE SEED_PASSWORD ROLLBAR_ACCESS_TOKEN
   ].freeze
 
   test "no secret is committed with a value" do

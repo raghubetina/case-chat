@@ -85,6 +85,11 @@ These are `sync: false` in the blueprint and must be set by hand:
   Account verification and password reset are the only mail this app sends, and
   both are how a new person gets in, so an unverified domain reads to a
   colleague as an app that will not let them sign up.
+- `ROLLBAR_ACCESS_TOKEN` — error reporting. Reporting needs the token *and*
+  `RAILS_ENV=production`; the same token in a developer's `.env` reports
+  nothing, which is what keeps a laptop's exceptions out of the production
+  project. `config/initializers/rollbar.rb` also drops routing errors and
+  record-not-found, which are ordinary public misses rather than bugs.
 - `SEED_DEMO_CASES` and `SEED_PASSWORD` — set both to load the teaching cases on
   first boot. The flag is read as a boolean, so `false` and `0` mean off rather
   than "present, therefore on". Seeding creates accounts that can be signed
