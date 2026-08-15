@@ -1,12 +1,11 @@
 # Case Chat: a note for the first people trying it
 
-**https://case-chat-claude.onrender.com**
+**https://cc.booth.school**
 
 Case Chat turns a written case into a set of people a student interviews. The student starts with a
 thin situation and two or three names, and earns the rest by asking someone the right question.
 
-Please author a case you already teach, and tell us whether the interview version teaches anything
-the handout does not. A case invented to suit the tool would flatter it.
+Please author a case you already teach.
 
 ## Create an account and open Authoring
 
@@ -22,15 +21,14 @@ timed anyone else.
 
 **Background** is handed to every student for free. So are the **Assignment**, everyone you put in
 the starting directory, and any file you tick "Given to every student at the start". Everything
-else has to be earned, so keep Background thin: where the student is, what is due, and when. A
-two-page setup pasted here rebuilds the handout.
+else has to be earned, so keep Background thin: where the student is, what is due, and when.
 
 The **Join code** arrives pre-filled. Keep it or type your own, but do not clear it: a case with an
 empty code will publish and still cannot be joined. Post it with the assignment.
 
 **Reachability**, in the right-hand panel, checks that everyone in the case can be reached from the
-starting directory through some chain of introductions. It is not advisory. The app refuses to
-publish while anyone is unreachable, so an ignored panel becomes a hard stop at step 6.
+starting directory through some chain of introductions. The app refuses to publish while anyone is
+unreachable.
 
 ## 2. Add the people
 
@@ -49,7 +47,7 @@ Dr. Ortiz above is told she will not tell the student what to optimise for, beca
 objective is the assignment.
 
 Do not write referral instructions here. Who this person introduces, and when, is set in the **Can
-introduce** rows further down the same page. Written in both places, the two versions drift apart.
+introduce** rows further down the same page. Written in both places, the two can disagree.
 
 ### What the app sends the model
 
@@ -65,8 +63,7 @@ composes a prompt from these blocks, in order:
 | `<how_to_answer>` | A fixed house style, identical for everyone in the case |
 
 Your prompt is passed through untouched, formatting included. Markdown in the prompt tends to
-produce markdown in the answer, and an interview answer in headed bullet points does not read as a
-person talking.
+produce markdown in the answer.
 
 `<how_to_answer>` already tells everyone to stay in character, to talk rather than write a
 memo, to say when they are unsure, to say when something falls outside their role, and not to do
@@ -77,10 +74,9 @@ their own end of the case. Left ticked, they are given the case Background.
 
 ![Model and reasoning effort, the case-background toggle, and the list of people this person can introduce](images/who-answers-and-referrals.jpg)
 
-**Who answers as this person** is set per person. The deployment default is GPT-5.6 Sol at
-high reasoning effort. Model and reasoning effort are separate fields, and the deployment's high
-does not follow a model you choose: pick a model and leave effort on "Model's own default", and the
-provider decides the effort rather than inheriting high.
+**Who answers as this person** is set per person. Both fields open on what will answer if you
+change nothing: GPT-5.6 Sol at high reasoning effort. Saving writes the choice down, so a later
+change to the deployment default leaves this case on the model you picked.
 
 **Usage**, in the sidebar, shows what each person has cost to answer as, with your rehearsals
 counted apart from students' replies.
@@ -93,8 +89,8 @@ should describe a question worth asking rather than a keyword:
 > *When the student asks what 'the most good' means, or how to compare a dose in one county with
 > a dose in another.*
 
-Written that way, meeting the epidemiologist is the reward for noticing that the objective is
-undefined. Written as *"when the student asks about epidemiology"*, it is a scavenger hunt.
+Written that way, the introduction goes to a student who has noticed the objective is undefined.
+Written as *"when the student asks about epidemiology"*, it fires as soon as the topic comes up.
 
 Watch the reachability panel as you add rows.
 
@@ -108,8 +104,7 @@ Tick "Given to every student at the start" on the files everyone should have. Le
 has to be earned: open the person who holds it and add it under **Can share**, with a condition
 written the same way as a referral's.
 
-Meridian gives both its files to everyone, so it has no earned document to copy. Its people hold
-testimony rather than paper.
+Meridian gives both its files to everyone, so it has no earned document to copy.
 
 ## 5. Test drive
 
@@ -144,9 +139,9 @@ Seven people in this case; the student starts with two.
 
 ![An introduction arriving in the thread: a reason, then a contact card](images/earned-introduction.jpg)
 
-Here the student asked who gets left short. Dr. Ortiz volunteered the thing her prompt tells her to
-keep back unless pushed — that she could not sign a plan leaving a county at zero — and then handed
-over the person whose job it is.
+Here the student asked who gets left short. Dr. Ortiz volunteered what her prompt tells her to keep
+back unless pushed — that she could not sign a plan leaving a county at zero — and then introduced
+Marcus Bell.
 
 ## What to send back
 
@@ -154,8 +149,7 @@ over the person whose job it is.
 2. Where did somebody break character? Send the question and the reply.
 3. Would you assign this instead of the handout, alongside it, or not at all?
 4. How long did authoring take?
-5. What would a student learn here that the written case does not teach? If the answer is nothing,
-   we would rather know now.
+5. What would a student learn here that the written case does not teach?
 
 ## Known rough edges
 
