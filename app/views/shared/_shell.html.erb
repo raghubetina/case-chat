@@ -17,8 +17,12 @@
             class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
     </div>
 
+    <%# Narrow until focused, then it takes the room it needs. Both widths are
+        rem so the transition interpolates; growing to a percentage would jump.
+        The text stays 16px throughout — see .rail-search. %>
     <%= form_with url: search_url, method: :get,
-          class: "flex w-full flex-1 items-center gap-2 rounded-md border border-railline px-3 py-2",
+          class: "flex w-56 max-w-full items-center gap-2 rounded-md border border-railline px-3 py-2 " \
+                 "transition-[width] duration-200 ease-out focus-within:w-[34rem]",
           style: "background:color-mix(in srgb, var(--color-railink) 14%, transparent); border-color:color-mix(in srgb, var(--color-railink) 45%, transparent)" do |form| %>
       <%# The Design's magnifier, made the actual submit control. Enter alone
           would leave the form unreachable to anyone driving the page by switch
@@ -40,7 +44,9 @@
       <% end %>
     <% end %>
 
-    <div class="flex shrink-0 justify-end px-4 md:w-[272px]">
+    <%# ml-auto holds this at the right edge. The search used to do it by
+        growing to fill, and it no longer grows until it is focused. %>
+    <div class="ml-auto flex shrink-0 justify-end px-4 md:w-[272px]">
       <%= render "shared/user_menu" %>
     </div>
   </div>

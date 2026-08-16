@@ -143,6 +143,27 @@ class StudentLoopTest < ApplicationSystemTestCase
     assert_no_selector "#workspace-sidebar", text: I18n.t("shell.case_section")
   end
 
+  # iOS Safari zooms the viewport when a focused field computes under 16px, and
+  # it decides that from the size the field had *before* focus -- so shrinking
+  # the text to suit the narrower box, which is the obvious next edit, would
+  # reintroduce the zoom that sizing it this way exists to avoid.
+  test "the search field widens on focus and never drops under 16px" do
+    visit case_path(@case_study)
+    width = -> { evaluate_script("document.querySelector('[role=search] form').getBoundingClientRect().width") }
+    font = -> { evaluate_script("parseFloat(getComputedStyle(document.querySelector('[role=search] input[type=search]')).fontSize)") }
+
+    idle_width = width.call
+    assert_operator font.call, :>=, 16, "the idle field is small enough to zoom iOS"
+
+    find("[role=search] input[type=search]").click
+    # Polls rather than sleeps: the width is mid-transition for 200ms.
+    page.document.synchronize(2) do
+      raise Capybara::ElementNotFound, "the field did not widen" unless width.call > idle_width
+    end
+
+    assert_operator font.call, :>=, 16, "the focused field is small enough to zoom iOS"
+  end
+
   test "search never reaches a conversation this run has not had" do
     other_run = Enrollment.create!(user: @student, case_study: @case_study)
     other = Conversation.create!(enrollment: other_run, contact: @june)

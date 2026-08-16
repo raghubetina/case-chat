@@ -404,6 +404,14 @@
   opacity: 1;
 }
 
+/* iOS Safari zooms the viewport when a focused field computes under 16px, and
+   it decides that from the size the field had *before* focus — growing the text
+   on :focus is too late to stop it. max() pins the floor whatever the utility
+   classes later say, so the field can shrink in width without shrinking here. */
+.rail-search {
+  font-size: max(16px, 1em);
+}
+
 /* The sidebar is permanent from md up. Below that it slides in over the pane,
    which is why it is `hidden` in markup and revealed by the drawer state. */
 @media (max-width: 767px) {
