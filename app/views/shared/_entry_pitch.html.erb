@@ -1,12 +1,10 @@
 <%# What the app is, shown beside every way in. Signed-out visitors land on
     the sign-in form itself, so this rail is the only place the pitch is made. %>
-<section class="flex flex-col justify-between gap-8 bg-rail p-6 text-railink md:p-8 lg:p-12">
-  <div class="flex flex-col gap-4">
-    <%# Not an h1: the page's heading is the form beside this, and the tagline
-        is a brand line rather than the document's title. %>
-    <p class="font-head text-xl font-semibold"><%= t("home.tagline") %></p>
-    <p class="max-w-prose text-base text-railmute"><%= t("home.lede") %></p>
-    <p class="max-w-prose text-base text-railmute"><%= t("home.rationale") %></p>
+<section class="flex flex-col justify-center gap-8 bg-rail p-6 text-railink md:p-8 lg:p-12">
+  <div class="flex flex-col gap-6">
+    <%# Not an h1: the page's heading is the form beside this, and this is the
+        product's name rather than the document's title. %>
+    <p class="font-head text-xl font-semibold"><%= t("app_name") %></p>
 
     <figure class="max-w-prose border-l-2 border-railmute pl-4">
       <blockquote class="text-base text-railink"><%= t("home.quote") %></blockquote>

@@ -165,7 +165,7 @@ class StudentLoopTest < ApplicationSystemTestCase
     assert_current_path "/login"
     assert_field "email"
     assert_field "password"
-    assert_text I18n.t("home.tagline"), count: 1
+    assert_text I18n.t("app_name"), count: 1
     assert_no_text "It works."
   end
 
@@ -178,7 +178,7 @@ class StudentLoopTest < ApplicationSystemTestCase
     find("a[href='/create-account']").click
 
     assert_field "password-confirm"
-    assert_text I18n.t("home.tagline"), count: 1
+    assert_text I18n.t("app_name"), count: 1
   end
 
   test "a signed-in visitor is sent into their case rather than the landing page" do

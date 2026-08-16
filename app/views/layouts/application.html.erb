@@ -47,7 +47,8 @@
         restyles with the rest of the app rather than being hard-coded dark. %>
     <header id="app-header" class="app-header sticky top-0 z-20 flex items-center gap-4 overflow-x-auto border-b border-railline bg-rail px-4 py-2">
       <div class="app-header-start flex shrink-0 items-center gap-1 hotwire-native-hidden">
-        <%= link_to t("app_name"), root_path,
+        <%# A short wordmark in the chrome; the full name still titles the page. %>
+        <%= link_to t("nav.wordmark"), root_path,
               class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
         <span class="mx-1 h-4 w-px bg-railline"></span>
         <%= render "shared/main_navigation" %>

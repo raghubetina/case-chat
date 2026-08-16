@@ -14,7 +14,7 @@ class NativeLayoutTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select 'body[data-hotwire-native-app="false"]'
     assert_select "header.app-header", count: 1
-    assert_select ".app-header-start.hotwire-native-hidden", count: 1, text: /#{Regexp.escape(I18n.t("app_name"))}/
+    assert_select ".app-header-start.hotwire-native-hidden", count: 1, text: /#{Regexp.escape(I18n.t("nav.wordmark"))}/
     assert_select ".app-header-end.hotwire-native-toolbar", count: 1
     assert_select "[data-controller='theme'] button[aria-label='#{I18n.t("nav.theme.label")}']", count: 1
   end

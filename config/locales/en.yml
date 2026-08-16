@@ -375,15 +375,12 @@ en:
     under_a_cent: Under $0.01
   home:
     for_instructors: For instructors
-    for_instructors_body: You write each person and set what opens an introduction. The cohort screen shows which of them students reached.
+    for_instructors_body: Turn your cases into an interactive exercise. See where students struggle. Refine.
     for_students: For students
-    for_students_body: You start with the situation and two or three names. Asking the right question is how you meet everyone else.
+    for_students_body: You begin with a brief, and it is up to you to talk to people until you identify the real problem and constraints.
     join_note: Once you are signed in, enter the case code your instructor posted with the assignment.
-    lede: A case is a brief, a few files, and people who each know part of it. Students are handed some of it at the start. The rest comes out of the questions they ask.
     quote: A problem well-stated is a problem half-solved.
     quote_source: Charles Kettering
-    rationale: Now that AI can do the analysis, this is deliberate practice at extracting the constraints.
-    tagline: Case studies students interview
   mailers:
     rodauth:
       greeting: Hello %{name},
@@ -407,6 +404,7 @@ en:
     sign_in: Sign in
     sign_out: Sign out
     skip_to_content: Skip to main content
+    wordmark: CC
     theme:
       label: Choose theme
       short: Theme
