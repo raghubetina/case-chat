@@ -10,7 +10,12 @@
 <div class="flex h-dvh flex-col" data-controller="drawer">
 
   <div role="search" class="flex shrink-0 items-center bg-rail py-2 pl-4 md:pl-0">
-    <div class="hidden w-[272px] shrink-0 md:block"></div>
+    <%# The column that lines up with the sidebar. It was empty, so the wordmark
+        vanished on exactly the screens a student spends all their time in. %>
+    <div class="hidden w-[272px] shrink-0 items-center px-4 md:flex">
+      <%= link_to t("nav.wordmark"), root_path,
+            class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
+    </div>
 
     <%= form_with url: search_url, method: :get,
           class: "flex w-full flex-1 items-center gap-2 rounded-md border border-railline px-3 py-2",

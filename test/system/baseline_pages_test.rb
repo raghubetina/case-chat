@@ -63,6 +63,28 @@ class BaselinePagesTest < ApplicationSystemTestCase
     assert_selector "main#main-content[tabindex='-1']"
   end
 
+  # The header carried overflow-x-auto for the pills, and an overflow ancestor
+  # clips absolutely positioned descendants: the theme menu was cut to a
+  # five-pixel sliver at the header's own bottom edge, on every page using this
+  # header. Capybara would not have caught it -- neither clipping nor opacity
+  # counts against its idea of visible -- so this asks the browser what is
+  # actually at the menu's midpoint.
+  test "the theme menu escapes the header rather than being clipped inside it" do
+    visit "/privacy"
+    find("#app-header [data-controller='theme'] button").click
+
+    reachable = page.evaluate_script(<<~JS)
+      (() => {
+        const panel = document.querySelector('#app-header [data-controller="theme"] .dropdown-content');
+        const box = panel.getBoundingClientRect();
+        const hit = document.elementFromPoint(box.left + box.width / 2, box.top + 12);
+        return !!(hit && panel.contains(hit));
+      })()
+    JS
+
+    assert reachable, "the theme menu is clipped and cannot be clicked"
+  end
+
   private
 
   # Effective theme: the explicit data-theme override, else the OS preference.

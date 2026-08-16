@@ -45,12 +45,18 @@
     <%# The Design's rail: a dark bar carrying pill navigation, not a light
         daisyUI navbar. Colours come from the theme's --color-rail family, so it
         restyles with the rest of the app rather than being hard-coded dark. %>
-    <header id="app-header" class="app-header sticky top-0 z-20 flex items-center gap-4 overflow-x-auto border-b border-railline bg-rail px-4 py-2">
-      <div class="app-header-start flex shrink-0 items-center gap-1 hotwire-native-hidden">
+    <%# The scroll lives on the pills, not on the header. An overflow ancestor
+        clips absolutely positioned descendants, and on the header it truncated
+        the theme menu to a five-pixel sliver at the header's own bottom edge. %>
+    <header id="app-header" class="app-header sticky top-0 z-20 flex items-center gap-4 border-b border-railline bg-rail px-4 py-2">
+      <div class="app-header-start flex min-w-0 shrink items-center gap-1 overflow-x-auto hotwire-native-hidden">
         <%# A short wordmark in the chrome; the full name still titles the page. %>
         <%= link_to t("nav.wordmark"), root_path,
               class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
-        <span class="mx-1 h-4 w-px bg-railline"></span>
+        <%# The rule separates the wordmark from the pills, so it goes when they do. %>
+        <% if current_user %>
+          <span class="mx-1 h-4 w-px shrink-0 bg-railline"></span>
+        <% end %>
         <%= render "shared/main_navigation" %>
       </div>
 
