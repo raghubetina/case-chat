@@ -11,13 +11,22 @@ module CaseSeeder
     # anyone the author account is worse than a box with no cases on it.
     PASSWORD = "case chat demo passphrase".freeze
 
+    # Tests sign in with PASSWORD by name, and dotenv loads .env in test too, so
+    # honouring SEED_PASSWORD here would let one developer's local value decide
+    # whether the suite passes. It did: setting it turned eleven sign-ins red.
+    #
+    # An empty SEED_PASSWORD counts as unset. The key is documented commented-out
+    # in .env.example, and a blank one reaching BCrypt would seed demo accounts
+    # with an empty passphrase rather than fail.
     def self.password
-      ENV.fetch("SEED_PASSWORD") do
-        next PASSWORD unless Rails.env.production?
+      return PASSWORD if Rails.env.test?
 
-        raise "Set SEED_PASSWORD before seeding demo accounts in production; " \
-              "#{name}::PASSWORD is public."
-      end
+      configured = ENV["SEED_PASSWORD"].presence
+      return configured if configured
+      return PASSWORD unless Rails.env.production?
+
+      raise "Set SEED_PASSWORD before seeding demo accounts in production; " \
+            "#{name}::PASSWORD is public."
     end
 
     # Files that ship with the app rather than sitting beside it. A seeder that
