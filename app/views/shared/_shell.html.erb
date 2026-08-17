@@ -27,8 +27,7 @@
         so the field cannot shrink the bar and the header carries a matching
         min-height instead. The text stays 16px — see .rail-search. %>
     <%= form_with url: search_url, method: :get,
-          class: "flex w-full flex-1 items-center gap-2 rounded-md border border-railline px-3 py-1",
-          style: "background:color-mix(in srgb, var(--color-railink) 14%, transparent); border-color:color-mix(in srgb, var(--color-railink) 45%, transparent)" do |form| %>
+          class: "rail-tint flex w-full flex-1 items-center gap-2 rounded-md border border-railline px-3 py-1" do |form| %>
       <%# The Design's magnifier, made the actual submit control. Enter alone
           would leave the form unreachable to anyone driving the page by switch
           or voice, and a decorative icon beside a field that needs a submit is
@@ -44,8 +43,12 @@
             autocomplete: "off",
             class: "rail-search min-w-0 flex-1 border-0 bg-transparent text-base text-railink outline-none" %>
       <% if params[:q].present? %>
+        <%# Full-strength ink, not railmute: this sits on the tinted field rather
+            than on the bare rail, and muted lost contrast there (4.37:1). The
+            tint only started rendering once it moved out of a style attribute
+            the CSP was dropping, so the shortfall had never been visible. %>
         <%= link_to t("shell.clear_search"), search_url,
-              class: "kick shrink-0 text-xs text-railmute hover:text-railink" %>
+              class: "kick shrink-0 text-xs text-railink" %>
       <% end %>
     <% end %>
 

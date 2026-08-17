@@ -56,6 +56,20 @@ was caught by eye and confirmed by measuring — which is why they are the list.
    a wordmark or page heading wearing the label tier, a primary action set like
    body text, a section label as large as the title it introduces.
 
+## Numbers must come from the file
+
+Cite only measurements that appear in `measurements.json`, and name the anchor
+key you read them from. If something in a screenshot looks wrong and no anchor
+covers it, say so in those words — "looks wrong in `author_cohort`, not
+measured" — and stop there. Do not estimate a number from an image.
+
+This is not hypothetical. A reviewer reported that seven progress bars were all
+"818×12px" and therefore contradicted their 100%/0% labels. No bar is an anchor,
+so no such measurement existed. The bars were correct: the element it described
+is a full-width track, and the fills inside measured 874, 874, 437, 0, 0, 0, 0
+against labels of 100, 100, 50, 0, 0, 0, 0. A confident number for something
+nobody measured cost more to disprove than the finding would have been worth.
+
 ## What not to report
 
 - Anything you cannot point at a number or two named surfaces for.

@@ -404,6 +404,39 @@
   opacity: 1;
 }
 
+/* Styles that used to ride on `style=` attributes. The CSP grants no
+   unsafe-inline, and a nonce cannot vouch for an attribute, so every one of them
+   was dropped in test and production while working in development. */
+
+/* The cohort's reach bars. A progress element needs both the track and the
+   value styled, and the pseudo-elements differ between engines. */
+.reach-bar {
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius-box, 4px);
+  background: var(--t-wash);
+  overflow: hidden;
+}
+
+.reach-bar::-webkit-progress-bar {
+  background: var(--t-wash);
+}
+
+.reach-bar::-webkit-progress-value {
+  background: var(--color-accent);
+}
+
+.reach-bar::-moz-progress-bar {
+  background: var(--color-accent);
+}
+
+/* A control sitting on the rail: tinted from the rail's own ink so it reads as
+   inset rather than as a light box dropped onto dark. */
+.rail-tint {
+  background: color-mix(in srgb, var(--color-railink) 14%, transparent);
+  border-color: color-mix(in srgb, var(--color-railink) 45%, transparent);
+}
+
 /* A flash slides in from the corner it lives in rather than appearing on top of
    the page, and leaves the same way. Motion is what makes it read as part of
    the interface instead of something dropped onto it — and is exactly what a

@@ -23,7 +23,11 @@ class DesignCaptureTest < ApplicationSystemTestCase
     "heading" => "h1",
     "sidebar_row" => "#workspace-sidebar a.row-off, #workspace-sidebar a.row-on",
     "card" => "article",
-    "field" => "input[type=text], input[type=search], input[type=email]"
+    "field" => "input[type=text], input[type=search], input[type=email]",
+    # The filled part of a bar, not its track. A reviewer given only the track
+    # sees seven identical widths and reasonably concludes the bars are broken;
+    # the track is meant to be identical, and the fill is what carries meaning.
+    "meter_fill" => ".bg-accent[style*='width']"
   }.freeze
 
   setup do
@@ -43,8 +47,14 @@ class DesignCaptureTest < ApplicationSystemTestCase
     manifest << capture("student_background", background_case_path(@case_study))
 
     sign_in_as_seeded("alice@example.com")
-    manifest << capture("author_cases", "/author/cases")
+    # Not /author/cases: with a case in hand it redirects to the setup screen,
+    # so capturing both wrote the same PNG twice and reported six surfaces while
+    # reviewing five.
     manifest << capture("author_case_setup", edit_author_case_path(@case_study))
+    manifest << capture("author_person_editor", edit_author_case_contact_path(@case_study, first_contact))
+    manifest << capture("author_documents", author_case_documents_path(@case_study))
+    manifest << capture("author_import", new_author_case_import_path(@case_study))
+    manifest << capture("author_usage", author_case_usage_path(@case_study))
     manifest << capture("author_cohort", author_case_cohort_path(@case_study))
 
     File.write(OUT.join("measurements.json"), JSON.pretty_generate(manifest))
@@ -52,6 +62,10 @@ class DesignCaptureTest < ApplicationSystemTestCase
   end
 
   private
+
+  def first_contact
+    Contact.where(case_study: @case_study).order(:created_at).first
+  end
 
   # Cookies rather than the sign-out control: there are two of those on a shell
   # page, and this is a capture tool, not a test of the logout flow.

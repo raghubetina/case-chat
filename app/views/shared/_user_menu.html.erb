@@ -11,8 +11,7 @@
   <button type="button"
           aria-label="<%= t("shell.account_menu", name: current_user.full_name) %>"
           class="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-railline">
-    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-railline font-mono text-[11px] font-semibold tracking-normal text-railink"
-          style="background:color-mix(in srgb, var(--color-railink) 14%, transparent); border-color:color-mix(in srgb, var(--color-railink) 45%, transparent)">
+    <span class="rail-tint flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-railline font-mono text-[11px] font-semibold tracking-normal text-railink">
       <%= initials_for(current_user.full_name) %>
     </span>
     <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="hidden shrink-0 text-railink sm:block">
