@@ -15,8 +15,12 @@
     <div class="hidden w-[272px] shrink-0 items-center px-4 md:flex">
       <%# -ml-2 cancels the pill's own px-2 so the glyphs, not the hover target,
           line up with the sidebar beneath: both start at 16px. %>
+      <%# text-base, not text-xs: at 12px the mark rendered identically to a
+          section label -- same size, weight and tracking as CASE -- while
+          sitting beside a 16px field and above a 20px case title. 16 puts it
+          between the label tier and the title rather than inside the labels. %>
       <%= link_to t("nav.wordmark"), root_path,
-            class: "kick -ml-2 whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
+            class: "kick -ml-2 whitespace-nowrap rounded-md px-2 py-1 text-base text-railink" %>
     </div>
 
     <%# This rail's height is set by the account menu's avatar, not by the field,

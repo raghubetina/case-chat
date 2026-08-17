@@ -58,9 +58,11 @@
     <header id="app-header" class="app-header sticky top-0 z-20 flex min-h-14 items-center gap-4 border-b border-railline bg-rail px-6 py-2 md:px-8 lg:px-12">
       <div class="app-header-start flex min-w-0 shrink items-center gap-1 overflow-x-auto hotwire-native-hidden">
         <%# A short wordmark in the chrome; the full name still titles the page.
-            -ml-2 cancels the pill's px-2 so the glyphs sit on the gutter. %>
+            -ml-2 cancels the pill's px-2 so the glyphs sit on the gutter, and
+            text-base keeps the mark a step above the nav pills beside it rather
+            than matching them. %>
         <%= link_to t("nav.wordmark"), root_path,
-              class: "kick -ml-2 whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
+              class: "kick -ml-2 whitespace-nowrap rounded-md px-2 py-1 text-base text-railink" %>
         <%# The rule separates the wordmark from the pills, so it goes when they do. %>
         <% if current_user %>
           <span class="mx-1 h-4 w-px shrink-0 bg-railline"></span>

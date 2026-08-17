@@ -93,6 +93,10 @@ class DesignCaptureTest < ApplicationSystemTestCase
               height: Math.round(box.height),
               fontSize: cs.fontSize,
               fontWeight: cs.fontWeight,
+              // Tracking and caps are what make this app's label tier a tier.
+              // Without them a reviewer cannot tell a mark from a label.
+              letterSpacing: cs.letterSpacing,
+              textTransform: cs.textTransform,
               paddingY: cs.paddingTop + "/" + cs.paddingBottom
             };
           });

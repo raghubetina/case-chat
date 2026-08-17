@@ -37,6 +37,25 @@ was caught by eye and confirmed by measuring — which is why they are the list.
    library's semantic palette rather than this app's own tokens. The app is
    paper-and-maroon; a blue or green control is foreign.
 
+6. **Something sitting in the wrong tier.** The other five look for values that
+   disagree. This one looks for values that agree when they should not, and it
+   is the one the first version of this file missed.
+
+   This app has three type tiers. The **label** tier is 12px, weight 600,
+   uppercase, tracked ~0.09em — `CASE`, `FOR STUDENTS`, table headers. **Body**
+   is 14–16px, untracked. **Titles** are 20px and up.
+
+   Ask of each anchor whether its treatment matches its job, not whether its
+   values are popular. The wordmark shipped at 12px/600/uppercase/tracked —
+   pixel-identical to a section label — while standing beside a 16px field and
+   above a 20px case title. Every value was on the scale and shared with a dozen
+   other elements, so a hunt for odd values could not see it. What gave it away
+   was reading it: the product's mark was set as a caption.
+
+   Flag any element whose treatment is identical to a tier below its role:
+   a wordmark or page heading wearing the label tier, a primary action set like
+   body text, a section label as large as the title it introduces.
+
 ## What not to report
 
 - Anything you cannot point at a number or two named surfaces for.
