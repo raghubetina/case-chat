@@ -404,6 +404,37 @@
   opacity: 1;
 }
 
+/* A flash slides in from the corner it lives in rather than appearing on top of
+   the page, and leaves the same way. Motion is what makes it read as part of
+   the interface instead of something dropped onto it — and is exactly what a
+   reader who asked for less of it should not get. */
+.flash-item {
+  animation: flash-in 160ms ease-out;
+}
+
+.flash-item.flash-leaving {
+  opacity: 0;
+  translate: 0 4px;
+  transition:
+    opacity 160ms ease-in,
+    translate 160ms ease-in;
+}
+
+@keyframes flash-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash-item,
+  .flash-item.flash-leaving {
+    animation: none;
+    transition: none;
+  }
+}
+
 /* iOS Safari zooms the viewport when a focused field computes under 16px, and
    it decides that from the size the field had *before* focus — growing the text
    on :focus is too late to stop it. max() pins the floor whatever the utility

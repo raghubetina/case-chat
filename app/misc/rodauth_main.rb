@@ -92,5 +92,15 @@ class RodauthMain < Rodauth::Rails::Auth
     logout_redirect { login_path }
     verify_account_redirect { login_redirect }
     reset_password_redirect { login_path }
+
+    # Signing in already shows you your cases; "You are signed in" announces
+    # something the screen has just finished demonstrating. A confirmation of an
+    # outcome the interface already makes obvious is the most-cited reason
+    # notifications start being ignored, so it is not raised at all.
+    #
+    # Rodauth assigns this straight into flash[:notice], nil included, which is
+    # why shared/_flash also skips blank messages rather than drawing an empty
+    # card for one.
+    login_notice_flash nil
   end
 end

@@ -157,6 +157,31 @@ class StudentLoopTest < ApplicationSystemTestCase
     assert_operator font.call, :>=, 16, "the focused field is small enough to zoom iOS"
   end
 
+  # A confirmation leaves on its own; an error waits to be read.
+  #
+  # This covers the behaviour, not the hazard behind it. An earlier version
+  # removed the card on transitionend, which never fired in a real browser and
+  # left the message up permanently — and headless does fire it, so this test
+  # passed against that version too. The removal is on a timer for that reason:
+  # a leaving animation that does not report finishing must still leave.
+  test "a confirmation clears itself and an error waits to be dismissed" do
+    visit new_join_cases_path
+    fill_in "join_code", with: CaseSeeder::Meridian::JOIN_CODE
+    click_on I18n.t("cases.join.action")
+
+    assert_selector "#flash_notices .flash-item"
+    assert_no_selector "#flash_notices .flash-item", wait: 8
+    # The region itself is permanent; only its contents come and go.
+    assert_selector "#flash_notices", visible: :all
+
+    visit new_join_cases_path
+    fill_in "join_code", with: "NOPE-99"
+    click_on I18n.t("cases.join.action")
+
+    assert_nil find("#flash_alerts .flash-item")["data-dismissable-after-value"],
+      "an error must not leave on a timer"
+  end
+
   # The chrome is two different bars — a header outside a case, a search rail
   # inside one — and they used to stand at different heights, so moving between
   # them shifted the whole page.
