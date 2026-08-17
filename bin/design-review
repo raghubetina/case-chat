@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Captures the app's surfaces and runs the Codex half of a design review.
+#
+# The Claude half is the design-review skill, which reads the same screenshots,
+# the same measurements and the same criteria file. Two models answering one
+# question independently is the whole point: the failures this is meant to catch
+# are ones the author's own assumptions hide, and a reviewer who shares those
+# assumptions finds nothing.
+#
+#   bin/design-review            capture, then review with Codex
+#   bin/design-review --skip-capture   reuse tmp/design from a previous run
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+OUT="tmp/design"
+CRITERIA=".claude/skills/design-review/criteria.md"
+
+if [[ "${1:-}" != "--skip-capture" ]]; then
+  echo "== Capturing surfaces =="
+  CAPTURE_SURFACES=1 bin/rails test:system test/system/design_capture_test.rb 2>&1 |
+    grep -E "Wrote|Failure:|Error:|runs," || true
+fi
+
+if [[ ! -f "$OUT/measurements.json" ]]; then
+  echo "No $OUT/measurements.json — capture first." >&2
+  exit 1
+fi
+
+command -v codex >/dev/null || { echo "codex not on PATH; skipping the Codex pass." >&2; exit 1; }
+
+# Every screenshot goes in one prompt so the reviewer can compare across
+# surfaces, which is where these bugs live. One surface at a time would find
+# nothing: each looked fine on its own.
+IMAGES=()
+for png in "$OUT"/*.png; do IMAGES+=(-i "$png"); done
+echo "== Reviewing ${#IMAGES[@]} images with Codex =="
+
+{
+  cat "$CRITERIA"
+  echo
+  echo "## Screenshots"
+  echo "Attached, named in the order: $(ls "$OUT"/*.png | xargs -n1 basename | tr '\n' ' ')"
+  echo
+  echo "## measurements.json"
+  cat "$OUT/measurements.json"
+  echo
+  echo "Report your findings as markdown. Be specific and be brief."
+} | codex exec "${IMAGES[@]}" --output-last-message "$OUT/codex-findings.md" >/dev/null
+
+echo
+echo "== Codex findings =="
+cat "$OUT/codex-findings.md"
+echo
+echo "(Claude's independent pass: run the design-review skill, then reconcile.)"
