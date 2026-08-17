@@ -29,8 +29,13 @@
             <% if conversation %>
               <%= link_to t("cases.resume"), thread_path(conversation), class: "btn btn-outline btn-sm" %>
             <% else %>
+              <%# form: contents collapses the wrapper button_to adds, so the
+                  button is the flex child rather than the form. Otherwise the
+                  narrow-card stretch lands on the form and the button inside
+                  keeps its content width, while Resume -- a bare link -- takes
+                  the full row. Same class, two different widths. %>
               <%= button_to t("cases.start_thread"), case_threads_path(@case_study, contact_id: contact.id),
-                    class: "btn btn-primary btn-sm" %>
+                    class: "btn btn-primary btn-sm", form: {class: "contents"} %>
             <% end %>
           </div>
         </article>

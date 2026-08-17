@@ -157,6 +157,22 @@ class StudentLoopTest < ApplicationSystemTestCase
     assert_operator font.call, :>=, 16, "the focused field is small enough to zoom iOS"
   end
 
+  # Resume is a link and Start thread is a button_to, so one is a flex child and
+  # the other is a form wrapping one. The card's narrow-width stretch reached the
+  # link and the form, never the button inside it, and the two carried identical
+  # classes the whole time -- nothing in the markup looked wrong.
+  test "a card's action is the same width whether it starts or resumes a thread" do
+    open_thread_with @june
+    visit case_path(@case_study)
+
+    widths = evaluate_script(
+      "[...document.querySelectorAll('article .btn')].map(b => Math.round(b.getBoundingClientRect().width))"
+    )
+
+    assert_operator widths.size, :>=, 2, "needs a started and an unstarted card to compare"
+    assert_equal 1, widths.uniq.size, "card actions render at #{widths.uniq.inspect}"
+  end
+
   # Same invariant as the signed-out page, against the surface it actually sits
   # over here: the sidebar. The wordmark's pill padding pushed its glyphs 8px
   # past the column beneath it, which no amount of picking values off a scale
