@@ -1,20 +1,28 @@
 <%# Persistent live regions: they exist on every page load, and flash content is
     injected INTO them - a region inserted at announce time is not reliably
-    announced by screen readers. Polite for notices, assertive for alerts. %>
-<div id="flash_notices" role="status" class="toast toast-top toast-center z-50 empty:hidden">
+    announced by screen readers. Polite for notices, assertive for alerts.
+
+    Styled from the app's own tokens rather than daisyUI's alert palette. The
+    semantic classes paint an info notice bright blue, which belongs to no theme
+    here and read as something bolted on rather than part of the page. %>
+<div id="flash_notices" role="status" class="toast toast-top toast-center top-16 z-50 empty:hidden">
   <% flash.each do |type, message| %>
     <% next if type.to_s == "alert" %>
-    <div class="alert alert-info shadow-lg" data-controller="dismissable">
+    <div class="flex items-center gap-3 rounded-lg border border-line border-l-2 border-l-accent bg-surface px-4 py-3 text-sm text-ink shadow-lg"
+         data-controller="dismissable">
       <span><%= message %></span>
-      <button type="button" class="btn btn-ghost btn-xs" data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
+      <button type="button" class="shrink-0 rounded-md px-1 text-mute hover:text-ink"
+              data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
     </div>
   <% end %>
 </div>
-<div id="flash_alerts" role="alert" class="toast toast-top toast-center z-50 empty:hidden">
+<div id="flash_alerts" role="alert" class="toast toast-top toast-center top-16 z-50 empty:hidden">
   <% if flash[:alert].present? %>
-    <div class="alert alert-error shadow-lg" data-controller="dismissable">
+    <div class="flex items-center gap-3 rounded-lg border border-line border-l-2 border-l-error bg-surface px-4 py-3 text-sm text-ink shadow-lg"
+         data-controller="dismissable">
       <span><%= flash[:alert] %></span>
-      <button type="button" class="btn btn-ghost btn-xs" data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
+      <button type="button" class="shrink-0 rounded-md px-1 text-mute hover:text-ink"
+              data-action="dismissable#dismiss" aria-label="<%= t("flash.dismiss") %>">✕</button>
     </div>
   <% end %>
 </div>

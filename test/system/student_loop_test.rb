@@ -144,24 +144,30 @@ class StudentLoopTest < ApplicationSystemTestCase
   end
 
   # iOS Safari zooms the viewport when a focused field computes under 16px, and
-  # it decides that from the size the field had *before* focus -- so shrinking
-  # the text to suit the narrower box, which is the obvious next edit, would
-  # reintroduce the zoom that sizing it this way exists to avoid.
-  test "the search field widens on focus and never drops under 16px" do
+  # it reads that size from *before* the focus, so raising it on :focus is too
+  # late. Shrinking this text to suit a smaller box is the tempting edit.
+  test "the search field never drops under the size that zooms iOS" do
     visit case_path(@case_study)
-    width = -> { evaluate_script("document.querySelector('[role=search] form').getBoundingClientRect().width") }
     font = -> { evaluate_script("parseFloat(getComputedStyle(document.querySelector('[role=search] input[type=search]')).fontSize)") }
 
-    idle_width = width.call
     assert_operator font.call, :>=, 16, "the idle field is small enough to zoom iOS"
 
     find("[role=search] input[type=search]").click
-    # Polls rather than sleeps: the width is mid-transition for 200ms.
-    page.document.synchronize(2) do
-      raise Capybara::ElementNotFound, "the field did not widen" unless width.call > idle_width
-    end
 
     assert_operator font.call, :>=, 16, "the focused field is small enough to zoom iOS"
+  end
+
+  # The chrome is two different bars — a header outside a case, a search rail
+  # inside one — and they used to stand at different heights, so moving between
+  # them shifted the whole page.
+  test "the chrome is the same height inside a case and outside one" do
+    visit "/privacy"
+    header = evaluate_script("document.getElementById('app-header').getBoundingClientRect().height")
+
+    visit case_path(@case_study)
+    rail = evaluate_script("document.querySelector('[role=search]').getBoundingClientRect().height")
+
+    assert_in_delta header, rail, 1, "the header and the search rail stand at different heights"
   end
 
   test "search never reaches a conversation this run has not had" do

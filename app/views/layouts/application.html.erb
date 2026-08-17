@@ -48,7 +48,10 @@
     <%# The scroll lives on the pills, not on the header. An overflow ancestor
         clips absolutely positioned descendants, and on the header it truncated
         the theme menu to a five-pixel sliver at the header's own bottom edge. %>
-    <header id="app-header" class="app-header sticky top-0 z-20 flex items-center gap-4 border-b border-railline bg-rail px-4 py-2">
+    <%# min-h matches the workspace rail, whose height is set by the account
+        menu's avatar rather than by anything here. Without it the chrome
+        changed height as you moved between a case and a page outside one. %>
+    <header id="app-header" class="app-header sticky top-0 z-20 flex min-h-14 items-center gap-4 border-b border-railline bg-rail px-4 py-2">
       <div class="app-header-start flex min-w-0 shrink items-center gap-1 overflow-x-auto hotwire-native-hidden">
         <%# A short wordmark in the chrome; the full name still titles the page. %>
         <%= link_to t("nav.wordmark"), root_path,
@@ -77,9 +80,17 @@
           <button type="button" class="kick rounded-md px-2 py-1 text-xs pill-off" aria-haspopup="menu" aria-label="<%= t("nav.theme.label") %>">
             <%= t("nav.theme.short") %>
           </button>
-          <div aria-label="<%= t("nav.theme.label") %>" class="dropdown-content menu z-50 mt-1 w-44 rounded-box border border-line bg-surface p-1 shadow">
+          <%# Same panel as the account menu's theme section, deliberately. It
+              carried daisyUI's `menu` with bare buttons rather than list items,
+              so none of that class's styling applied and the options came out
+              unpadded and oversized -- a different menu on the same knob. `menu`
+              also sets display:flex, which the account menu documents as the way
+              to wedge this panel permanently open. %>
+          <div aria-label="<%= t("nav.theme.label") %>" class="dropdown-content z-50 mt-1 w-[240px] rounded-lg border border-line bg-surface py-1 shadow">
+            <span class="kick block px-3 py-1 text-xs text-mute"><%= t("nav.theme.label") %></span>
             <% %w[ledger bureau dusk chicago auto].each do |name| %>
-              <button type="button" aria-pressed="false" class="text-left"
+              <button type="button" aria-pressed="false"
+                class="block w-full px-3 py-2 text-left text-sm hover:bg-wash"
                 data-theme-target="option" data-action="theme#set" data-theme-name-param="<%= name %>">
                 <%= t("nav.theme.#{name}") %>
               </button>
