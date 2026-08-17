@@ -51,11 +51,16 @@
     <%# min-h matches the workspace rail, whose height is set by the account
         menu's avatar rather than by anything here. Without it the chrome
         changed height as you moved between a case and a page outside one. %>
-    <header id="app-header" class="app-header sticky top-0 z-20 flex min-h-14 items-center gap-4 border-b border-railline bg-rail px-4 py-2">
+    <%# The gutter tracks the entry pitch below it (p-6 / md:p-8 / lg:p-12), so
+        the wordmark and the pitch's heading start on the same line at every
+        width. Both read from the same three steps rather than being matched by
+        eye at one breakpoint. %>
+    <header id="app-header" class="app-header sticky top-0 z-20 flex min-h-14 items-center gap-4 border-b border-railline bg-rail px-6 py-2 md:px-8 lg:px-12">
       <div class="app-header-start flex min-w-0 shrink items-center gap-1 overflow-x-auto hotwire-native-hidden">
-        <%# A short wordmark in the chrome; the full name still titles the page. %>
+        <%# A short wordmark in the chrome; the full name still titles the page.
+            -ml-2 cancels the pill's px-2 so the glyphs sit on the gutter. %>
         <%= link_to t("nav.wordmark"), root_path,
-              class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
+              class: "kick -ml-2 whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
         <%# The rule separates the wordmark from the pills, so it goes when they do. %>
         <% if current_user %>
           <span class="mx-1 h-4 w-px shrink-0 bg-railline"></span>

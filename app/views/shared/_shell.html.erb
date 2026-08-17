@@ -13,8 +13,10 @@
     <%# The column that lines up with the sidebar. It was empty, so the wordmark
         vanished on exactly the screens a student spends all their time in. %>
     <div class="hidden w-[272px] shrink-0 items-center px-4 md:flex">
+      <%# -ml-2 cancels the pill's own px-2 so the glyphs, not the hover target,
+          line up with the sidebar beneath: both start at 16px. %>
       <%= link_to t("nav.wordmark"), root_path,
-            class: "kick whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
+            class: "kick -ml-2 whitespace-nowrap rounded-md px-2 py-1 text-xs text-railink" %>
     </div>
 
     <%# This rail's height is set by the account menu's avatar, not by the field,

@@ -157,6 +157,30 @@ class StudentLoopTest < ApplicationSystemTestCase
     assert_operator font.call, :>=, 16, "the focused field is small enough to zoom iOS"
   end
 
+  # Same invariant as the signed-out page, against the surface it actually sits
+  # over here: the sidebar. The wordmark's pill padding pushed its glyphs 8px
+  # past the column beneath it, which no amount of picking values off a scale
+  # would have caught.
+  test "the wordmark starts on the same line as the sidebar under it" do
+    visit case_path(@case_study)
+    left = ->(selector) {
+      evaluate_script(<<~JS)
+        (() => {
+          const el = document.querySelector(#{selector.to_json});
+          const box = el.getBoundingClientRect();
+          return Math.round(box.left + parseFloat(getComputedStyle(el).paddingLeft));
+        })()
+      JS
+    }
+
+    # A sidebar row, not the first anchor in the tree: the case switcher's menu
+    # items come first in source order and are collapsed to zero width, so they
+    # measure against a box nobody can see.
+    assert_equal left.call("#workspace-sidebar a.row-off, #workspace-sidebar a.row-on"),
+      left.call("[role=search] a"),
+      "the wordmark and the sidebar start on different lines"
+  end
+
   # A confirmation leaves on its own; an error waits to be read.
   #
   # This covers the behaviour, not the hazard behind it. An earlier version
