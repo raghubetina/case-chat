@@ -116,6 +116,7 @@ en:
       model_heading: AI model
       model_label: Model
       model_price: "%{input} in, %{output} out, per million tokens"
+      model_price_cached: "%{input} in (%{cached} cached), %{output} out, per million tokens"
       model_price_unknown: No published price
       model_note: Token use is recorded per person.
       add: Add person
@@ -242,6 +243,18 @@ en:
       rehearsals_note: What test drives on this case have cost.
       replies: Students' replies
       stakeholder: Person
+      student: Student
+      students: Per student
+      students_caption: What each student's questions have cost
+      runs: Runs
+      threads: Threads
+      threads_caption: What each conversation has cost
+      threads_heading: Per conversation
+      thread_with: With
+      test_drives: Your test drives
+      test_drives_caption: What rehearsing each person has cost
+      tokens: Tokens
+      no_student_calls: Nobody has run the case yet, so there is nothing to break down by student.
       table_caption: What each person has cost to answer as
       title: Usage
       tokens: Tokens

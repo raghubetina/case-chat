@@ -25,6 +25,15 @@ module ApplicationHelper
     prices = ModelCatalogue.prices_for(id)
     return t("author.contacts.model_price_unknown") if prices.nil?
 
+    # Most input on a repeat question is a cache read here -- the briefing is
+    # cached deliberately -- so the headline input rate overstates what a busy
+    # stakeholder actually bills. Named when the provider publishes it.
+    if prices[:cached]
+      return t("author.contacts.model_price_cached",
+        input: money(prices[:input]), cached: money(prices[:cached]),
+        output: money(prices[:output]))
+    end
+
     t("author.contacts.model_price",
       input: money(prices[:input]), output: money(prices[:output]))
   end

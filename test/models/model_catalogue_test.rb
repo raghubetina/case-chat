@@ -125,7 +125,8 @@ class ModelCatalogueTest < ActiveSupport::TestCase
   # The line beside the model select. nil rather than zero for an unpriced model,
   # so the view can say so instead of claiming it is free.
   test "reports prices per model and nothing for an unknown one" do
-    assert_equal({input: 5.00, output: 30.00}, ModelCatalogue.prices_for("gpt-5.6-sol"))
+    assert_equal({input: 5.00, output: 30.00, cached: 0.50},
+      ModelCatalogue.prices_for("gpt-5.6-sol"))
     assert_nil ModelCatalogue.prices_for("gpt-9-imaginary")
   end
 end

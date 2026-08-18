@@ -31,57 +31,115 @@
           </div>
         </div>
 
-        <p class="max-w-prose text-sm text-mute"><%= t("author.usage.rehearsals_note") %></p>
-
+        <%# Per student, per conversation, per cohort. Per stakeholder answers a
+            milder question and stays only where it is the sole key available:
+            a rehearsal has no student and no thread to belong to. %>
         <section class="flex flex-col gap-4">
-          <div class="overflow-x-auto rounded-lg border border-line bg-surface">
-            <table class="w-full border-collapse text-sm">
-              <caption class="sr-only"><%= t("author.usage.table_caption") %></caption>
-              <thead>
-                <tr class="border-b border-line">
-                  <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.stakeholder") %></th>
-                  <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.model") %></th>
-                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.replies") %></th>
-                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.rehearsals") %></th>
-                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cache_rate") %></th>
-                  <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cost") %></th>
-                </tr>
-              </thead>
-              <tbody>
-                <% @report.rows.each do |row| %>
-                  <tr class="border-b border-line last:border-0">
-                    <td class="px-4 py-3">
-                      <span class="block font-semibold"><%= row.contact.full_name %></span>
-                      <span class="block text-xs text-mute"><%= row.contact.role_title %></span>
-                    </td>
-                    <td class="px-4 py-3 text-mute">
-                      <%= row.models.map { |id| ModelCatalogue.find(id)&.label || id }.join(", ") %>
-                    </td>
-                    <td class="px-4 py-3 text-right"><%= number_with_delimiter(row.replies.tokens) %></td>
-                    <td class="px-4 py-3 text-right text-mute"><%= number_with_delimiter(row.rehearsals.tokens) %></td>
-                    <td class="px-4 py-3 text-right"><%= (row.total.cache_hit_rate * 100).round %>%</td>
-                    <td class="px-4 py-3 text-right">
-                      <%= money(row.cost, unknown: "—") %>
-                    </td>
-                  </tr>
-                <% end %>
-              </tbody>
-              <tfoot>
-                <tr class="border-t border-line font-semibold">
-                  <td class="px-4 py-3" colspan="2"><%= t("author.usage.total") %></td>
-                  <td class="px-4 py-3 text-right"><%= number_with_delimiter(@report.reply_totals.tokens) %></td>
-                  <td class="px-4 py-3 text-right text-mute"><%= number_with_delimiter(@report.rehearsal_totals.tokens) %></td>
-                  <td class="px-4 py-3 text-right"><%= (@report.grand_totals.cache_hit_rate * 100).round %>%</td>
-                  <td class="px-4 py-3 text-right">
-                    <%= money(@report.cost, unknown: t("author.usage.cost_unknown")) %>
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          <h2 class="font-head text-lg font-semibold"><%= t("author.usage.students") %></h2>
 
-          <p class="max-w-prose text-sm text-mute"><%= t("author.usage.cost_note") %></p>
+          <% if @report.student_rows.any? %>
+            <div class="overflow-x-auto rounded-lg border border-line bg-surface">
+              <table class="w-full border-collapse text-sm">
+                <caption class="sr-only"><%= t("author.usage.students_caption") %></caption>
+                <thead>
+                  <tr class="border-b border-line">
+                    <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.student") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.runs") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.threads") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.tokens") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cost") %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @report.student_rows.each do |row| %>
+                    <tr class="border-b border-line last:border-0">
+                      <td class="px-4 py-3 font-semibold"><%= row.user.full_name %></td>
+                      <td class="px-4 py-3 text-right text-mute"><%= row.runs %></td>
+                      <td class="px-4 py-3 text-right text-mute"><%= row.threads %></td>
+                      <td class="px-4 py-3 text-right"><%= number_with_delimiter(row.totals.tokens) %></td>
+                      <td class="px-4 py-3 text-right"><%= money(row.cost, unknown: "—") %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <p class="max-w-prose text-sm text-mute"><%= t("author.usage.no_student_calls") %></p>
+          <% end %>
         </section>
+
+        <% if @report.thread_rows.any? %>
+          <section class="flex flex-col gap-4">
+            <h2 class="font-head text-lg font-semibold"><%= t("author.usage.threads_heading") %></h2>
+
+            <div class="overflow-x-auto rounded-lg border border-line bg-surface">
+              <table class="w-full border-collapse text-sm">
+                <caption class="sr-only"><%= t("author.usage.threads_caption") %></caption>
+                <thead>
+                  <tr class="border-b border-line">
+                    <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.student") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.thread_with") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.tokens") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cache_rate") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cost") %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @report.thread_rows.each do |row| %>
+                    <tr class="border-b border-line last:border-0">
+                      <td class="px-4 py-3"><%= row.user.full_name %></td>
+                      <td class="px-4 py-3">
+                        <span class="block font-semibold"><%= row.contact.full_name %></span>
+                        <span class="block text-xs text-mute"><%= row.contact.role_title %></span>
+                      </td>
+                      <td class="px-4 py-3 text-right"><%= number_with_delimiter(row.totals.tokens) %></td>
+                      <td class="px-4 py-3 text-right"><%= (row.totals.cache_hit_rate * 100).round %>%</td>
+                      <td class="px-4 py-3 text-right"><%= money(row.cost, unknown: "—") %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        <% end %>
+
+        <% if @report.rehearsal_rows.any? %>
+          <section class="flex flex-col gap-4">
+            <h2 class="font-head text-lg font-semibold"><%= t("author.usage.test_drives") %></h2>
+            <p class="max-w-prose text-sm text-mute"><%= t("author.usage.rehearsals_note") %></p>
+
+            <div class="overflow-x-auto rounded-lg border border-line bg-surface">
+              <table class="w-full border-collapse text-sm">
+                <caption class="sr-only"><%= t("author.usage.test_drives_caption") %></caption>
+                <thead>
+                  <tr class="border-b border-line">
+                    <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.stakeholder") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-left text-xs text-mute"><%= t("author.usage.model") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.tokens") %></th>
+                    <th scope="col" class="kick px-4 py-3 text-right text-xs text-mute"><%= t("author.usage.cost") %></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @report.rehearsal_rows.each do |row| %>
+                    <tr class="border-b border-line last:border-0">
+                      <td class="px-4 py-3">
+                        <span class="block font-semibold"><%= row.contact.full_name %></span>
+                        <span class="block text-xs text-mute"><%= row.contact.role_title %></span>
+                      </td>
+                      <td class="px-4 py-3 text-mute">
+                        <%= row.models.map { |id| ModelCatalogue.find(id)&.label || id }.join(", ") %>
+                      </td>
+                      <td class="px-4 py-3 text-right"><%= number_with_delimiter(row.rehearsals.tokens) %></td>
+                      <td class="px-4 py-3 text-right"><%= money(row.cost, unknown: "—") %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        <% end %>
+
+        <p class="max-w-prose text-sm text-mute"><%= t("author.usage.cost_note") %></p>
       <% else %>
         <div class="flex flex-col items-center gap-2 rounded-lg border border-dashed border-line p-10 text-center">
           <h2 class="font-head text-lg font-semibold"><%= t("author.usage.empty_heading") %></h2>

@@ -76,7 +76,7 @@ class ModelCatalogue
       entry = find(id)
       return nil if entry.nil? || entry.input_price.nil? || entry.output_price.nil?
 
-      {input: entry.input_price, output: entry.output_price}
+      {input: entry.input_price, output: entry.output_price, cached: entry.cache_read_price}
     end
 
     # Which level a model's select should open on: what was stored if this model
