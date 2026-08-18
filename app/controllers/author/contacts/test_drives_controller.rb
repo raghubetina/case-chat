@@ -9,6 +9,21 @@ module Author
         with: :too_many_test_drives,
         name: "test_drive"
 
+      # Every run of this stakeholder, laid out for comparison.
+      def index
+        drive_for(params[:contact_id])
+
+        # Only runs that asked something: an empty drive is a Reset nobody used,
+        # and a column with nothing in it to compare.
+        @drives = TestDrive.where(contact_id: @contact.id, author_id: current_user.id)
+          .newest_first.includes(:turns).reject { |drive| drive.turns.empty? }
+
+        @costs = ModelCall.where(test_drive_id: @drives.map(&:id))
+          .group(:test_drive_id)
+          .pluck(Arel.sql("test_drive_id, SUM(input_tokens + output_tokens), STRING_AGG(DISTINCT model, ', '), STRING_AGG(DISTINCT effort, ', ')"))
+          .to_h { |id, tokens, models, efforts| [id, {tokens: tokens.to_i, models: models, efforts: efforts}] }
+      end
+
       def create
         drive = drive_for(params[:contact_id])
         question = params.require(:test_drive).permit(:body)[:body].to_s.strip

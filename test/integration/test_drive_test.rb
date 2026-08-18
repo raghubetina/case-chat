@@ -136,4 +136,45 @@ class TestDriveTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to edit_author_case_contact_path(@case_study, @dana)
   end
+
+  # The board is the reason a drive is kept at all: two runs of the same
+  # question, read against each other rather than one replacing the other.
+  test "the board shows one column per run, newest first" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "First question." }
+    delete author_case_contact_test_drive_path(@case_study, @dana),
+      headers: {"Accept" => "text/vnd.turbo-stream.html"}
+    perform_enqueued_jobs { ask "Second question." }
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_response :success
+    assert_select "section", 2
+    assert_match(/Second question/, response.body)
+    assert_match(/First question/, response.body)
+  end
+
+  test "the board leaves out a run that asked nothing" do
+    sign_in_as @author
+    TestDrive.open_new(@author, @dana)
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_select "section", 0
+  end
+
+  # A prompt edited between runs is the other reason two columns differ, and the
+  # one an author will not remember.
+  test "the board says when the person has changed since a run" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "Before the edit." }
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+    assert_no_match(/#{I18n.t("author.test_drive.board_stale")}/, response.body)
+
+    @dana.update!(system_prompt: "#{@dana.system_prompt} Now different.")
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_match(/#{I18n.t("author.test_drive.board_stale")}/, response.body)
+  end
 end

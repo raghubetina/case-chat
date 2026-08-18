@@ -71,6 +71,8 @@ Rails.application.routes.draw do
       resources :contacts, only: %i[new create edit update destroy] do
         # Rehearsing a stakeholder. Singular: one live transcript per author.
         resource :test_drive, only: %i[create destroy], module: :contacts
+        # The runs of this person, read side by side.
+        resources :test_drives, only: :index, module: :contacts
       end
     end
     resources :contacts, only: [] do

@@ -262,6 +262,15 @@ en:
       tokens_per_run: Tokens per run
       total: Total
     test_drive:
+      board_title: "Runs of %{name}"
+      board_note: Each run reads left to right, newest first.
+      back_to_person: Back to the person
+      board_empty_heading: No runs yet
+      board_empty_body: Rehearse this person, then reset and rehearse again. The two runs sit here side by side.
+      board_no_model: No call recorded
+      board_stale: The prompt has changed since this run
+      board_tokens: "%{count} tokens"
+      board_open: Compare runs
       blank: Ask something first.
       compose_label: "Ask %{name} something, as a student would"
       compose_placeholder: Ask as a student

@@ -120,8 +120,8 @@ class ModelUsageReport
   # keying on it is what lets two runs be set beside each other -- Opus at high
   # against Sol at medium -- instead of pooled under the person they rehearsed.
   #
-  # Rehearsals recorded before drives were kept have no drive to belong to, and
-  # fall to the by-stakeholder rows below.
+  # Every rehearsal has a drive: the ones recorded before drives existed were
+  # removed rather than carried as a special case nobody could act on.
   DriveRow = Data.define(:test_drive, :contact, :models, :totals, :cost) do
     def priced? = !cost.nil?
   end
@@ -140,14 +140,6 @@ class ModelUsageReport
         )
       }
       .sort_by { |row| row.test_drive ? -row.test_drive.created_at.to_i : 0 }
-  end
-
-  # Rehearsals with no drive recorded against them, kept so the screen still
-  # accounts for everything the total counts.
-  def orphan_rehearsal_rows
-    @orphan_rehearsal_rows ||= rows.select { |row| row.rehearsals.any? }
-      .reject { |row| drive_rows.any? { |drive| drive.contact&.id == row.contact.id } }
-      .sort_by { |row| -row.rehearsals.tokens }
   end
 
   private

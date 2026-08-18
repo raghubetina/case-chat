@@ -103,7 +103,7 @@
           </section>
         <% end %>
 
-        <% if @report.drive_rows.any? || @report.orphan_rehearsal_rows.any? %>
+        <% if @report.drive_rows.any? %>
           <section class="flex flex-col gap-4">
             <h2 class="font-head text-lg font-semibold"><%= t("author.usage.test_drives") %></h2>
             <p class="max-w-prose text-sm text-mute"><%= t("author.usage.rehearsals_note") %></p>
@@ -138,21 +138,6 @@
                         <%= row.test_drive ? l(row.test_drive.created_at, format: :short) : "—" %>
                       </td>
                       <td class="px-4 py-3 text-right"><%= number_with_delimiter(row.totals.tokens) %></td>
-                      <td class="px-4 py-3 text-right"><%= money(row.cost, unknown: "—") %></td>
-                    </tr>
-                  <% end %>
-                  <%# Rehearsals from before drives were kept: no run to name. %>
-                  <% @report.orphan_rehearsal_rows.each do |row| %>
-                    <tr class="border-b border-line last:border-0">
-                      <td class="px-4 py-3">
-                        <span class="block font-semibold"><%= row.contact.full_name %></span>
-                        <span class="block text-xs text-mute"><%= row.contact.role_title %></span>
-                      </td>
-                      <td class="px-4 py-3 text-mute">
-                        <%= row.models.map { |id| ModelCatalogue.find(id)&.label || id }.join(", ") %>
-                      </td>
-                      <td class="px-4 py-3 text-mute">—</td>
-                      <td class="px-4 py-3 text-right"><%= number_with_delimiter(row.rehearsals.tokens) %></td>
                       <td class="px-4 py-3 text-right"><%= money(row.cost, unknown: "—") %></td>
                     </tr>
                   <% end %>

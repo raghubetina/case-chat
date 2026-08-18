@@ -147,7 +147,7 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
-  test "the usage page reports tokens per stakeholder" do
+  test "the usage page reports what each rehearsal run cost" do
     record_call(@lena, input: 4000, output: 400)
     record_call(@ray, input: 100, output: 10)
     sign_in_as @author, password: CaseSeeder::Meridian::PASSWORD
@@ -234,9 +234,15 @@ class AuthorExperienceTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # A rehearsal belongs to a run. The app never records one without a drive, so
+  # neither does this: a call with no message and no drive is counted in the
+  # totals and shown in no table, which is the state the screen used to carry a
+  # whole extra branch to describe.
   def record_call(contact, model: "claude-opus-5", input: 1000, output: 100, message: nil)
+    drive = TestDrive.open_new(@author, contact) if message.nil?
+
     ModelCall.record(
-      contact: contact, message: message, provider: "anthropic", model: model,
+      contact: contact, message: message, test_drive: drive, provider: "anthropic", model: model,
       reply: Responder::Reply.new(
         text: "Answering.",
         usage: Responder::Usage.new(input_tokens: input, output_tokens: output,

@@ -19,11 +19,14 @@
 #
 # Table name: test_drives
 #
-#  id         :uuid             not null, primary key
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  author_id  :uuid             not null
-#  contact_id :uuid             not null
+#  id                    :uuid             not null, primary key
+#  knows_case_background :boolean
+#  role_title            :string
+#  system_prompt         :text
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  author_id             :uuid             not null
+#  contact_id            :uuid             not null
 #
 # Indexes
 #
@@ -52,14 +55,37 @@ class TestDrive < ApplicationRecord
   # there is nothing to load yet.
   def self.current(author, contact)
     mine(author, contact).first || begin
-      create!(author: author, contact: contact)
+      create!(author: author, contact: contact, **snapshot_of(contact))
       mine(author, contact).first
     end
   end
 
   def self.open_new(author, contact)
-    create!(author: author, contact: contact)
+    create!(author: author, contact: contact, **snapshot_of(contact))
     mine(author, contact).first
+  end
+
+  # Written once, when the drive opens, and never updated. Reading two runs
+  # side by side, "why did these differ" is as often the prompt as the model,
+  # and an edit between runs is invisible unless the run recorded what it used.
+  def self.snapshot_of(contact)
+    {
+      system_prompt: contact.system_prompt,
+      role_title: contact.role_title,
+      knows_case_background: contact.knows_case_background
+    }
+  end
+
+  # True when the person has been edited since this run, so the board can say so
+  # rather than letting a prompt change read as a model difference. Takes the
+  # person rather than reaching through the association: the caller is rendering
+  # one contact's drives and already holds it.
+  def stale?(current)
+    return false if system_prompt.nil?
+
+    system_prompt != current.system_prompt ||
+      role_title != current.role_title ||
+      knows_case_background != current.knows_case_background
   end
 
   def self.mine(author, contact)
