@@ -89,4 +89,43 @@ class ModelCatalogueTest < ActiveSupport::TestCase
       assert_nil ModelCatalogue.cost(model: unpriced.id, input_tokens: 1000, output_tokens: 1000)
     end
   end
+
+  # The editor's select opens on this, and its Stimulus controller repeats the
+  # same three steps when the model changes, so a level rendered by the server
+  # and one chosen in the browser cannot disagree.
+  test "keeps a stored effort the model still offers" do
+    assert_equal "max", ModelCatalogue.resolved_effort("claude-opus-5", "max")
+  end
+
+  test "falls back to the deployment default when the stored effort is not offered" do
+    assert_not_includes ModelCatalogue.efforts_for("claude-opus-5"), "none"
+
+    assert_equal ModelCatalogue::DEFAULT_EFFORT,
+      ModelCatalogue.resolved_effort("claude-opus-5", "none")
+  end
+
+  # Every catalogued model happens to offer the default today, so this branch is
+  # unreachable through real data -- and it is the branch that decides what a
+  # model added tomorrow opens on.
+  test "falls back to the model's own first level when it does not offer the default" do
+    original = ModelCatalogue.method(:efforts_for)
+    ModelCatalogue.define_singleton_method(:efforts_for) { |_id| ["brisk", "brisker"] }
+
+    assert_equal "brisk", ModelCatalogue.resolved_effort("any-model", "none")
+    assert_equal "brisker", ModelCatalogue.resolved_effort("any-model", "brisker")
+  ensure
+    ModelCatalogue.define_singleton_method(:efforts_for, original)
+  end
+
+  test "resolves without a stored effort" do
+    assert_includes ModelCatalogue.efforts_for("claude-opus-5"),
+      ModelCatalogue.resolved_effort("claude-opus-5", nil)
+  end
+
+  # The line beside the model select. nil rather than zero for an unpriced model,
+  # so the view can say so instead of claiming it is free.
+  test "reports prices per model and nothing for an unknown one" do
+    assert_equal({input: 5.00, output: 30.00}, ModelCatalogue.prices_for("gpt-5.6-sol"))
+    assert_nil ModelCatalogue.prices_for("gpt-9-imaginary")
+  end
 end

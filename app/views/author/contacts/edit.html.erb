@@ -89,7 +89,12 @@
           <span class="kick text-xs text-faint"><%= t("author.contacts.model_note") %></span>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
+        <% chosen_model = @contact.model.presence || ModelCatalogue::DEFAULT_ID %>
+        <div class="grid gap-4 sm:grid-cols-2"
+             data-controller="effort-options"
+             data-effort-options-efforts-value="<%= ModelCatalogue.efforts_by_id.to_json %>"
+             data-effort-options-fallback-value="<%= ModelCatalogue::DEFAULT_EFFORT %>"
+             data-effort-options-prices-value="<%= model_price_summaries.to_json %>">
           <div class="flex flex-col gap-2">
             <%= form.label :model, t("author.contacts.model_label"), class: "kick text-xs text-mute" %>
             <%# Shown resolved rather than blank. A contact with nothing stored
@@ -97,20 +102,26 @@
                 actually true; a blank option beside it would mean the same
                 thing under a vaguer label. Saving writes the value down. %>
             <%= form.select :model,
-                  grouped_options_for_select(ModelCatalogue.grouped_for_select,
-                    @contact.model.presence || ModelCatalogue::DEFAULT_ID),
+                  grouped_options_for_select(ModelCatalogue.grouped_for_select, chosen_model),
                   {},
-                  class: "select select-bordered w-full" %>
+                  class: "select select-bordered w-full",
+                  data: {effort_options_target: "model", action: "change->effort-options#modelChanged"} %>
+            <%# What this model bills, so the choice is not made blind. Rendered
+                for the current model and swapped by the same controller that
+                narrows the effort list. %>
+            <span class="text-xs text-faint" data-effort-options-target="price"><%= model_price_summary(chosen_model) %></span>
           </div>
           <div class="flex flex-col gap-2">
             <%= form.label :effort, t("author.contacts.effort_label"), class: "kick text-xs text-mute" %>
-            <%# Every level any catalogued model offers; the model validates that
-                the one chosen is offered by the model chosen. %>
+            <%# Only the levels this model accepts. Rendered narrowed rather than
+                narrowed on load, so the list is right before any JavaScript runs
+                and stays right if none does. %>
             <%= form.select :effort,
-                  options_for_select(ModelCatalogue.all_efforts,
-                    @contact.effort.presence || ModelCatalogue::DEFAULT_EFFORT),
+                  options_for_select(ModelCatalogue.efforts_for(chosen_model),
+                    ModelCatalogue.resolved_effort(chosen_model, @contact.effort)),
                   {},
-                  class: "select select-bordered w-full" %>
+                  class: "select select-bordered w-full",
+                  data: {effort_options_target: "effort"} %>
           </div>
         </div>
 

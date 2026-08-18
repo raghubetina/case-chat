@@ -13,6 +13,22 @@ module ApplicationHelper
     (amount < 0.005) ? t("money.under_a_cent") : number_to_currency(amount, precision: 2)
   end
 
+  # What a model costs, in words, for every catalogued model. Rendered once and
+  # handed to the browser as a map so changing the model updates the line
+  # without a request -- and so currency and translation stay on this side,
+  # rather than being reimplemented in JavaScript.
+  def model_price_summaries
+    ModelCatalogue.ids.index_with { |id| model_price_summary(id) }
+  end
+
+  def model_price_summary(id)
+    prices = ModelCatalogue.prices_for(id)
+    return t("author.contacts.model_price_unknown") if prices.nil?
+
+    t("author.contacts.model_price",
+      input: money(prices[:input]), output: money(prices[:output]))
+  end
+
   def rodauth_field_error_id(param_name)
     "#{param_name.to_s.tr("_", "-")}-error"
   end

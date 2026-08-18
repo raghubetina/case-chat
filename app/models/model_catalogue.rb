@@ -69,6 +69,29 @@ class ModelCatalogue
     # select when the first one changes.
     def efforts_by_id = all.to_h { |entry| [entry.id, entry.efforts] }
 
+    # Input and output dollars per million tokens, or nil where a model has no
+    # published rate. Formatting belongs to the view; this only says what is
+    # known, so a model priced at zero is distinguishable from one unpriced.
+    def prices_for(id)
+      entry = find(id)
+      return nil if entry.nil? || entry.input_price.nil? || entry.output_price.nil?
+
+      {input: entry.input_price, output: entry.output_price}
+    end
+
+    # Which level a model's select should open on: what was stored if this model
+    # still offers it, else the deployment default if this model offers that,
+    # else whatever it offers first. The editor's Stimulus controller applies
+    # the same three steps when the model changes, so a level chosen in the
+    # browser and one rendered by the server agree.
+    def resolved_effort(id, stored = nil)
+      offered = efforts_for(id)
+      return stored if stored.present? && offered.include?(stored)
+      return DEFAULT_EFFORT if offered.include?(DEFAULT_EFFORT)
+
+      offered.first
+    end
+
     # Dollars, or nil when the model is not one we know. Used to stamp a rate
     # onto a call as it is made; reading a past call's cost goes through the
     # rates stored on the row instead, so that history cannot move.

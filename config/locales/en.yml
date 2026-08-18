@@ -21,7 +21,7 @@ en:
       have_account: Already have an account?
       lede: Create your profile, then verify your email address.
     login:
-      lede: Welcome back. Sign in to work your cases.
+      lede: Sign in to work your cases.
     logout:
       lede: End your current Case Chat session.
     other_options: Other options
@@ -55,7 +55,7 @@ en:
       create: Create case
       created: Case created. Now add the people.
       draft_badge: Draft
-      empty_body: A case is a question, a set of people who each know part of the answer, and the rules for who introduces whom.
+      empty_body: A case is people who each know part of the answer, and rules for who introduces whom.
       empty_heading: You have not written a case yet
       fields:
         assignment: Assignment
@@ -112,10 +112,12 @@ en:
     contacts:
       effort_label: Reasoning effort
       knows_background: Knows the case background
-      knows_background_note: On by default. On, the case background is sent to this person. Off, they are told none of it.
-      model_heading: Who answers as this person
+      knows_background_note: Included in this person's prompt.
+      model_heading: AI model
       model_label: Model
-      model_note: Answers from this contact use the model and effort below. Token use is recorded per person.
+      model_price: "%{input} in, %{output} out, per million tokens"
+      model_price_unknown: No published price
+      model_note: Token use is recorded per person.
       add: Add person
       back: Back to case setup
       create: Create person
@@ -134,7 +136,7 @@ en:
       save: Save person
       saved: Saved.
       shown_in_directory: Shown to students in the directory
-      system_prompt_note: Sent to the model as written, under a generated line naming this person and their role. The referral and share rules below become their own sections, so anything repeated here is sent twice.
+      system_prompt_note: Sent to the model as written. Their name and role are added for you, and the rules below become their own sections, so anything repeated here is sent twice.
     documents:
       add: Add document
       added: Document added.
@@ -169,7 +171,7 @@ en:
       failed: The draft could not be produced.
       failed_note: Nothing was created, and the proposal was cleared. Drafting again reads the documents on the case as they are now.
       hint: Anything the draft should know
-      hint_note: Optional. Added to the drafting prompt under "What the instructor said". Blank leaves that section out.
+      hint_note: Optional. Added to the drafting prompt.
       hint_placeholder: The expediter should be reachable only through the chef, and only after he admits he does not know what happens at eight o'clock.
       no_documents: Upload at least one file before drafting a case from it.
       nothing_to_accept: There is no draft to accept. Draft one first.
@@ -232,12 +234,12 @@ en:
       cost: Cost
       cost_note: Cache writes are not priced here, and a request over 272K tokens bills at a higher rate, so a total reads low rather than high.
       cost_unknown: Not priced
-      cost_unknown_note: "%{models} has no price on file, so this case has no total. Add the rate to the catalogue once you have read the provider's own page."
-      empty_body: Rehearse someone, or publish the case and let somebody run it, and the count starts here.
+      cost_unknown_note: "%{models} has no price on file, so this case has no total."
+      empty_body: Rehearse someone, or publish the case and let somebody run it.
       empty_heading: Nothing has been spent on this case yet
       model: Model
       rehearsals: Your rehearsals
-      rehearsals_note: What test drives on this case have cost. A test drive is recorded with no message attached, which is how it is counted apart from a student's reply.
+      rehearsals_note: What test drives on this case have cost.
       replies: Students' replies
       stakeholder: Person
       table_caption: What each person has cost to answer as
