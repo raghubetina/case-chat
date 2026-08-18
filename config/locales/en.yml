@@ -252,7 +252,8 @@ en:
       threads_heading: Per conversation
       thread_with: With
       test_drives: Your test drives
-      test_drives_caption: What rehearsing each person has cost
+      test_drives_caption: What each rehearsal run has cost
+      run_started: Run started
       tokens: Tokens
       no_student_calls: Nobody has run the case yet, so there is nothing to break down by student.
       table_caption: What each person has cost to answer as

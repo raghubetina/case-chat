@@ -28,21 +28,27 @@
 #  updated_at         :datetime         not null
 #  contact_id         :uuid             not null
 #  message_id         :uuid
+#  test_drive_id      :uuid
 #
 # Indexes
 #
 #  index_model_calls_on_contact_id            (contact_id)
 #  index_model_calls_on_message_id            (message_id)
 #  index_model_calls_on_model_and_created_at  (model,created_at)
+#  index_model_calls_on_test_drive_id         (test_drive_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (contact_id => contacts.id) ON DELETE => cascade
 #  fk_rails_...  (message_id => messages.id) ON DELETE => nullify
+#  fk_rails_...  (test_drive_id => test_drives.id) ON DELETE => nullify
 #
 class ModelCall < ApplicationRecord
   belongs_to :contact, class_name: "Contact", optional: false
   belongs_to :message, class_name: "Message", optional: true
+  # Present on a rehearsal, absent on a student's reply. A call with neither
+  # is a rehearsal from before drives were kept.
+  belongs_to :test_drive, class_name: "TestDrive", optional: true
 
   validates :provider, presence: true
   validates :model, presence: true
@@ -88,12 +94,12 @@ class ModelCall < ApplicationRecord
   # The rate is looked up now and written down, because it is a fact about this
   # request. Derived later from whatever the catalogue happens to say, a
   # correction to one number would silently re-price every call ever made.
-  def self.record(contact:, reply:, model:, provider:, effort: nil, message: nil, duration_ms: nil)
+  def self.record(contact:, reply:, model:, provider:, effort: nil, message: nil, test_drive: nil, duration_ms: nil)
     usage = reply.usage
     entry = ModelCatalogue.find(model)
 
     create!(
-      contact: contact, message: message,
+      contact: contact, message: message, test_drive: test_drive,
       provider: provider, model: model, effort: effort,
       input_tokens: usage.input_tokens, output_tokens: usage.output_tokens,
       cache_read_tokens: usage.cache_read_tokens, cache_write_tokens: usage.cache_write_tokens,

@@ -27,14 +27,17 @@ module Author
         end
       end
 
+      # Reset opens a new drive rather than erasing this one, so two runs of
+      # the same question against different models can be compared afterwards.
       def destroy
-        drive_for(params[:contact_id]).reset
+        drive_for(params[:contact_id])
+        fresh = TestDrive.open_new(current_user, @contact)
 
         respond_to do |format|
           format.turbo_stream do
             render turbo_stream: turbo_stream.replace(
               "test_drive", partial: "author/contacts/test_drive",
-              locals: {contact: @contact, case_study: @case_study, drive: drive_for(params[:contact_id])}
+              locals: {contact: @contact, case_study: @case_study, drive: fresh}
             )
           end
           format.html { redirect_to edit_author_case_contact_path(@case_study, @contact) }
@@ -50,7 +53,7 @@ module Author
           .find(contact_id)
         authorize! @contact, to: :update?
 
-        TestDrive.new(current_user, @contact)
+        TestDrive.current(current_user, @contact)
       end
 
       def render_asked(drive, asked)

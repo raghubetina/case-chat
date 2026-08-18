@@ -42,7 +42,7 @@ class TestDriveTest < ActionDispatch::IntegrationTest
     sign_in_as @author
     perform_enqueued_jobs { ask "Why did margin fall?" }
 
-    turns = TestDrive.new(@author, @dana).turns
+    turns = TestDrive.current(@author, @dana).turns
 
     assert_equal 2, turns.size, "the author's question and the stakeholder's answer"
     assert_equal "Why did margin fall?", turns.first.text
@@ -52,7 +52,7 @@ class TestDriveTest < ActionDispatch::IntegrationTest
 
   test "a rehearsal is generated from the briefing a student would get" do
     sign_in_as @author
-    drive = TestDrive.new(@author, @dana)
+    drive = TestDrive.current(@author, @dana)
 
     assert_equal ContactBriefing.new(@dana).system_text, drive.briefing.system_text,
       "testing against a different briefing would rehearse something no student meets"
@@ -66,7 +66,8 @@ class TestDriveTest < ActionDispatch::IntegrationTest
       system_prompt: "You know the plants.", case_study: @case_study
     )
     Referral.create!(referring_contact: @dana, referred_contact: priya, condition: "On the plants.")
-    turn = TestDrive::Turn.new(role: "contact", text: "", introduced_ids: [priya.id], shared_ids: [])
+    turn = TestDriveTurn.new(from_contact: true, body: "",
+      introduced_contact_ids: [priya.id], shared_document_ids: [])
 
     html = ApplicationController.render(
       partial: "author/contacts/test_turn", locals: {turn: turn, contact: @dana}
@@ -76,15 +77,35 @@ class TestDriveTest < ActionDispatch::IntegrationTest
     assert_no_match(/px-3 py-2 text-sm">\s*<\/div>/, html, "an empty bubble should not be drawn")
   end
 
-  test "resetting clears the transcript" do
+  # Reset opens a new drive rather than erasing the old one: asking the same
+  # question of two models is the point, and that only works if the first
+  # transcript is still there to compare against.
+  test "resetting starts a fresh drive and keeps the finished one" do
     sign_in_as @author
     perform_enqueued_jobs { ask "First question." }
-    assert_not_empty TestDrive.new(@author, @dana).turns
+    first = TestDrive.current(@author, @dana)
+    assert_not_empty first.turns
 
-    delete author_case_contact_test_drive_path(@case_study, @dana),
-      headers: {"Accept" => "text/vnd.turbo-stream.html"}
+    assert_difference "TestDrive.count", 1 do
+      delete author_case_contact_test_drive_path(@case_study, @dana),
+        headers: {"Accept" => "text/vnd.turbo-stream.html"}
+    end
 
-    assert_empty TestDrive.new(@author, @dana).turns
+    assert_empty TestDrive.current(@author, @dana).turns, "the new drive starts empty"
+    assert_not_empty first.reload.turns, "the finished one is still readable"
+  end
+
+  # The cost of a rehearsal now belongs to the drive that incurred it, which is
+  # what lets two runs be compared rather than pooled under the stakeholder.
+  test "a rehearsal's cost is attributed to its own drive" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "What does this cost?" }
+
+    drive = TestDrive.current(@author, @dana)
+    call = ModelCall.where(test_drive_id: drive.id).first
+
+    assert_not_nil call, "the call is tied to the drive"
+    assert_nil call.message_id, "and still carries no message"
   end
 
   test "one author cannot see another's rehearsal" do
@@ -92,7 +113,7 @@ class TestDriveTest < ActionDispatch::IntegrationTest
     sign_in_as @author
     perform_enqueued_jobs { ask "Mine." }
 
-    assert_empty TestDrive.new(other, @dana).turns,
+    assert_empty TestDrive.current(other, @dana).turns,
       "the transcript is keyed on the author, not just the stakeholder"
   end
 

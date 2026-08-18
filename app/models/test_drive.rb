@@ -1,58 +1,88 @@
 # An author talking to a stakeholder they are writing, to find out whether the
 # prompt they just saved actually behaves.
 #
-# Nothing here is persisted as domain data. A test drive creates no Enrollment,
-# no Conversation, no Message, and no Introduction or DocumentShare — if it did,
-# an author trying out their own case would appear in their own cohort report,
-# and a student opening that thread would find someone else's rehearsal in it.
-# The transcript lives in the cache and expires on its own.
+# A drive is kept, and Reset opens a new one rather than erasing this one. That
+# is the point: ask the same question of Opus at high and of Sol at medium and
+# the two transcripts sit side by side afterwards, each with its own cost.
+#
+# It is still not domain data. A drive creates no Enrollment, no Conversation,
+# no Message, and applies no Introduction or DocumentShare -- an author
+# rehearsing their own case must not appear in their own cohort report, and a
+# student opening a thread must not find someone else's rehearsal in it. These
+# are separate tables for exactly that reason: nothing that reads conversations
+# or messages can reach them by accident.
 #
 # What it does share with a real conversation is the briefing. ContactBriefing
-# composes exactly what a student's reply is generated from, so a test that used
-# anything else would be testing something the student will never meet.
-class TestDrive
-  EXPIRES_IN = 2.hours
+# composes exactly what a student's reply is generated from, so a rehearsal that
+# used anything else would be testing something no student will meet.
+# == Schema Information
+#
+# Table name: test_drives
+#
+#  id         :uuid             not null, primary key
+#  created_at :datetime         not null
+#  updated_at :datetime         not null
+#  author_id  :uuid             not null
+#  contact_id :uuid             not null
+#
+# Indexes
+#
+#  index_test_drives_on_author_id                                (author_id)
+#  index_test_drives_on_contact_id_and_author_id_and_created_at  (contact_id,author_id,created_at)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (author_id => users.id) ON DELETE => cascade
+#  fk_rails_...  (contact_id => contacts.id) ON DELETE => cascade
+#
+class TestDrive < ApplicationRecord
+  belongs_to :contact, class_name: "Contact", optional: false
+  belongs_to :author, class_name: "User", optional: false
+  has_many :turns, -> { order(:created_at) }, class_name: "TestDriveTurn", dependent: :destroy
+  has_many :model_calls, class_name: "ModelCall", dependent: :nullify
 
-  # A contact's answer may fire the introduce or share tool. Those are the
-  # interesting events for an author — the condition either matched or it did
-  # not — so they are carried alongside the text rather than being applied.
-  Turn = Struct.new(:role, :text, :introduced_ids, :shared_ids) do
-    def from_contact? = role.to_s == "contact"
+  scope :newest_first, -> { order(created_at: :desc) }
+
+  # The drive an author is currently in for this stakeholder, opening one if
+  # they have never rehearsed it or have just reset.
+  # Always preloaded. strict_loading is on by default and a drive is never used
+  # without its contact and its turns -- the briefing wants one and the history
+  # wants the other -- so the finder loads them rather than each caller
+  # discovering the guard. Creating costs a second query, on the one path where
+  # there is nothing to load yet.
+  def self.current(author, contact)
+    mine(author, contact).first || begin
+      create!(author: author, contact: contact)
+      mine(author, contact).first
+    end
   end
 
-  attr_reader :author, :contact
-
-  def initialize(author, contact)
-    @author = author
-    @contact = contact
+  def self.open_new(author, contact)
+    create!(author: author, contact: contact)
+    mine(author, contact).first
   end
 
-  def turns
-    (Rails.cache.read(cache_key) || []).map { |attrs| Turn.new(**attrs) }
+  def self.mine(author, contact)
+    where(author_id: author.id, contact_id: contact.id)
+      .newest_first.includes(:contact, :author, :turns)
   end
 
-  def ask(text)
-    append(role: "student", text: text.to_s.strip)
-  end
+  def ask(text) = turns.create!(from_contact: false, body: text.to_s.strip)
 
   def answer(reply)
-    append(
-      role: "contact",
-      text: reply.spoken_text,
-      introduced_ids: reply.introduced_contact_ids,
-      shared_ids: reply.shared_document_ids
+    turns.create!(
+      from_contact: true,
+      body: reply.spoken_text,
+      introduced_contact_ids: reply.introduced_contact_ids,
+      shared_document_ids: reply.shared_document_ids
     )
   end
 
-  def reset
-    Rails.cache.delete(cache_key)
-  end
-
   # The responder wants Message-shaped objects. These are never saved; building
-  # them unsaved is what keeps a rehearsal out of the transcript.
+  # them unsaved is what keeps a rehearsal out of any transcript.
   def history
     turns.map do |turn|
-      Message.new(body: turn.text, from_contact: turn.from_contact?, sent_at: Time.current)
+      Message.new(body: turn.body, from_contact: turn.from_contact, sent_at: turn.created_at)
     end
   end
 
@@ -64,13 +94,7 @@ class TestDrive
 
   def dom_id_for(suffix) = ActionView::RecordIdentifier.dom_id(contact, "test_#{suffix}")
 
-  private
-
-  def append(**attrs)
-    turn = {role: nil, text: nil, introduced_ids: [], shared_ids: []}.merge(attrs)
-    Rails.cache.write(cache_key, turns.map(&:to_h) + [turn], expires_in: EXPIRES_IN)
-    Turn.new(**turn)
-  end
-
-  def cache_key = ["test_drive", author.id, contact.id].join("/")
+  # What answered, taken from the calls themselves rather than stored here: an
+  # author can change the model mid-drive, and the calls are what actually ran.
+  def models_used = model_calls.distinct.pluck(:model, :effort)
 end

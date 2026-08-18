@@ -222,6 +222,6 @@
 
     <%= render "author/contacts/test_drive",
           contact: @contact, case_study: @case_study,
-          drive: TestDrive.new(current_user, @contact) %>
+          drive: TestDrive.current(current_user, @contact) %>
   </div>
 <% end %>

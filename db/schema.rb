@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -179,10 +179,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.integer "output_tokens", default: 0, null: false
     t.string "provider", null: false
     t.jsonb "raw"
+    t.uuid "test_drive_id"
     t.datetime "updated_at", null: false
     t.index ["contact_id"], name: "index_model_calls_on_contact_id"
     t.index ["message_id"], name: "index_model_calls_on_message_id"
     t.index ["model", "created_at"], name: "index_model_calls_on_model_and_created_at"
+    t.index ["test_drive_id"], name: "index_model_calls_on_test_drive_id"
   end
 
   create_table "referrals", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
@@ -348,6 +350,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "test_drive_turns", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.boolean "from_contact", default: false, null: false
+    t.jsonb "introduced_contact_ids", default: [], null: false
+    t.jsonb "shared_document_ids", default: [], null: false
+    t.uuid "test_drive_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["test_drive_id", "created_at"], name: "index_test_drive_turns_on_test_drive_id_and_created_at"
+  end
+
+  create_table "test_drives", id: :uuid, default: -> { "uuidv7()" }, force: :cascade do |t|
+    t.uuid "author_id", null: false
+    t.uuid "contact_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_test_drives_on_author_id"
+    t.index ["contact_id", "author_id", "created_at"], name: "index_test_drives_on_contact_id_and_author_id_and_created_at"
+  end
+
   create_table "user_lockouts", id: :uuid, default: nil, force: :cascade do |t|
     t.datetime "deadline", null: false
     t.datetime "email_last_sent"
@@ -408,6 +430,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "messages", "conversations", on_delete: :cascade
   add_foreign_key "model_calls", "contacts", on_delete: :cascade
   add_foreign_key "model_calls", "messages", on_delete: :nullify
+  add_foreign_key "model_calls", "test_drives", column: "test_drive_id", on_delete: :nullify
   add_foreign_key "referrals", "contacts", column: "referred_contact_id", on_delete: :cascade
   add_foreign_key "referrals", "contacts", column: "referring_contact_id", on_delete: :cascade
   add_foreign_key "share_rules", "contacts", on_delete: :cascade
@@ -418,6 +441,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_180000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "test_drive_turns", "test_drives", column: "test_drive_id", on_delete: :cascade
+  add_foreign_key "test_drives", "contacts", on_delete: :cascade
+  add_foreign_key "test_drives", "users", column: "author_id", on_delete: :cascade
   add_foreign_key "user_lockouts", "users", column: "id", on_delete: :cascade
   add_foreign_key "user_login_failures", "users", column: "id", on_delete: :cascade
   add_foreign_key "user_password_reset_keys", "users", column: "id", on_delete: :cascade

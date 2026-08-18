@@ -115,11 +115,38 @@ class ModelUsageReport
       .sort_by { |row| -row.totals.tokens }
   end
 
-  # The author's own test drives. Keyed by stakeholder because a rehearsal has
-  # no student and no thread -- it is the one place per-stakeholder is the only
-  # answer available, and the useful one.
-  def rehearsal_rows
-    @rehearsal_rows ||= rows.select { |row| row.rehearsals.any? }
+  # The author's own test drives, one row per drive rather than per stakeholder.
+  # A drive is a run of the prompt against a particular model and effort, so
+  # keying on it is what lets two runs be set beside each other -- Opus at high
+  # against Sol at medium -- instead of pooled under the person they rehearsed.
+  #
+  # Rehearsals recorded before drives were kept have no drive to belong to, and
+  # fall to the by-stakeholder rows below.
+  DriveRow = Data.define(:test_drive, :contact, :models, :totals, :cost) do
+    def priced? = !cost.nil?
+  end
+
+  def drive_rows
+    @drive_rows ||= drive_buckets
+      .group_by(&:test_drive_id)
+      .map { |drive_id, mine|
+        first = mine.first
+        DriveRow.new(
+          test_drive: drives[drive_id],
+          contact: contacts_by_id[first.contact_id],
+          models: mine.map { |b| [b.model, b.effort] }.uniq,
+          totals: sum_of(mine),
+          cost: cost_for(mine)
+        )
+      }
+      .sort_by { |row| row.test_drive ? -row.test_drive.created_at.to_i : 0 }
+  end
+
+  # Rehearsals with no drive recorded against them, kept so the screen still
+  # accounts for everything the total counts.
+  def orphan_rehearsal_rows
+    @orphan_rehearsal_rows ||= rows.select { |row| row.rehearsals.any? }
+      .reject { |row| drive_rows.any? { |drive| drive.contact&.id == row.contact.id } }
       .sort_by { |row| -row.rehearsals.tokens }
   end
 
@@ -174,6 +201,35 @@ class ModelUsageReport
   def cost_for(buckets_for_row)
     costs = buckets_for_row.map(&:cost)
     costs.any?(&:nil?) ? nil : costs.sum
+  end
+
+  DriveBucket = Data.define(:test_drive_id, :contact_id, :model, :effort, :totals, :cost)
+
+  def drives
+    @drives ||= TestDrive.where(id: drive_buckets.map(&:test_drive_id).uniq).index_by(&:id)
+  end
+
+  # One row per drive, model and effort: an author who changes the model without
+  # resetting gets both named on the same run, which is the truth of it.
+  def drive_buckets
+    @drive_buckets ||= ModelCall
+      .where(contact_id: Contact.where(case_study_id: @case_study.id).select(:id))
+      .where.not(test_drive_id: nil)
+      .group(:test_drive_id, :contact_id, :model, :effort)
+      .pluck(Arel.sql(<<~SQL.squish))
+        test_drive_id, contact_id, model, effort,
+        COUNT(*), SUM(input_tokens), SUM(output_tokens),
+        SUM(cache_read_tokens), SUM(cache_write_tokens),
+        #{COST}, BOOL_OR(input_price IS NULL OR output_price IS NULL)
+      SQL
+      .map do |drive_id, contact_id, model, effort, calls, input, output, cache_read, cache_write, cost, unpriced|
+        DriveBucket.new(
+          test_drive_id: drive_id, contact_id: contact_id, model: model, effort: effort,
+          cost: unpriced ? nil : cost&.to_f,
+          totals: Totals.new(calls: calls, input: input, output: output,
+            cache_read: cache_read, cache_write: cache_write)
+        )
+      end
   end
 
   StudentBucket = Data.define(:user_id, :enrollment_id, :conversation_id, :contact_id, :totals, :cost)

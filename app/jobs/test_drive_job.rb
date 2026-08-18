@@ -19,7 +19,7 @@ class TestDriveJob < ApplicationJob
     author = User.find_by(id: author_id)
     return if contact.nil? || author.nil?
 
-    drive = TestDrive.new(author, contact)
+    drive = TestDrive.current(author, contact)
     buffer = +""
     last_flush = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
@@ -43,7 +43,7 @@ class TestDriveJob < ApplicationJob
       # Recorded with no message: a rehearsal costs real tokens and should show
       # up in the total, but it belongs to nobody's transcript.
       ModelCall.record(
-        contact: contact, reply: reply,
+        contact: contact, reply: reply, test_drive: drive,
         provider: Responder.provider_name(adapter),
         model: adapter.try(:model).presence || Responder.provider_name(adapter),
         effort: adapter.try(:effort),

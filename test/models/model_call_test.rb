@@ -23,17 +23,20 @@ require_relative "domain_test_helper"
 #  updated_at         :datetime         not null
 #  contact_id         :uuid             not null
 #  message_id         :uuid
+#  test_drive_id      :uuid
 #
 # Indexes
 #
 #  index_model_calls_on_contact_id            (contact_id)
 #  index_model_calls_on_message_id            (message_id)
 #  index_model_calls_on_model_and_created_at  (model,created_at)
+#  index_model_calls_on_test_drive_id         (test_drive_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (contact_id => contacts.id) ON DELETE => cascade
 #  fk_rails_...  (message_id => messages.id) ON DELETE => nullify
+#  fk_rails_...  (test_drive_id => test_drives.id) ON DELETE => nullify
 #
 class ModelCallTest < ActiveSupport::TestCase
   include DomainTestHelper

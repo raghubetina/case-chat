@@ -55,7 +55,18 @@ ActiveRecordDoctor.configure do
   # response id, which is the rule that actually matters.
   detector :missing_presence_validation, ignore_attributes: rodauth_models.flat_map { |model|
     %w[key password_hash requested_at email_last_sent deadline number].map { |attr| "#{model}.#{attr}" }
-  } + ["MessageReasoning.blocks"]
+  } + [
+    "MessageReasoning.blocks",
+    # from_contact is a boolean whose default is false, and false is the
+    # commoner of the two values: a presence validator would reject every
+    # question an author asks. The NOT NULL constraint is the real guard.
+    "TestDriveTurn.from_contact",
+    # Both are jsonb arrays defaulting to []. An answer that fired no tool
+    # carries an empty one, which is the ordinary case rather than a missing
+    # value, and presence rejects [].
+    "TestDriveTurn.introduced_contact_ids",
+    "TestDriveTurn.shared_document_ids"
+  ]
 
   # contacts.case_study_id is indexed, by
   # index_contacts_on_case_study_id_and_lower_full_name, which leads with it.
