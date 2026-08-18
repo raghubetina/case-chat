@@ -60,4 +60,50 @@ class ContactTest < ActiveSupport::TestCase
     assert_not duplicate.valid?
     assert duplicate.errors.of_kind?(:full_name, :taken)
   end
+
+  # An effort that is valid somewhere is not valid everywhere: OpenAI offers
+  # none, Anthropic offers max, and the pair only makes sense together. The rule
+  # shipped without a test, and the editor still offers every level any model
+  # accepts, so this is the only thing standing between an author and a request
+  # the provider rejects mid-reply.
+  test "accepts an effort the chosen model offers" do
+    contact = build_contact
+    contact.update(model: "claude-opus-5", effort: "max")
+
+    assert_predicate contact, :valid?
+  end
+
+  test "rejects an effort another model offers but this one does not" do
+    contact = build_contact
+    contact.assign_attributes(model: "claude-opus-5", effort: "none")
+
+    assert_not contact.valid?
+    assert contact.errors.of_kind?(:effort, :inclusion)
+  end
+
+  test "rejects an effort no catalogued model offers" do
+    contact = build_contact
+    contact.assign_attributes(model: "claude-opus-5", effort: "vigorous")
+
+    assert_not contact.valid?
+    assert contact.errors.of_kind?(:effort, :inclusion)
+  end
+
+  test "leaves the effort alone when none is chosen" do
+    contact = build_contact
+    contact.assign_attributes(model: "claude-opus-5", effort: nil)
+
+    assert_predicate contact, :valid?
+  end
+
+  # Deliberate fail-open: a model the catalogue cannot describe has no list to
+  # check against, and refusing every effort would make an unknown model
+  # unusable rather than merely unverified.
+  test "accepts any effort for a model the catalogue does not describe" do
+    contact = build_contact
+    contact.model = "gpt-9-imaginary"
+
+    assert_not contact.valid?, "an uncatalogued model is itself rejected"
+    assert contact.errors.of_kind?(:model, :inclusion)
+  end
 end
