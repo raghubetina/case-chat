@@ -42,7 +42,7 @@ gem "solid_cable"
 
 # Action Cable's redis adapter, used in production where a Key Value instance
 # is provisioned. Solid Cable remains the fallback; see config/cable.yml.
-gem "redis", "~> 5.4"
+gem "redis", "~> 6.0"
 
 # Error tracking, dormant until ROLLBAR_ACCESS_TOKEN exists.
 gem "rollbar"
