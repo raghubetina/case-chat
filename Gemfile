@@ -71,7 +71,7 @@ gem "anthropic", "~> 1.61"
 # OpenAI's Responses API, behind the same Responder seam. Kept alongside rather
 # than instead of: it has explicit prompt-cache breakpoints on gpt-5.6+, direct
 # file input, and the realtime audio models a future voice mode would need.
-gem "openai", "~> 0.78"
+gem "openai", "~> 0.79"
 
 # Perimeter per-IP rate limiting; counters ride Rails.cache.
 gem "rack-attack"
