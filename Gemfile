@@ -66,7 +66,7 @@ gem "action_policy", "~> 0.7"
 # the composed briefing plus the whole thread) and cache_control, cache TTL,
 # and cache_read_input_tokens are exactly what an abstraction normalizes away.
 # Provider swappability lives in app/models/responder.rb instead, which we own.
-gem "anthropic", "~> 1.61"
+gem "anthropic", "~> 1.62"
 
 # OpenAI's Responses API, behind the same Responder seam. Kept alongside rather
 # than instead of: it has explicit prompt-cache breakpoints on gpt-5.6+, direct
