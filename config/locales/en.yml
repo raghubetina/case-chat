@@ -261,6 +261,18 @@ en:
       tokens: Tokens
       tokens_per_run: Tokens per run
       total: Total
+    student:
+      title: "%{name}"
+      back: Back to the cohort
+      run: "Run %{number}"
+      run_empty: Nothing was asked in this run.
+      asked:
+        zero: Nothing asked yet
+        one: 1 question asked
+        other: "%{count} questions asked"
+      empty_heading: This student has not started
+      empty_body: They have joined the case but have not opened a thread yet.
+      open: "Read %{name}'s threads"
     test_drive:
       board_title: "Runs of %{name}"
       board_note: Each run reads left to right, newest first.
@@ -268,6 +280,11 @@ en:
       board_empty_heading: No runs yet
       board_empty_body: Rehearse this person, then reset and rehearse again. The two runs sit here side by side.
       board_no_model: No call recorded
+      board_no_role: No role recorded
+      board_prompt: Prompt used for this run
+      board_prompt_missing: This run finished before prompts were recorded.
+      board_with_background: knows the case background
+      board_without_background: does not know the case background
       board_stale: The prompt has changed since this run
       board_tokens: "%{count} tokens"
       board_open: Compare runs

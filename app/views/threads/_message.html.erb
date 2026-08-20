@@ -1,4 +1,13 @@
-<% speaker = message.from_contact? ? message.conversation.contact.full_name : current_user.full_name %>
+<%# asker_name is who sent the messages that are not the contact's. It is
+    current_user in a student's own thread, and the student when an author is
+    reading that thread back — labelling their words with the author's name
+    would be quietly wrong on exactly the screen built for reading them. %>
+<%# Resolved inside the ternary, not before it. A contact's reply is rendered
+    from a background job, where there is no request and current_user raises —
+    so the branch that reaches for it must stay unevaluated there. %>
+<% speaker = message.from_contact? ?
+     message.conversation.contact.full_name :
+     local_assigns.fetch(:asker_name) { current_user.full_name } %>
 <%= render layout: "shared/transcript_row", locals: {
       id: dom_id(message),
       speaker: speaker,
@@ -26,11 +35,22 @@
               <span class="truncate text-base leading-tight text-mute"><%= introduction.contact.role_title %></span>
             </span>
           </div>
-          <%# The introduced contact already carries the case id; going through
-              the enrollment for it would be a second hop for the same value. %>
-          <%= button_to t("threads.open_thread"),
-                case_threads_path(introduction.contact.case_study_id, contact_id: introduction.contact.id),
-                class: "btn btn-primary btn-sm" %>
+          <%# Only the student whose thread this is can open it. An author
+              reading the same transcript back gets the card without the
+              button: following it would open a thread as themselves, in a
+              case they wrote, which is a run nobody asked for.
+
+              The file link below stays either way — DocumentPolicy#show?
+              already grants an author their own case's documents, and being
+              able to open what a student was handed is most of the point. %>
+          <% if local_assigns.fetch(:interactive, true) %>
+            <%# The introduced contact already carries the case id; going
+                through the enrollment for it would be a second hop for the
+                same value. %>
+            <%= button_to t("threads.open_thread"),
+                  case_threads_path(introduction.contact.case_study_id, contact_id: introduction.contact.id),
+                  class: "btn btn-primary btn-sm" %>
+          <% end %>
         </div>
       <% end %>
     </div>
