@@ -11,6 +11,20 @@ class ContactReply
 
   attr_reader :conversation, :responder
 
+  # A contact's turn can be an act rather than words. Models routinely hand over
+  # a document with no accompanying text, and printing "(no answer)" above the
+  # file card tells the student the reply failed when they just got what they
+  # asked for. Only a turn that carried nothing at all gets that.
+  #
+  # Shared with TestDrive: an author rehearsing the same person must see the
+  # same turn a student would, including this one.
+  def self.spoken_body(reply)
+    return reply.spoken_text if reply.spoken_text.present?
+    return "" if reply.introduced_contact_ids.any? || reply.shared_document_ids.any?
+
+    I18n.t("threads.no_answer")
+  end
+
   def initialize(conversation, responder: nil)
     @conversation = conversation
     @responder = responder
@@ -86,21 +100,10 @@ class ContactReply
 
   def persist_message(reply)
     conversation.messages.create!(
-      body: body_for(reply),
+      body: self.class.spoken_body(reply),
       sent_at: Time.current,
       from_contact: true
     )
-  end
-
-  # A contact's turn can be an act rather than words. Models routinely hand over
-  # a document with no accompanying text, and printing "(no answer)" above the
-  # file card tells the student the reply failed when they just got what they
-  # asked for. Only a turn that carried nothing at all gets that.
-  def body_for(reply)
-    return reply.spoken_text if reply.spoken_text.present?
-    return "" if reply.introduced_contact_ids.any? || reply.shared_document_ids.any?
-
-    I18n.t("threads.no_answer")
   end
 
   # Inside the transaction with the message, because a turn whose reasoning was

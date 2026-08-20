@@ -9,6 +9,7 @@ require_relative "../models/domain_test_helper"
 class TestDriveTest < ActionDispatch::IntegrationTest
   include DomainTestHelper
   include ActiveJob::TestHelper
+  include ActionView::RecordIdentifier
 
   setup do
     @author = register_user(full_name: "Alice Alvarez")
@@ -59,22 +60,53 @@ class TestDriveTest < ActionDispatch::IntegrationTest
   end
 
   # ContactReply lets a reply be wordless when a tool fired, so the rehearsal
-  # must not draw an empty bubble above the card carrying the actual answer.
-  test "a wordless reply renders its triggered card and no empty bubble" do
-    priya = Contact.create!(
-      full_name: "Priya Raghunathan", role_title: "Plant Manager",
-      system_prompt: "You know the plants.", case_study: @case_study
-    )
-    Referral.create!(referring_contact: @dana, referred_contact: priya, condition: "On the plants.")
-    turn = TestDriveTurn.new(from_contact: true, body: "",
-      introduced_contact_ids: [priya.id], shared_document_ids: [])
+  # must not draw an empty paragraph above the card carrying the actual answer.
+  test "a wordless reply renders its triggered card and no empty paragraph" do
+    turn = wordless_turn
 
     html = ApplicationController.render(
-      partial: "author/contacts/test_turn", locals: {turn: turn, contact: @dana}
+      partial: "author/contacts/test_turn",
+      locals: {turn: turn, contact: @dana, author_name: @author.full_name}
     )
 
     assert_match(/Priya Raghunathan/, html)
-    assert_no_match(/px-3 py-2 text-sm">\s*<\/div>/, html, "an empty bubble should not be drawn")
+    assert_no_match(/<p [^>]*><\/p>/, html, "an empty paragraph should not be drawn")
+  end
+
+  # The turn is saved, not just rendered: validating body presence on a
+  # contact's turn raised inside the job, which streamed the answer to the
+  # screen and then never replaced the row it was streaming into.
+  test "a wordless reply from a contact can be recorded" do
+    assert_predicate wordless_turn, :persisted?
+  end
+
+  # Every settled contact turn used to carry the same id as the row a reply
+  # streams into. Turbo resolves a replace target with getElementById, which
+  # returns the first match, so each new answer landed on the oldest one and
+  # the row waiting at the bottom stayed empty for the rest of the visit.
+  test "no two rows in a rehearsal share a dom id" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "First question." }
+    perform_enqueued_jobs { ask "Second question." }
+
+    get edit_author_case_contact_path(@case_study, @dana)
+    ids = css_select("#test_transcript > *").pluck("id")
+
+    assert_equal 4, ids.size, "two questions and two answers"
+    assert_equal ids.uniq, ids, "a repeated id sends Turbo's replace to the wrong row"
+  end
+
+  test "the row a reply streams into is keyed on the question, not the person" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "First question." }
+    ask "Second question."
+
+    turns = TestDrive.current(@author, @dana).turns
+    answered = turns.find(&:from_contact?)
+
+    assert_match dom_id(turns.last, :test_pending), response.body
+    assert_no_match(/#{dom_id(answered)}/, response.body,
+      "streaming into an id the settled answer owns overwrites that answer")
   end
 
   # Reset opens a new drive rather than erasing the old one: asking the same
@@ -115,6 +147,18 @@ class TestDriveTest < ActionDispatch::IntegrationTest
 
     assert_empty TestDrive.current(other, @dana).turns,
       "the transcript is keyed on the author, not just the stakeholder"
+  end
+
+  def wordless_turn
+    priya = Contact.create!(
+      full_name: "Priya Raghunathan", role_title: "Plant Manager",
+      system_prompt: "You know the plants.", case_study: @case_study
+    )
+    Referral.create!(referring_contact: @dana, referred_contact: priya, condition: "On the plants.")
+
+    TestDriveTurn.create!(test_drive: TestDrive.current(@author, @dana),
+      from_contact: true, body: "",
+      introduced_contact_ids: [priya.id], shared_document_ids: [])
   end
 
   test "somebody who does not author the case cannot rehearse its cast" do

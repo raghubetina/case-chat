@@ -1,0 +1,36 @@
+<%# One line of a transcript, wherever a transcript is read: a student's thread,
+    the author's rehearsal of that same person, and the board that lays two
+    rehearsals side by side.
+
+    They were three sets of markup for one thing and had drifted into three
+    different readings — the thread showing a named, timestamped paragraph at
+    16px and the rehearsal showing 14px chat bubbles of the same words.
+
+    The pending row and the settled row it is replaced by render through here
+    together, which is the point. A `<p>` whose classes drift from its
+    replacement moves the text at the moment the reply lands, and a bubble with
+    a border and a background draws an empty box for as long as there is
+    nothing in it yet. %>
+<div id="<%= id %>" class="flex gap-3">
+  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line font-mono text-[11px] font-semibold tracking-normal text-accent <%= from_contact ? "bg-wash" : "bg-soft" %>">
+    <%= initials_for(speaker) %>
+  </div>
+
+  <div class="flex min-w-0 grow flex-col gap-2">
+    <div class="flex items-baseline gap-2">
+      <span class="text-sm font-semibold"><%= speaker %></span>
+      <%= local_assigns[:meta] %>
+    </div>
+
+    <%# body_id means "deltas stream in here", so the paragraph is drawn even
+        while it is empty. Without an id, an empty body draws nothing at all —
+        a contact whose whole turn was a tool call has no prose, and a bubble
+        above the card carrying the actual answer reads as a failure. %>
+    <% if local_assigns[:body_id].present? || body.present? %>
+      <%= tag.p body, id: local_assigns[:body_id],
+            class: "max-w-prose whitespace-pre-wrap break-words text-base" %>
+    <% end %>
+
+    <%= yield %>
+  </div>
+</div>

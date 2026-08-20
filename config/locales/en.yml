@@ -277,6 +277,7 @@ en:
       empty: "Nothing yet. Ask %{name} something and see what they do with it."
       failed: That answer did not come back. Try again.
       heading: Test drive
+      log_label: "Your rehearsal of %{name}"
       not_applied: Nothing here was applied. This is what a student would have received.
       not_visible: Not visible to students
       reset: Reset
