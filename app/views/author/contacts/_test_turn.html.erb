@@ -1,16 +1,20 @@
-<% if turn.from_contact? %>
-  <div id="<%= dom_id(contact, :test_pending) %>" class="flex flex-col gap-1">
-    <span class="kick text-xs text-mute"><%= contact.full_name %></span>
-    <%# A reply that only calls a tool carries no prose — ContactReply allows an
-        empty body exactly then — so an unconditional bubble renders as an empty
-        box above the card that holds the actual answer. %>
-    <% if turn.text.present? %>
-      <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-lg border border-line bg-surface px-3 py-2 text-sm">
-        <%= turn.text %>
-      </div>
-    <% end %>
-  </div>
+<%# A rehearsal reads the same way a student's thread does — see
+    shared/_transcript_row. It used to be chat bubbles at 14px beside a thread
+    of named 16px paragraphs, which made the same words look like a different
+    product.
 
+    The author's own turns carry the author's own name, because that is what a
+    student sees in their thread and the rehearsal is meant to be faithful.
+    It arrives as a local rather than from current_user: the job renders this
+    partial from a broadcast, where there is no request and no helper. %>
+<%= render layout: "shared/transcript_row", locals: {
+      id: dom_id(turn),
+      speaker: turn.from_contact? ? contact.full_name : author_name,
+      from_contact: turn.from_contact?,
+      body: turn.text,
+      meta: turn.created_at && tag.time(l(turn.created_at, format: :short),
+        datetime: turn.created_at.iso8601, class: "text-sm text-faint")
+    } do %>
   <%# The point of a rehearsal. An author is asking whether the condition they
       wrote fires, so a run that only showed prose would answer the wrong
       question. Nothing below was applied — it is what a student would have
@@ -19,25 +23,19 @@
   <% shared = Document.where(id: turn.shared_ids).order(:file_name) %>
 
   <% if introduced.any? || shared.any? %>
-    <div class="flex flex-col gap-2 rounded-lg border border-line bg-soft p-3">
+    <div class="flex max-w-[440px] flex-col gap-2 rounded-lg border border-line bg-soft p-3">
       <span class="kick text-xs text-accent"><%= t("author.test_drive.triggered") %></span>
       <% introduced.each do |person| %>
-        <span class="text-sm">
+        <span class="text-base">
           <%= t("author.test_drive.would_introduce_html", name: tag.span(person.full_name, class: "font-semibold")) %>
         </span>
       <% end %>
       <% shared.each do |document| %>
-        <span class="text-sm">
+        <span class="text-base">
           <%= t("author.test_drive.would_share_html", name: tag.span(document.file_name, class: "font-semibold")) %>
         </span>
       <% end %>
       <span class="text-sm text-mute"><%= t("author.test_drive.not_applied") %></span>
     </div>
   <% end %>
-<% else %>
-  <div class="flex flex-col items-end gap-1">
-    <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-lg bg-accent px-3 py-2 text-sm text-onaccent">
-      <%= turn.text %>
-    </div>
-  </div>
 <% end %>

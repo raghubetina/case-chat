@@ -1,6 +1,13 @@
-<%# Matches the settled contact turn below, so the swap does not move the text. %>
-<div id="<%= dom_id(contact, :test_pending) %>" class="flex flex-col gap-1">
-  <span class="kick text-xs text-mute"><%= contact.full_name %></span>
-  <div class="max-w-[85%] whitespace-pre-wrap break-words rounded-lg border border-line bg-surface px-3 py-2 text-sm"
-       id="<%= dom_id(contact, :test_pending_body) %>"></div>
-</div>
+<%# Keyed on the question, not on the stakeholder. Every settled contact turn
+    used to carry the same id as this row, so Turbo's replace — which resolves
+    its target with getElementById — overwrote the *first* one: each new answer
+    landed on the oldest, and the row waiting at the bottom stayed empty for
+    the rest of the visit. %>
+<%= render layout: "shared/transcript_row", locals: {
+      id: dom_id(question, :test_pending),
+      speaker: contact.full_name,
+      from_contact: true,
+      body: nil,
+      body_id: dom_id(question, :test_pending_body),
+      meta: tag.span(t("threads.replying"), class: "kick text-xs text-accent")
+    } do %><% end %>

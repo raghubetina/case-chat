@@ -19,16 +19,21 @@
           method: :delete, class: "btn btn-outline btn-sm" %>
   </div>
 
-  <div class="scroll-y flex flex-1 flex-col gap-4 p-4"
+  <%# role="log" and the rhythm below are the thread's, so a rehearsal is read
+      -- and announced -- the same way the student's transcript is. %>
+  <div role="log" aria-live="polite"
+       aria-label="<%= t("author.test_drive.log_label", name: contact.full_name) %>"
+       class="scroll-y flex flex-1 flex-col gap-6 px-4 py-6"
        data-controller="autoscroll" data-autoscroll-target="container">
-    <div id="test_transcript" class="flex flex-col gap-4">
+    <div id="test_transcript" class="flex flex-col gap-6">
       <% if drive.turns.empty? %>
         <p id="test_drive_empty" class="text-sm text-mute">
           <%= t("author.test_drive.empty", name: contact.full_name) %>
         </p>
       <% end %>
       <% drive.turns.each do |turn| %>
-        <%= render "author/contacts/test_turn", turn: turn, contact: contact %>
+        <%= render "author/contacts/test_turn", turn: turn, contact: contact,
+              author_name: current_user.full_name %>
       <% end %>
     </div>
   </div>

@@ -25,7 +25,11 @@
 class TestDriveTurn < ApplicationRecord
   belongs_to :test_drive, class_name: "TestDrive", optional: false
 
-  validates :body, presence: true
+  # Matches Message: a contact's turn can be an act rather than words, and a
+  # reply that only introduced someone carries no prose. Validating it presence
+  # here raised RecordInvalid inside the job, which streamed the answer to the
+  # screen and then never replaced the row it was streaming into.
+  validates :body, presence: true, unless: :from_contact?
 
   alias_attribute :text, :body
 

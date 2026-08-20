@@ -34,10 +34,10 @@ module Author
         end
 
         asked = drive.ask(question)
-        TestDriveJob.perform_later(@contact.id, current_user.id)
+        TestDriveJob.perform_later(@contact.id, current_user.id, asked.id)
 
         respond_to do |format|
-          format.turbo_stream { render_asked(drive, asked) }
+          format.turbo_stream { render_asked(asked) }
           format.html { redirect_to edit_author_case_contact_path(@case_study, @contact) }
         end
       end
@@ -71,13 +71,13 @@ module Author
         TestDrive.current(current_user, @contact)
       end
 
-      def render_asked(drive, asked)
+      def render_asked(asked)
         render turbo_stream: [
           turbo_stream.remove("test_drive_empty"),
           turbo_stream.append("test_transcript", partial: "author/contacts/test_turn",
-            locals: {turn: asked, contact: @contact}),
+            locals: {turn: asked, contact: @contact, author_name: current_user.full_name}),
           turbo_stream.append("test_transcript", partial: "author/contacts/test_pending",
-            locals: {contact: @contact, drive: drive}),
+            locals: {contact: @contact, question: asked}),
           turbo_stream.replace("test_composer", partial: "author/contacts/test_composer",
             locals: {contact: @contact, case_study: @case_study})
         ]

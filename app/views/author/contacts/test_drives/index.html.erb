@@ -45,9 +45,10 @@
             <% end %>
           </header>
 
-          <div class="scroll-y flex min-h-0 flex-1 flex-col gap-3 p-4">
+          <div class="scroll-y flex min-h-0 flex-1 flex-col gap-6 p-4">
             <% drive.turns.each do |turn| %>
-              <%= render "author/contacts/test_turn", turn: turn, contact: @contact %>
+              <%= render "author/contacts/test_turn", turn: turn, contact: @contact,
+                    author_name: current_user.full_name %>
             <% end %>
           </div>
         </section>

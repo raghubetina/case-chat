@@ -10,16 +10,23 @@ class TestDriveJob < ApplicationJob
   # student loop serialises: two answers generated together would each be built
   # from a history missing the other.
   limits_concurrency to: 1, duration: 10.minutes,
-    key: ->(contact_id, author_id) { "test-drive/#{contact_id}/#{author_id}" }
+    key: ->(contact_id, author_id, _question_id) { "test-drive/#{contact_id}/#{author_id}" }
 
   FLUSH_INTERVAL = 0.05
 
-  def perform(contact_id, author_id)
+  # The question is what the answer is keyed to on the page, and the drive is
+  # taken from it rather than from TestDrive.current: an author who resets while
+  # a reply is in flight would otherwise have the answer to the old question
+  # filed under the new run.
+  def perform(contact_id, author_id, question_id)
     contact = Contact.includes(:case_study).find_by(id: contact_id)
-    author = User.find_by(id: author_id)
-    return if contact.nil? || author.nil?
+    question = TestDriveTurn.find_by(id: question_id)
+    return if contact.nil? || question.nil?
 
-    drive = TestDrive.current(author, contact)
+    drive = TestDrive.where(id: question.test_drive_id)
+      .includes({contact: :case_study}, :author, :turns).first
+    return if drive.nil?
+
     buffer = +""
     last_flush = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
@@ -33,12 +40,12 @@ class TestDriveJob < ApplicationJob
         now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         next if now - last_flush < FLUSH_INTERVAL
 
-        broadcast_delta(drive, buffer)
+        broadcast_delta(drive, question, buffer)
         buffer = +""
         last_flush = now
       end
 
-      broadcast_delta(drive, buffer) if buffer.present?
+      broadcast_delta(drive, question, buffer) if buffer.present?
 
       # Recorded with no message: a rehearsal costs real tokens and should show
       # up in the total, but it belongs to nobody's transcript.
@@ -49,19 +56,19 @@ class TestDriveJob < ApplicationJob
         effort: adapter.try(:effort),
         duration_ms: ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
       )
-      finish(drive, reply)
+      finish(drive, question, reply)
     rescue Responder::Error => e
       Rails.logger.error("Test drive failed for contact #{contact.id}: #{e.message}")
-      fail_gracefully(drive)
+      fail_gracefully(drive, question)
     end
   end
 
   private
 
-  def broadcast_delta(drive, text)
+  def broadcast_delta(drive, question, text)
     Turbo::StreamsChannel.broadcast_append_to(
       drive.stream_name,
-      target: drive.dom_id_for(:pending_body),
+      target: dom_id(question, :test_pending_body),
       partial: "threads/delta",
       locals: {text: text}
     )
@@ -71,23 +78,25 @@ class TestDriveJob < ApplicationJob
   # appended after it — an author's actual question is whether the condition
   # fired, so a rehearsal that only showed prose would be answering the wrong
   # thing.
-  def finish(drive, reply)
+  def finish(drive, question, reply)
     turn = drive.answer(reply)
 
     Turbo::StreamsChannel.broadcast_replace_to(
       drive.stream_name,
-      target: drive.dom_id_for(:pending),
+      target: dom_id(question, :test_pending),
       partial: "author/contacts/test_turn",
-      locals: {turn: turn, contact: drive.contact}
+      locals: {turn: turn, contact: drive.contact, author_name: drive.author.full_name}
     )
   end
 
-  def fail_gracefully(drive)
+  def fail_gracefully(drive, question)
     Turbo::StreamsChannel.broadcast_replace_to(
       drive.stream_name,
-      target: drive.dom_id_for(:pending),
+      target: dom_id(question, :test_pending),
       partial: "author/contacts/test_failed",
-      locals: {contact: drive.contact}
+      locals: {question: question}
     )
   end
+
+  def dom_id(...) = ActionView::RecordIdentifier.dom_id(...)
 end

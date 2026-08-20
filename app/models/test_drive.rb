@@ -98,7 +98,7 @@ class TestDrive < ApplicationRecord
   def answer(reply)
     turns.create!(
       from_contact: true,
-      body: reply.spoken_text,
+      body: ContactReply.spoken_body(reply),
       introduced_contact_ids: reply.introduced_contact_ids,
       shared_document_ids: reply.shared_document_ids
     )
@@ -117,8 +117,6 @@ class TestDrive < ApplicationRecord
   # Broadcasts are scoped to the author as well as the contact: two authors on
   # one case would otherwise watch each other's rehearsals.
   def stream_name = [contact, author, :test_drive]
-
-  def dom_id_for(suffix) = ActionView::RecordIdentifier.dom_id(contact, "test_#{suffix}")
 
   # What answered, taken from the calls themselves rather than stored here: an
   # author can change the model mid-drive, and the calls are what actually ran.

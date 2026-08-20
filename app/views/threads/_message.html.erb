@@ -1,69 +1,59 @@
-<div id="<%= dom_id(message) %>" class="flex gap-3">
-  <% speaker = message.from_contact? ? message.conversation.contact.full_name : current_user.full_name %>
-  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line font-mono text-[11px] font-semibold tracking-normal text-accent <%= message.from_contact? ? "bg-wash" : "bg-soft" %>">
-    <%= initials_for(speaker) %>
-  </div>
-
-  <div class="flex min-w-0 grow flex-col gap-2">
-    <div class="flex items-baseline gap-2">
-      <span class="text-sm font-semibold"><%= speaker %></span>
-      <time class="text-sm text-faint" datetime="<%= message.sent_at&.iso8601 %>">
-        <%= l(message.sent_at, format: :short) if message.sent_at %>
-      </time>
-    </div>
-
-    <% if message.body.present? %>
-      <p class="max-w-prose whitespace-pre-wrap break-words text-base"><%= message.body %></p>
-    <% end %>
-
-    <%# Contact cards: people the student has just earned access to. A contact
-        can hand over more than one person in a turn, so the label heads the
-        group rather than repeating above every card. %>
-    <% if message.introductions.any? %>
-      <div class="flex max-w-[440px] flex-col gap-2">
-        <span class="kick flex items-center gap-2 text-xs text-mute">
-          <%= t("threads.contact_shared") %>
-        </span>
-        <% message.introductions.each do |introduction| %>
-          <div class="@container @max-[380px]:flex-col @max-[380px]:items-stretch flex flex-wrap items-center gap-3 rounded-lg border border-line bg-bg p-3">
-            <div class="flex min-w-0 flex-1 items-center gap-3">
-              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface font-mono text-[13px] font-semibold tracking-normal text-accent">
-                <%= initials_for(introduction.contact.full_name) %>
-              </span>
-              <span class="flex min-w-0 flex-col gap-1">
-                <span class="truncate text-base font-semibold leading-tight"><%= introduction.contact.full_name %></span>
-                <span class="truncate text-base leading-tight text-mute"><%= introduction.contact.role_title %></span>
-              </span>
-            </div>
-            <%# The introduced contact already carries the case id; going through
-                the enrollment for it would be a second hop for the same value. %>
-            <%= button_to t("threads.open_thread"),
-                  case_threads_path(introduction.contact.case_study_id, contact_id: introduction.contact.id),
-                  class: "btn btn-primary btn-sm" %>
+<% speaker = message.from_contact? ? message.conversation.contact.full_name : current_user.full_name %>
+<%= render layout: "shared/transcript_row", locals: {
+      id: dom_id(message),
+      speaker: speaker,
+      from_contact: message.from_contact?,
+      body: message.body,
+      meta: tag.time(message.sent_at && l(message.sent_at, format: :short),
+        datetime: message.sent_at&.iso8601, class: "text-sm text-faint")
+    } do %>
+  <%# Contact cards: people the student has just been introduced to. A contact
+      can hand over more than one person in a turn, so the label heads the
+      group rather than repeating above every card. %>
+  <% if message.introductions.any? %>
+    <div class="flex max-w-[440px] flex-col gap-2">
+      <span class="kick flex items-center gap-2 text-xs text-mute">
+        <%= t("threads.contact_shared") %>
+      </span>
+      <% message.introductions.each do |introduction| %>
+        <div class="@container @max-[380px]:flex-col @max-[380px]:items-stretch flex flex-wrap items-center gap-3 rounded-lg border border-line bg-bg p-3">
+          <div class="flex min-w-0 flex-1 items-center gap-3">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface font-mono text-[13px] font-semibold tracking-normal text-accent">
+              <%= initials_for(introduction.contact.full_name) %>
+            </span>
+            <span class="flex min-w-0 flex-col gap-1">
+              <span class="truncate text-base font-semibold leading-tight"><%= introduction.contact.full_name %></span>
+              <span class="truncate text-base leading-tight text-mute"><%= introduction.contact.role_title %></span>
+            </span>
           </div>
-        <% end %>
-      </div>
-    <% end %>
-
-    <%# File cards: documents handed over in this message. %>
-    <% message.document_shares.each do |share| %>
-      <div class="@container flex max-w-[440px] flex-col gap-2">
-        <span class="kick flex items-center gap-2 text-xs text-mute">
-          <%= t("threads.file_shared") %>
-        </span>
-        <div class="@max-[380px]:flex-col @max-[380px]:items-stretch flex items-center gap-3 rounded-lg border border-line bg-bg p-3">
-          <span class="kick flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-xs text-accent">
-            <%= File.extname(share.document.file_name).delete(".").upcase.presence || t("threads.file") %>
-          </span>
-          <span class="flex min-w-0 flex-1 flex-col gap-1">
-            <span class="truncate text-base font-medium leading-tight"><%= share.document.file_name %></span>
-            <% if share.document.description.present? %>
-              <span class="truncate text-base leading-tight text-faint"><%= share.document.description %></span>
-            <% end %>
-          </span>
-          <%= document_link(share.document, label: t("threads.open_document")) %>
+          <%# The introduced contact already carries the case id; going through
+              the enrollment for it would be a second hop for the same value. %>
+          <%= button_to t("threads.open_thread"),
+                case_threads_path(introduction.contact.case_study_id, contact_id: introduction.contact.id),
+                class: "btn btn-primary btn-sm" %>
         </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# File cards: documents handed over in this message. %>
+  <% message.document_shares.each do |share| %>
+    <div class="@container flex max-w-[440px] flex-col gap-2">
+      <span class="kick flex items-center gap-2 text-xs text-mute">
+        <%= t("threads.file_shared") %>
+      </span>
+      <div class="@max-[380px]:flex-col @max-[380px]:items-stretch flex items-center gap-3 rounded-lg border border-line bg-bg p-3">
+        <span class="kick flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-xs text-accent">
+          <%= File.extname(share.document.file_name).delete(".").upcase.presence || t("threads.file") %>
+        </span>
+        <span class="flex min-w-0 flex-1 flex-col gap-1">
+          <span class="truncate text-base font-medium leading-tight"><%= share.document.file_name %></span>
+          <% if share.document.description.present? %>
+            <span class="truncate text-base leading-tight text-faint"><%= share.document.description %></span>
+          <% end %>
+        </span>
+        <%= document_link(share.document, label: t("threads.open_document")) %>
       </div>
-    <% end %>
-  </div>
-</div>
+    </div>
+  <% end %>
+<% end %>
