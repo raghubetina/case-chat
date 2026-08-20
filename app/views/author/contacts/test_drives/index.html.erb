@@ -59,20 +59,23 @@
               <%= t("author.test_drive.board_prompt") %>
             </summary>
             <div class="flex flex-col gap-2 px-4 pb-3">
-              <% if drive.system_prompt.nil? %>
-                <%# Drives from before a run recorded what it was given. %>
-                <p class="text-sm text-faint"><%= t("author.test_drive.board_prompt_missing") %></p>
+              <% if drive.briefing_text.present? %>
+                <%# The whole thing, tags and all. The author's own field was
+                    about 39% of what the model read: the case background, the
+                    referral and share sections and the answering rules are
+                    composed from rows edited elsewhere, and a run that differed
+                    because a referral condition moved looked identical here.
+                    Long, so it scrolls inside the column rather than
+                    stretching it. %>
+                <pre class="scroll-y max-h-80 whitespace-pre-wrap break-words rounded-md bg-wash p-3 font-mono text-xs leading-relaxed"><%= drive.briefing_text %></pre>
+              <% elsif drive.system_prompt.present? %>
+                <%# Runs from before the whole briefing was recorded still have
+                    the author's field, and saying which part this is beats
+                    showing it as though it were everything. %>
+                <p class="text-xs text-mute"><%= t("author.test_drive.board_prompt_partial") %></p>
+                <pre class="scroll-y max-h-80 whitespace-pre-wrap break-words rounded-md bg-wash p-3 font-mono text-xs leading-relaxed"><%= drive.system_prompt %></pre>
               <% else %>
-                <p class="text-xs text-mute">
-                  <%= drive.role_title.presence || t("author.test_drive.board_no_role") %>
-                  ·
-                  <%= drive.knows_case_background ?
-                        t("author.test_drive.board_with_background") :
-                        t("author.test_drive.board_without_background") %>
-                </p>
-                <%# The prompt is the author's own text and often long, so it
-                    scrolls inside the column rather than stretching it. %>
-                <pre class="scroll-y max-h-64 whitespace-pre-wrap break-words rounded-md bg-wash p-3 font-mono text-xs leading-relaxed"><%= drive.system_prompt %></pre>
+                <p class="text-sm text-faint"><%= t("author.test_drive.board_prompt_missing") %></p>
               <% end %>
             </div>
           </details>

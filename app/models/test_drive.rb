@@ -20,6 +20,7 @@
 # Table name: test_drives
 #
 #  id                    :uuid             not null, primary key
+#  briefing_text         :text
 #  knows_case_background :boolean
 #  role_title            :string
 #  system_prompt         :text
@@ -68,19 +69,35 @@ class TestDrive < ApplicationRecord
   # Written once, when the drive opens, and never updated. Reading two runs
   # side by side, "why did these differ" is as often the prompt as the model,
   # and an edit between runs is invisible unless the run recorded what it used.
+  #
+  # briefing_text is the whole thing, not the author's field. ContactBriefing
+  # composes the case background, the persona, the referral and share sections
+  # and the answering rules; the author's own system_prompt was under half of
+  # what the model actually read. The individual fields are kept alongside it
+  # because they are what the editor edits, and naming which one moved is more
+  # use than pointing at a diff of four thousand characters.
   def self.snapshot_of(contact)
     {
+      briefing_text: ContactBriefing.new(contact).system_text,
       system_prompt: contact.system_prompt,
       role_title: contact.role_title,
       knows_case_background: contact.knows_case_background
     }
   end
 
-  # True when the person has been edited since this run, so the board can say so
+  # True when the prompt has moved since this run, so the board can say so
   # rather than letting a prompt change read as a model difference. Takes the
   # person rather than reaching through the association: the caller is rendering
   # one contact's drives and already holds it.
+  #
+  # Compared against the composed briefing where there is one, because the
+  # levers an author pulls are not all on the person. A referral's condition
+  # lives on the edge between two people and the background lives on the case,
+  # and editing either changes what the model reads while every field on this
+  # contact stays put -- so the three-field comparison below called that
+  # unchanged.
   def stale?(current)
+    return briefing_text != ContactBriefing.new(current).system_text if briefing_text.present?
     return false if system_prompt.nil?
 
     system_prompt != current.system_prompt ||
