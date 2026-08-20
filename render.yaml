@@ -13,8 +13,11 @@
 #   worst case is a row stuck on REPLYING until a reload. Move to starter
 #   ($10) before a live class, for the restarts rather than the capacity.
 #
-#   Web is starter (512MB), so WEB_CONCURRENCY stays at one Puma worker. Two
-#   would not fit.
+#   Web is starter (512MB), so Puma runs in single mode. A second worker
+#   would not fit, and a one-worker cluster only adds a master.
+#
+#   The worker is standard (2GB) after starter OOMed on five streaming
+#   replies. That is where the thread count now comes from.
 #
 #   Postgres is basic-256mb, which holds the seeded cases and a few students.
 #
@@ -22,8 +25,8 @@
 # another instance and change the thing being tested: a reply streams for
 # 10-60 seconds and would hold a request thread for all of it.
 #
-# Restore before a class uses this: standard web, basic-1gb Postgres, and
-# starter Key Value.
+# Restore before a class uses this: standard web (with preload_app! and
+# WEB_CONCURRENCY=2), basic-1gb Postgres, and starter Key Value.
 #
 # The Foundation blueprint runs everything in one 512MB web service with Solid
 # Queue inside Puma and Action Cable polling Postgres. That is a sound default
@@ -86,15 +89,25 @@ services:
           property: connectionString
       - key: PORT
         value: "80"
-      # Standard has room for a real cluster; each worker gets its own threads.
+      # Zero, not one. Puma reads WEB_CONCURRENCY itself, and any positive
+      # value starts cluster mode -- so "1" bought a supervising master process
+      # and exactly the same concurrency as single mode. There is no
+      # preload_app! here either, so there was no copy-on-write saving to set
+      # against it. On 512MB that master was pure overhead.
+      #
+      # Raise this to 2 with preload_app! when the web service moves to
+      # standard; a second worker needs the memory and the shared boot.
       - key: WEB_CONCURRENCY
-        value: "1"
+        value: "0"
       - key: RAILS_MAX_THREADS
         value: "5"
       # Web processes no longer run jobs — that is the worker's job now.
       - key: SOLID_QUEUE_IN_PUMA
         value: "false"
-      # Per Puma worker: threads plus headroom for Action Cable and Solid Cache.
+      # Five Puma threads plus one spare. Action Cable used to belong in this
+      # sum and no longer does: its stream subscriptions are verified from a
+      # signed name rather than a lookup, and with Key Value carrying pub/sub
+      # its worker threads touch no database at all.
       - key: DB_POOL
         value: "6"
       # Streaming responses are held open by Action Cable, not by a request, so
@@ -137,17 +150,28 @@ services:
           type: keyvalue
           property: connectionString
       # A reply job spends most of its life waiting on the model, so threads
-      # are cheap here; this is IO-bound, not CPU-bound.
+      # are cheap here; this is IO-bound, not CPU-bound. Processes are not:
+      # each one is another whole Rails, and none of this is CPU-bound enough
+      # to want a second interpreter.
       - key: JOB_CONCURRENCY
         value: "1"
+      # Threads are what a queue of students actually waits on. Five meant a
+      # class of thirty asking at once cleared in six waves of 10-60 seconds,
+      # so the last student waited minutes for a reply nobody was working on.
+      # Ten halves that, and the room is now there: this service was moved to
+      # standard (2GB) after starter's 512MB OOMed, and five threads fit in
+      # that half gig.
+      #
+      # Pick the next value from the [stream] traces rather than from here --
+      # total_ms is how long a thread is actually occupied.
       - key: JOB_THREADS
-        value: "5"
+        value: "10"
       # Solid Queue refuses to boot if the pool cannot cover its threads, and it
       # opens two beyond them — one for the dispatcher, one for the supervisor's
-      # heartbeat. Five threads therefore needs seven, and this is eight so the
-      # next thread added does not crash-loop the worker.
+      # heartbeat. Ten threads therefore needs twelve. Both services together
+      # now ask Postgres for eighteen of its hundred.
       - key: DB_POOL
-        value: "8"
+        value: "12"
 
 # Two groups on purpose. This one is the blueprint's: wiring it can derive, and
 # values it generates. The other, `case-chat`, is managed by hand in the
