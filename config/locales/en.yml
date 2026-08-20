@@ -232,7 +232,7 @@ en:
         one: 1 call
         other: "%{count} calls"
       cost: Cost
-      cost_note: Cache writes are not priced here, and a request over 272K tokens bills at a higher rate, so a total reads low rather than high.
+      cost_note: Every call is priced at the rate it was billed at rather than at today's. A request over 272K tokens bills higher than this accounts for, so a large total reads low rather than high.
       contacts_heading: Per interviewee
       contacts_note: Which of these people is expensive to talk to, across every student and every rehearsal.
       contacts_caption: Token use and cost for each interviewee.
