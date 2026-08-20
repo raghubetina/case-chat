@@ -39,22 +39,32 @@ class ContactReplyJob < ApplicationJob
     return if question.nil?
 
     buffer = +""
-    last_flush = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    last_flush = started
+    deltas = flushes = 0
+    first_at = nil
 
     begin
       message = ContactReply.new(conversation).generate! do |delta|
         next if delta.blank?
 
+        deltas += 1
         buffer << delta
         now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        first_at ||= now
         next if now - last_flush < FLUSH_INTERVAL
 
         broadcast_delta(conversation, question, buffer)
+        flushes += 1
         buffer = +""
         last_flush = now
       end
 
-      broadcast_delta(conversation, question, buffer) if buffer.present?
+      if buffer.present?
+        broadcast_delta(conversation, question, buffer)
+        flushes += 1
+      end
+      trace("conversation", conversation.id, deltas, flushes, first_at, started)
       finish(conversation, question, message)
     rescue Responder::Error, ContactReply::RuleViolation => e
       Rails.logger.error("Contact reply failed for conversation #{conversation.id}: #{e.message}")
@@ -64,6 +74,20 @@ class ContactReplyJob < ApplicationJob
 
   private
 
+  # "Sometimes it does not stream at all" is not diagnosable from a screenshot,
+  # so the shape of every stream is recorded: how long the model was silent
+  # before the first token, how many flushes the reader actually got, and over
+  # what span. A reply that arrives whole shows up here as one or two flushes,
+  # and a long think shows up as first_token_ms.
+  def trace(label, id, deltas, flushes, first_at, started)
+    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    Rails.logger.info(
+      "[stream] #{label}=#{id} deltas=#{deltas} flushes=#{flushes} " \
+      "first_token_ms=#{first_at ? ((first_at - started) * 1000).round : "none"} " \
+      "total_ms=#{((now - started) * 1000).round}"
+    )
+  end
+
   # Appending a text node rather than replacing the bubble keeps each broadcast
   # proportional to the new text, not to the reply so far.
   #
@@ -72,12 +96,21 @@ class ContactReplyJob < ApplicationJob
   # worker polls at 0.1s, so slices piled up and arrived in bursts. Worse, with
   # five worker threads those per-delta jobs could be picked up concurrently,
   # so nothing guaranteed the tokens arrived in the order they were generated.
+  # Escaped text, not a partial. Every ERB file ends with a newline, so a
+  # partial-per-chunk appended "<chunk>\n" -- and the paragraph is
+  # whitespace-pre-wrap, which renders that as a hard line break. A reply
+  # arrived as a jagged column, one flush per line, and then reflowed into
+  # prose the moment the finished message replaced it.
+  #
+  # `content:` skips template rendering entirely, which is also what RubyLLM's
+  # own generator emits. It is inserted raw -- turbo-rails does
+  # tag.template(content.to_s.html_safe) -- so the escaping here is load
+  # bearing: model output is untrusted text.
   def broadcast_delta(conversation, question, text)
     Turbo::StreamsChannel.broadcast_append_to(
       conversation,
       target: dom_id(question, :pending_body),
-      partial: "threads/delta",
-      locals: {text: text}
+      content: ERB::Util.html_escape(text)
     )
   end
 
