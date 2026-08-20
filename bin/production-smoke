@@ -6,8 +6,11 @@ suffix="${GITHUB_RUN_ID:-$$}-${GITHUB_RUN_ATTEMPT:-0}"
 image="rails-app-production-smoke:${suffix}"
 network="rails-app-smoke-${suffix}"
 database="rails-app-smoke-db-${suffix}"
+cable="rails-app-smoke-cable-${suffix}"
 app="rails-app-smoke-web-${suffix}"
 postgres_image="${POSTGRES_IMAGE:-postgres:18}"
+# Render Key Value is Valkey, so the smoke runs what production runs.
+cable_image="${CABLE_IMAGE:-valkey/valkey:8-alpine}"
 token="${suffix}"
 
 cleanup() {
@@ -17,7 +20,7 @@ cleanup() {
     echo "Production container logs:" >&2
     docker logs "${app}" >&2 || true
   fi
-  docker rm --force "${app}" "${database}" >/dev/null 2>&1 || true
+  docker rm --force "${app}" "${database}" "${cable}" >/dev/null 2>&1 || true
   docker network rm "${network}" >/dev/null 2>&1 || true
   docker image rm "${image}" >/dev/null 2>&1 || true
   exit "${status}"
@@ -97,9 +100,21 @@ docker run --detach --name "${database}" --network "${network}" \
   "${postgres_image}" >/dev/null
 wait_for_health "${database}" 45 || { docker logs "${database}" >&2; exit 1; }
 
+# Action Cable talks to a Key Value instance in production, so it talks to one
+# here. Without this the image was only ever smoked on the Solid Cable
+# fallback, which is the path production no longer takes -- and the failure it
+# could not see is the worst kind: the redis gem is only in the default bundle
+# group, so dropping it would boot fine until the first broadcast.
+docker run --detach --name "${cable}" --network "${network}" \
+  --health-cmd='valkey-cli ping' \
+  --health-interval=1s --health-timeout=3s --health-retries=30 \
+  "${cable_image}" >/dev/null
+wait_for_health "${cable}" 45 || { docker logs "${cable}" >&2; exit 1; }
+
 database_url="postgres://postgres:postgres@${database}:5432/app_production"
 docker run --detach --name "${app}" --network "${network}" --publish 127.0.0.1::80 \
   --env DATABASE_URL="${database_url}" \
+  --env REDIS_URL="redis://${cable}:6379" \
   --env SECRET_KEY_BASE="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
   --env WEB_CONCURRENCY=0 \
   --env RAILS_MAX_THREADS=3 \
@@ -127,14 +142,27 @@ assert_enforced_csp "${base_url}/production-smoke-missing" --header 'Host: rende
 docker exec "${app}" bin/rails runner \
   'key = "production-smoke:cache"; Rails.cache.write(key, ENV.fetch("SMOKE_TOKEN")); abort "Solid Cache failed" unless Rails.cache.read(key) == ENV.fetch("SMOKE_TOKEN")'
 
-cable_before="$(docker exec "${app}" bin/rails runner 'puts ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM solid_cable_messages")')"
-docker exec "${app}" bin/rails runner 'ActionCable.server.broadcast("production-smoke", {ok: true})'
-for _ in {1..20}; do
-  cable_after="$(docker exec "${app}" bin/rails runner 'puts ActiveRecord::Base.connection.select_value("SELECT COUNT(*) FROM solid_cable_messages")')"
-  (( cable_after > cable_before )) && break
-  sleep 1
-done
-(( cable_after > cable_before )) || { echo "Solid Cable did not persist a broadcast" >&2; exit 1; }
+# A broadcast published and received, rather than a row counted. Counting rows
+# proved the fallback wrote to Postgres; this proves a subscriber actually gets
+# what a publisher sends, over the adapter production uses.
+docker exec "${app}" bin/rails runner "$(cat <<'RUBY'
+require "timeout"
+
+adapter = ActionCable.server.pubsub
+abort "Expected the Redis adapter, got #{adapter.class}" unless
+  adapter.is_a?(ActionCable::SubscriptionAdapter::Redis)
+
+received = Queue.new
+subscribed = Queue.new
+adapter.subscribe("production-smoke", ->(message) { received << message }, -> { subscribed << true })
+
+Timeout.timeout(15) { subscribed.pop }
+ActionCable.server.broadcast("production-smoke", {token: ENV.fetch("SMOKE_TOKEN")})
+payload = Timeout.timeout(15) { received.pop }
+
+abort "Action Cable delivered #{payload.inspect}" unless payload.include?(ENV.fetch("SMOKE_TOKEN"))
+RUBY
+)"
 
 docker exec "${app}" bin/rails runner \
   '6.times { |index| ProductionSmokeJob.perform_later("#{ENV.fetch("SMOKE_TOKEN")}-#{index}") }'
@@ -161,4 +189,4 @@ for _ in {1..45}; do
 done
 [[ "${job_performed:-false}" == "true" ]] || { echo "Solid Queue did not perform the smoke job" >&2; exit 1; }
 
-echo "Production image booted as non-root; attachment processors absent; db:prepare, readiness, Solid Cache, Cable, and Queue passed"
+echo "Production image booted as non-root; attachment processors absent; db:prepare, readiness, Solid Cache, Action Cable over Key Value, and Solid Queue passed"
