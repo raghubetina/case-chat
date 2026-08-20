@@ -1,14 +1,20 @@
 # A TESTING profile, deliberately smaller than the topology this app wants.
 #
-# What was cut, and what it costs to have cut it:
+# Where it is smaller, and what that costs:
 #
-#   Key Value is gone. Action Cable falls back to Solid Cable, which polls
-#   Postgres — every subscriber is a recurring query and every streamed token a
-#   write. Fine for a handful of testers, wrong for a class of thirty streaming
-#   at once, which is the case the Key Value instance existed to serve.
+#   Key Value is back, on free. Free is 25MB and 50 connections, and neither
+#   is close to binding: Action Cable memoizes two connections per Rails
+#   process — one to publish, one Listener multiplexing every channel — so
+#   thirty students streaming is thirty WebSockets to Puma and still one
+#   subscriber connection here. Pub/sub stores nothing, so the 25MB has
+#   nothing to hold. What free costs is that Render may restart the instance
+#   unannounced, dropping messages in flight. A reply survives that: it is
+#   persisted before the broadcast that replaces the streaming row, so the
+#   worst case is a row stuck on REPLYING until a reload. Move to starter
+#   ($10) before a live class, for the restarts rather than the capacity.
 #
-#   Web and worker are starter (512MB), so WEB_CONCURRENCY drops to one Puma
-#   worker. Two would not fit.
+#   Web is starter (512MB), so WEB_CONCURRENCY stays at one Puma worker. Two
+#   would not fit.
 #
 #   Postgres is basic-256mb, which holds the seeded cases and a few students.
 #
@@ -16,7 +22,8 @@
 # another instance and change the thing being tested: a reply streams for
 # 10-60 seconds and would hold a request thread for all of it.
 #
-# Restore before a class uses this: keyvalue back, standard/standard, basic-1gb.
+# Restore before a class uses this: standard web, basic-1gb Postgres, and
+# starter Key Value.
 #
 # The Foundation blueprint runs everything in one 512MB web service with Solid
 # Queue inside Puma and Action Cable polling Postgres. That is a sound default
@@ -40,6 +47,19 @@ databases:
     postgresMajorVersion: "18"
 
 services:
+  # Action Cable only. Cache and queue stay on Postgres, where their access
+  # patterns fit; this exists because token streaming does not — Solid Cable
+  # polls, so the browser could never see an update sooner than one poll
+  # interval no matter how fast the model streamed.
+  - name: case-chat-claude-cable
+    type: keyvalue
+    plan: free
+    region: ohio
+    ipAllowList: [] # reachable only from inside the Render private network
+    # Nothing to evict: pub/sub messages are not keys, so this policy never
+    # acts. Kept because a queue would want it if this instance is ever reused,
+    # not because it protects a stream.
+    maxmemoryPolicy: noeviction
   - type: web
     name: case-chat-claude
     runtime: docker
@@ -58,6 +78,11 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: case-chat-claude-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: case-chat-claude-cable
+          type: keyvalue
           property: connectionString
       - key: PORT
         value: "80"
@@ -85,7 +110,11 @@ services:
   - type: worker
     name: case-chat-claude-worker
     runtime: docker
-    plan: starter
+    # Standard (2GB). Starter's 512MB was not enough: the worker OOMed, which
+    # is what a service holding five concurrent streaming replies plus their
+    # briefings looks like on half a gig. Changed in the dashboard first — this
+    # line is what keeps a blueprint sync from putting it back.
+    plan: standard
     region: ohio
     autoDeployTrigger: checksPass
     # Not ./bin/rails server, so the entrypoint's db:prepare does not run here:
@@ -101,6 +130,11 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: case-chat-claude-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: case-chat-claude-cable
+          type: keyvalue
           property: connectionString
       # A reply job spends most of its life waiting on the model, so threads
       # are cheap here; this is IO-bound, not CPU-bound.
