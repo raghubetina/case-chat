@@ -114,16 +114,16 @@ class ModelUsageReportTest < ActiveSupport::TestCase
       "the priced stakeholder still reports their own figure"
   end
 
-  test "cache hit rate is the share of input the cache answered" do
-    record(contact: @dana, input: 1000, output: 0, cache_read: 900)
+  # The SQL is the fast copy of ModelCall.price and the two drifting apart would
+  # show as a page whose rows do not add up to its own totals.
+  test "the rolled up cost matches the arithmetic a single call reports" do
+    record(contact: @dana, input: 1000, output: 100, cache_read: 800)
 
-    assert_in_delta 0.9, ModelUsageReport.new(@case_study).rows.first.total.cache_hit_rate, 0.001
-  end
+    call = ModelCall.where(contact_id: @dana.id).first
+    rolled = ModelUsageReport.new(@case_study).rows.first.cost
 
-  test "a stakeholder who was sent nothing does not divide by zero" do
-    record(contact: @dana, input: 0, output: 0, cache_read: 0)
-
-    assert_equal 0.0, ModelUsageReport.new(@case_study).rows.first.total.cache_hit_rate
+    assert_not_nil call.cost
+    assert_in_delta call.cost, rolled, 1e-9
   end
 
   # The rollup is one grouped query and a fold, so adding stakeholders must not

@@ -64,31 +64,30 @@ class ModelCall < ApplicationRecord
   def cost
     self.class.price(
       input_tokens: input_tokens, output_tokens: output_tokens,
-      cache_read_tokens: cache_read_tokens,
-      input_price: input_price, output_price: output_price, cache_read_price: cache_read_price
+      cache_read_tokens: cache_read_tokens, cache_write_tokens: cache_write_tokens,
+      input_price: input_price, output_price: output_price,
+      cache_read_price: cache_read_price, cache_write_price: cache_write_price
     )
   end
 
   def priced? = !cost.nil?
 
-  # Cached reads bill at their own lower rate, so they come out of input rather
-  # than adding to it. Cache writes are recorded but not billed here: both
-  # providers charge 1.25x input for them, so every total reads low.
-  def self.price(input_tokens:, output_tokens:, cache_read_tokens: 0,
-    input_price: nil, output_price: nil, cache_read_price: nil)
+  # input_tokens is the whole prompt, so reads and writes come out of it rather
+  # than adding to it, and each bills at its own rate. Cache writes used to be
+  # left out entirely, which read every total low -- both providers charge more
+  # than input for them, not nothing.
+  def self.price(input_tokens:, output_tokens:, cache_read_tokens: 0, cache_write_tokens: 0,
+    input_price: nil, output_price: nil, cache_read_price: nil, cache_write_price: nil)
     return nil if input_price.nil? || output_price.nil?
 
-    fresh_input = [input_tokens - cache_read_tokens, 0].max
+    fresh_input = [input_tokens - cache_read_tokens - cache_write_tokens, 0].max
     cached = cache_read_price.nil? ? 0 : cache_read_tokens * cache_read_price.to_f
+    # No stored write rate means an older row or an unlisted model. Billing
+    # those at the input rate is nearer the truth than billing them at zero.
+    written = cache_write_tokens * (cache_write_price || input_price).to_f
 
-    (fresh_input * input_price.to_f + cached + output_tokens * output_price.to_f) / 1_000_000.0
-  end
-
-  # What the briefing cache actually bought on this call.
-  def cache_hit_rate
-    return 0.0 if input_tokens.zero?
-
-    cache_read_tokens.to_f / input_tokens
+    (fresh_input * input_price.to_f + cached + written +
+      output_tokens * output_price.to_f) / 1_000_000.0
   end
 
   # The rate is looked up now and written down, because it is a fact about this

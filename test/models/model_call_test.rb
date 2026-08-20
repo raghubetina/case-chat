@@ -83,18 +83,40 @@ class ModelCallTest < ActiveSupport::TestCase
     assert_equal({"x" => 1}, call.raw["usage"])
   end
 
-  test "reports what the briefing cache actually bought" do
-    call = ModelCall.record(contact: @contact, reply: reply(input: 1000, cache_read: 900),
-      provider: "anthropic", model: "claude-opus-5")
+  # input_tokens is the whole prompt, so a cached call bills the part that was
+  # not cached at the input rate and the rest at the cache rate. It used to
+  # subtract cache reads from a number that, on Anthropic, never contained
+  # them -- which drove fresh input to zero and priced it at nothing.
+  test "a cached call bills fresh, cached and written tokens at their own rates" do
+    price = ModelCall.price(
+      input_tokens: 1000, output_tokens: 100,
+      cache_read_tokens: 800, cache_write_tokens: 100,
+      input_price: 5.0, output_price: 25.0,
+      cache_read_price: 0.5, cache_write_price: 6.25
+    )
 
-    assert_in_delta 0.9, call.cache_hit_rate, 0.001
+    # 100 fresh at 5 + 800 read at 0.5 + 100 written at 6.25 + 100 out at 25.
+    assert_in_delta (100 * 5.0 + 800 * 0.5 + 100 * 6.25 + 100 * 25.0) / 1_000_000, price, 1e-12
   end
 
-  test "a call with no input tokens does not divide by zero" do
-    call = ModelCall.record(contact: @contact, reply: reply(input: 0, cache_read: 0),
-      provider: "fake", model: "fake")
+  # Older rows and unlisted models carry no write rate. Input is nearer the
+  # truth than free.
+  test "cache writes fall back to the input rate rather than to nothing" do
+    price = ModelCall.price(
+      input_tokens: 500, output_tokens: 0, cache_write_tokens: 500,
+      input_price: 5.0, output_price: 25.0
+    )
 
-    assert_equal 0.0, call.cache_hit_rate
+    assert_in_delta (500 * 5.0) / 1_000_000, price, 1e-12
+  end
+
+  test "a call whose cache figures exceed its prompt never bills negative input" do
+    price = ModelCall.price(
+      input_tokens: 100, output_tokens: 0, cache_read_tokens: 900,
+      input_price: 5.0, output_price: 25.0, cache_read_price: 0.5
+    )
+
+    assert_operator price, :>=, 0
   end
 
   # A stakeholder can be left on a model id the catalogue no longer carries, and

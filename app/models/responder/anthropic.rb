@@ -176,11 +176,27 @@ module Responder
     def usage_from(usage)
       return NULL_USAGE if usage.nil?
 
+      # input_tokens means different things on the two providers, and both land
+      # in one column. Anthropic counts only the tokens after the last cache
+      # breakpoint -- their docs give the total as
+      #
+      #   cache_read_input_tokens + cache_creation_input_tokens + input_tokens
+      #
+      # while OpenAI reports the whole prompt with cached_tokens as a subset of
+      # it. Left raw, a cached Anthropic call reported a cache hit rate of 186%
+      # and priced its fresh tokens at zero, because the pricing subtracts
+      # cache reads from a number that never contained them.
+      #
+      # Normalized here rather than at each reader: input_tokens is the whole
+      # prompt on both providers from this point on.
+      cache_read = usage.cache_read_input_tokens.to_i
+      cache_write = usage.cache_creation_input_tokens.to_i
+
       Usage.new(
-        input_tokens: usage.input_tokens.to_i,
+        input_tokens: usage.input_tokens.to_i + cache_read + cache_write,
         output_tokens: usage.output_tokens.to_i,
-        cache_read_tokens: usage.cache_read_input_tokens.to_i,
-        cache_write_tokens: usage.cache_creation_input_tokens.to_i
+        cache_read_tokens: cache_read,
+        cache_write_tokens: cache_write
       )
     end
   end

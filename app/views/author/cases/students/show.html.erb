@@ -49,6 +49,11 @@
               <span class="truncate text-xs text-mute"><%= transcript.contact.role_title %></span>
               <span class="text-xs text-faint">
                 <%= t("author.student.asked", count: transcript.messages.count { |message| !message.from_contact? }) %>
+                <% spend = @spend[transcript.conversation.id] %>
+                <% if spend %>
+                  · <%= t("author.student.tokens", count: number_with_delimiter(spend.totals.tokens)) %>
+                  · <%= money(spend.cost, unknown: "—") %>
+                <% end %>
               </span>
             </header>
 

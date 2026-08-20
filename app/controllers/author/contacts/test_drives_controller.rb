@@ -18,10 +18,21 @@ module Author
         @drives = TestDrive.where(contact_id: @contact.id, author_id: current_user.id)
           .newest_first.includes(:turns).reject { |drive| drive.turns.empty? }
 
+        # Cost per run lives here rather than on the usage page: a rehearsal is
+        # read against the run beside it, and "what did this one cost" is part
+        # of that comparison. COST is shared with the usage report so there is
+        # one definition of the arithmetic.
         @costs = ModelCall.where(test_drive_id: @drives.map(&:id))
           .group(:test_drive_id)
-          .pluck(Arel.sql("test_drive_id, SUM(input_tokens + output_tokens), STRING_AGG(DISTINCT model, ', '), STRING_AGG(DISTINCT effort, ', ')"))
-          .to_h { |id, tokens, models, efforts| [id, {tokens: tokens.to_i, models: models, efforts: efforts}] }
+          .pluck(Arel.sql(<<~SQL.squish))
+            test_drive_id, SUM(input_tokens + output_tokens),
+            STRING_AGG(DISTINCT model, ', '), STRING_AGG(DISTINCT effort, ', '),
+            #{ModelUsageReport::COST}, BOOL_OR(input_price IS NULL OR output_price IS NULL)
+          SQL
+          .to_h { |id, tokens, models, efforts, cost, unpriced|
+            [id, {tokens: tokens.to_i, models: models, efforts: efforts,
+                  cost: unpriced ? nil : cost&.to_f}]
+          }
       end
 
       def create
