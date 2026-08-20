@@ -28,24 +28,33 @@ class TestDriveJob < ApplicationJob
     return if drive.nil?
 
     buffer = +""
-    last_flush = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    deltas = flushes = 0
+    first_at = nil
 
     begin
       adapter = Responder.for(contact)
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      last_flush = started
       reply = adapter.reply(briefing: drive.briefing, history: drive.history) do |delta|
         next if delta.blank?
 
+        deltas += 1
         buffer << delta
         now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        first_at ||= now
         next if now - last_flush < FLUSH_INTERVAL
 
         broadcast_delta(drive, question, buffer)
+        flushes += 1
         buffer = +""
         last_flush = now
       end
 
-      broadcast_delta(drive, question, buffer) if buffer.present?
+      if buffer.present?
+        broadcast_delta(drive, question, buffer)
+        flushes += 1
+      end
+      trace("test_drive", drive.id, deltas, flushes, first_at, started)
 
       # Recorded with no message: a rehearsal costs real tokens and should show
       # up in the total, but it belongs to nobody's transcript.
@@ -65,12 +74,35 @@ class TestDriveJob < ApplicationJob
 
   private
 
+  # "Sometimes it does not stream at all" is not diagnosable from a screenshot,
+  # so the shape of every stream is recorded: how long the model was silent
+  # before the first token, how many flushes the reader actually got, and over
+  # what span. A reply that arrives whole shows up here as one or two flushes,
+  # and a long think shows up as first_token_ms.
+  def trace(label, id, deltas, flushes, first_at, started)
+    now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    Rails.logger.info(
+      "[stream] #{label}=#{id} deltas=#{deltas} flushes=#{flushes} " \
+      "first_token_ms=#{first_at ? ((first_at - started) * 1000).round : "none"} " \
+      "total_ms=#{((now - started) * 1000).round}"
+    )
+  end
+
+  # Escaped text, not a partial. Every ERB file ends with a newline, so a
+  # partial-per-chunk appended "<chunk>\n" -- and the paragraph is
+  # whitespace-pre-wrap, which renders that as a hard line break. A reply
+  # arrived as a jagged column, one flush per line, and then reflowed into
+  # prose the moment the finished message replaced it.
+  #
+  # `content:` skips template rendering entirely, which is also what RubyLLM's
+  # own generator emits. It is inserted raw -- turbo-rails does
+  # tag.template(content.to_s.html_safe) -- so the escaping here is load
+  # bearing: model output is untrusted text.
   def broadcast_delta(drive, question, text)
     Turbo::StreamsChannel.broadcast_append_to(
       drive.stream_name,
       target: dom_id(question, :test_pending_body),
-      partial: "threads/delta",
-      locals: {text: text}
+      content: ERB::Util.html_escape(text)
     )
   end
 
