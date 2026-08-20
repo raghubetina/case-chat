@@ -223,16 +223,82 @@ class TestDriveTest < ActionDispatch::IntegrationTest
       "the run shows what it was given, not what the person says now")
   end
 
+  # The author's own field was under half of what the model read. Showing only
+  # it under the words "prompt used for this run" was a claim the page could
+  # not support.
+  test "the board shows the whole briefing, not just the persona" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "What did you get?" }
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+    shown = css_select("details pre").to_s
+
+    assert_includes shown, "&lt;who_you_are&gt;"
+    assert_includes shown, "&lt;how_to_answer&gt;"
+    assert_equal ContactBriefing.new(@dana).system_text,
+      TestDrive.current(@author, @dana).briefing_text
+  end
+
   # Drives that finished before the snapshot columns existed have nothing to
   # show, and must say so rather than rendering an empty box.
   test "a run with no recorded prompt says so" do
     sign_in_as @author
     perform_enqueued_jobs { ask "Older run." }
-    TestDrive.current(@author, @dana).update_columns(system_prompt: nil)
+    TestDrive.current(@author, @dana).update_columns(system_prompt: nil, briefing_text: nil)
 
     get author_case_contact_test_drives_path(@case_study, @dana)
 
     assert_select "details", text: /#{I18n.t("author.test_drive.board_prompt_missing")}/
+  end
+
+  # A run recorded before the whole briefing was kept still has the persona,
+  # and saying which part it is beats presenting it as everything.
+  test "a run with only the persona recorded says which part it is" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "Older run." }
+    TestDrive.current(@author, @dana).update_columns(briefing_text: nil)
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_select "details", text: /#{I18n.t("author.test_drive.board_prompt_partial")}/
+  end
+
+  # The levers an author pulls are not all on the person. A referral's
+  # condition lives on the edge between two people, so editing one changed the
+  # prompt while every field on this contact stayed put -- and the board called
+  # that unchanged.
+  test "the board notices a run going stale because a referral condition moved" do
+    priya = Contact.create!(
+      full_name: "Priya Raghunathan", role_title: "Plant Manager",
+      system_prompt: "You know the plants.", case_study: @case_study
+    )
+    referral = Referral.create!(referring_contact: @dana, referred_contact: priya,
+      condition: "When the student asks about the plants.")
+
+    sign_in_as @author
+    perform_enqueued_jobs { ask "Before the edit." }
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+    assert_no_match(/#{I18n.t("author.test_drive.board_stale")}/, response.body)
+
+    referral.update!(condition: "Only once the student has seen the overrun.")
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_match(/#{I18n.t("author.test_drive.board_stale")}/, response.body)
+  end
+
+  # The same for the case background, which is not on the contact at all.
+  test "the board notices a run going stale because the background moved" do
+    @dana.update!(knows_case_background: true)
+    @case_study.update!(background: "Margins fell in Q3.")
+
+    sign_in_as @author
+    perform_enqueued_jobs { ask "Before the edit." }
+
+    @case_study.update!(background: "Margins fell in Q3, and again in Q4.")
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_match(/#{I18n.t("author.test_drive.board_stale")}/, response.body)
   end
 
   # A prompt edited between runs is the other reason two columns differ, and the
