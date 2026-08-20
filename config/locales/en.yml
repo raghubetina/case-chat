@@ -228,12 +228,16 @@ en:
       usage: Usage
       your_cases: Your cases
     usage:
-      cache_rate: Cache hit rate
       calls:
         one: 1 call
         other: "%{count} calls"
       cost: Cost
       cost_note: Cache writes are not priced here, and a request over 272K tokens bills at a higher rate, so a total reads low rather than high.
+      contacts_heading: Per interviewee
+      contacts_note: Which of these people is expensive to talk to, across every student and every rehearsal.
+      contacts_caption: Token use and cost for each interviewee.
+      reply_tokens: Student replies
+      rehearsal_tokens: Rehearsals
       cost_unknown: Not priced
       cost_unknown_note: "%{models} has no price on file, so this case has no total."
       empty_body: Rehearse someone, or publish the case and let somebody run it.
@@ -248,11 +252,6 @@ en:
       students_caption: What each student's questions have cost
       runs: Runs
       threads: Threads
-      threads_caption: What each conversation has cost
-      threads_heading: Per conversation
-      thread_with: With
-      test_drives: Your test drives
-      test_drives_caption: What each rehearsal run has cost
       run_started: Run started
       tokens: Tokens
       no_student_calls: Nobody has run the case yet, so there is nothing to break down by student.
@@ -266,6 +265,7 @@ en:
       back: Back to the cohort
       run: "Run %{number}"
       run_empty: Nothing was asked in this run.
+      tokens: "%{count} tokens"
       asked:
         zero: Nothing asked yet
         one: 1 question asked

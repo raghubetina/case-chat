@@ -17,7 +17,6 @@ class ModelUsageReport
     def any? = calls.positive?
 
     # What the briefing cache bought, across a bucket rather than one call.
-    def cache_hit_rate = input.zero? ? 0.0 : cache_read.fdiv(input)
 
     def +(other)
       Totals.new(
@@ -115,33 +114,6 @@ class ModelUsageReport
       .sort_by { |row| -row.totals.tokens }
   end
 
-  # The author's own test drives, one row per drive rather than per stakeholder.
-  # A drive is a run of the prompt against a particular model and effort, so
-  # keying on it is what lets two runs be set beside each other -- Opus at high
-  # against Sol at medium -- instead of pooled under the person they rehearsed.
-  #
-  # Every rehearsal has a drive: the ones recorded before drives existed were
-  # removed rather than carried as a special case nobody could act on.
-  DriveRow = Data.define(:test_drive, :contact, :models, :totals, :cost) do
-    def priced? = !cost.nil?
-  end
-
-  def drive_rows
-    @drive_rows ||= drive_buckets
-      .group_by(&:test_drive_id)
-      .map { |drive_id, mine|
-        first = mine.first
-        DriveRow.new(
-          test_drive: drives[drive_id],
-          contact: contacts_by_id[first.contact_id],
-          models: mine.map { |b| [b.model, b.effort] }.uniq,
-          totals: sum_of(mine),
-          cost: cost_for(mine)
-        )
-      }
-      .sort_by { |row| row.test_drive ? -row.test_drive.created_at.to_i : 0 }
-  end
-
   private
 
   Bucket = Data.define(:contact_id, :model, :rehearsal, :totals, :cost)
@@ -156,10 +128,13 @@ class ModelUsageReport
   # the database rather than reconstructed here from a rate that may since have
   # moved. That also keeps this one grouped query: no rate in the grouping key,
   # no bucket per price change.
+  # Mirrors ModelCall.price, which is the readable copy of this. input_tokens is
+  # the whole prompt on both providers, so reads and writes come out of it.
   COST = <<~SQL.squish
     SUM(
-      (GREATEST(input_tokens - cache_read_tokens, 0) * input_price
+      (GREATEST(input_tokens - cache_read_tokens - cache_write_tokens, 0) * input_price
         + cache_read_tokens * COALESCE(cache_read_price, 0)
+        + cache_write_tokens * COALESCE(cache_write_price, input_price)
         + output_tokens * output_price) / 1000000.0
     )
   SQL
@@ -193,35 +168,6 @@ class ModelUsageReport
   def cost_for(buckets_for_row)
     costs = buckets_for_row.map(&:cost)
     costs.any?(&:nil?) ? nil : costs.sum
-  end
-
-  DriveBucket = Data.define(:test_drive_id, :contact_id, :model, :effort, :totals, :cost)
-
-  def drives
-    @drives ||= TestDrive.where(id: drive_buckets.map(&:test_drive_id).uniq).index_by(&:id)
-  end
-
-  # One row per drive, model and effort: an author who changes the model without
-  # resetting gets both named on the same run, which is the truth of it.
-  def drive_buckets
-    @drive_buckets ||= ModelCall
-      .where(contact_id: Contact.where(case_study_id: @case_study.id).select(:id))
-      .where.not(test_drive_id: nil)
-      .group(:test_drive_id, :contact_id, :model, :effort)
-      .pluck(Arel.sql(<<~SQL.squish))
-        test_drive_id, contact_id, model, effort,
-        COUNT(*), SUM(input_tokens), SUM(output_tokens),
-        SUM(cache_read_tokens), SUM(cache_write_tokens),
-        #{COST}, BOOL_OR(input_price IS NULL OR output_price IS NULL)
-      SQL
-      .map do |drive_id, contact_id, model, effort, calls, input, output, cache_read, cache_write, cost, unpriced|
-        DriveBucket.new(
-          test_drive_id: drive_id, contact_id: contact_id, model: model, effort: effort,
-          cost: unpriced ? nil : cost&.to_f,
-          totals: Totals.new(calls: calls, input: input, output: output,
-            cache_read: cache_read, cache_write: cache_write)
-        )
-      end
   end
 
   StudentBucket = Data.define(:user_id, :enrollment_id, :conversation_id, :contact_id, :totals, :cost)

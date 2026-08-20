@@ -15,6 +15,14 @@ module Author
 
         @student = User.find(params[:id])
         @report = StudentReport.new(@case_study, @student)
+
+        # What each thread cost, which used to be a row on the usage page. It
+        # belongs next to the conversation it describes rather than in a list
+        # that grows with the class. ModelUsageReport already computes this for
+        # the whole case in one grouped query; taking the slice is cheaper than
+        # a second way of doing the same arithmetic.
+        @spend = ModelUsageReport.new(@case_study).thread_rows
+          .index_by(&:conversation_id)
       end
     end
   end

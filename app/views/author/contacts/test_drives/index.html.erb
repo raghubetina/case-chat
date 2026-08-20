@@ -36,6 +36,7 @@
               <%= l(drive.created_at, format: :short) %>
               <% if cost %>
                 · <%= t("author.test_drive.board_tokens", count: number_with_delimiter(cost[:tokens])) %>
+                · <%= money(cost[:cost], unknown: "—") %>
               <% end %>
             </span>
             <%# A prompt edited since the run is the other reason two columns
