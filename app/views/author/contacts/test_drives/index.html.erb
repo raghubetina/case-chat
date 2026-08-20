@@ -45,6 +45,37 @@
             <% end %>
           </header>
 
+          <%# The prompt this run actually used, which is the thing being
+              changed between runs and so the thing two columns are being read
+              to compare. Collapsed, because the answers are what you scan
+              first and a prompt is long enough to push them off the screen.
+
+              <details> rather than a Stimulus toggle: it opens without
+              JavaScript, and the summary is already a button to a screen
+              reader. %>
+          <details class="shrink-0 border-b border-line">
+            <summary class="kick cursor-pointer px-4 py-2 text-xs text-mute marker:text-faint">
+              <%= t("author.test_drive.board_prompt") %>
+            </summary>
+            <div class="flex flex-col gap-2 px-4 pb-3">
+              <% if drive.system_prompt.nil? %>
+                <%# Drives from before a run recorded what it was given. %>
+                <p class="text-sm text-faint"><%= t("author.test_drive.board_prompt_missing") %></p>
+              <% else %>
+                <p class="text-xs text-mute">
+                  <%= drive.role_title.presence || t("author.test_drive.board_no_role") %>
+                  ·
+                  <%= drive.knows_case_background ?
+                        t("author.test_drive.board_with_background") :
+                        t("author.test_drive.board_without_background") %>
+                </p>
+                <%# The prompt is the author's own text and often long, so it
+                    scrolls inside the column rather than stretching it. %>
+                <pre class="scroll-y max-h-64 whitespace-pre-wrap break-words rounded-md bg-wash p-3 font-mono text-xs leading-relaxed"><%= drive.system_prompt %></pre>
+              <% end %>
+            </div>
+          </details>
+
           <div class="scroll-y flex min-h-0 flex-1 flex-col gap-6 p-4">
             <% drive.turns.each do |turn| %>
               <%= render "author/contacts/test_turn", turn: turn, contact: @contact,

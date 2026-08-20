@@ -65,6 +65,9 @@ Rails.application.routes.draw do
         get :search
       end
       resource :cohort, only: :show, module: :cases
+      # One student's runs, read side by side. Nested under the case because a
+      # student only exists here as somebody enrolled in it.
+      resources :students, only: :show, module: :cases
       resource :usage, only: :show, module: :cases
       resources :documents, only: %i[index new create destroy], module: :cases
       resource :import, only: %i[new create], module: :cases

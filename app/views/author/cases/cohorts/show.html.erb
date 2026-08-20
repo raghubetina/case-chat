@@ -70,7 +70,14 @@
             <tbody>
               <% @report.students.each do |student| %>
                 <tr class="border-b border-line last:border-0">
-                  <td class="px-4 py-3 font-medium"><%= student.user.full_name %></td>
+                  <td class="px-4 py-3 font-medium">
+                    <%# The row already says how much they did; the name is the
+                        way through to what they actually said. %>
+                    <%= link_to student.user.full_name,
+                          author_case_student_path(@case_study, student.user),
+                          class: "underline decoration-line underline-offset-2 hover:decoration-ink",
+                          "aria-label": t("author.student.open", name: student.user.full_name) %>
+                  </td>
                   <td class="px-4 py-3"><%= student.contacts_met %> / <%= @report.contact_count %></td>
                   <td class="px-4 py-3"><%= student.messages_sent %></td>
                   <td class="px-4 py-3"><%= student.documents_earned %></td>

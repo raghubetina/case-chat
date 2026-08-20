@@ -207,6 +207,34 @@ class TestDriveTest < ActionDispatch::IntegrationTest
     assert_select "section", 0
   end
 
+  # The prompt is what an author changes between runs, so it is what two
+  # columns are being read to compare. It is on the board, collapsed.
+  test "the board carries the prompt each run actually used" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "Before the edit." }
+    @dana.update!(system_prompt: "Something else entirely.")
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_select "details summary", text: I18n.t("author.test_drive.board_prompt")
+    assert_select "details pre", text: /You do not volunteer the ERP overrun/,
+      count: 1
+    assert_no_match(/Something else entirely/, css_select("details pre").to_s,
+      "the run shows what it was given, not what the person says now")
+  end
+
+  # Drives that finished before the snapshot columns existed have nothing to
+  # show, and must say so rather than rendering an empty box.
+  test "a run with no recorded prompt says so" do
+    sign_in_as @author
+    perform_enqueued_jobs { ask "Older run." }
+    TestDrive.current(@author, @dana).update_columns(system_prompt: nil)
+
+    get author_case_contact_test_drives_path(@case_study, @dana)
+
+    assert_select "details", text: /#{I18n.t("author.test_drive.board_prompt_missing")}/
+  end
+
   # A prompt edited between runs is the other reason two columns differ, and the
   # one an author will not remember.
   test "the board says when the person has changed since a run" do

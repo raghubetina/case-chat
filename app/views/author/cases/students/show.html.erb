@@ -1,0 +1,68 @@
+<% content_for :title, t("author.student.title", name: @student.full_name) %>
+
+<%= render layout: "shared/shell", locals: author_shell do %>
+  <%= render "shared/pane_header",
+        title: t("author.student.title", name: @student.full_name),
+        actions: link_to(t("author.student.back"),
+          author_case_cohort_path(@case_study),
+          class: "btn btn-outline btn-sm") %>
+
+  <% if @report.runs.empty? %>
+    <div class="scroll-y flex-1 p-6 lg:p-8">
+      <div class="mx-auto flex max-w-col flex-col items-center gap-2 rounded-lg border border-dashed border-line p-10 text-center">
+        <h2 class="font-head text-lg font-semibold"><%= t("author.student.empty_heading") %></h2>
+        <p class="max-w-prose text-sm text-mute"><%= t("author.student.empty_body") %></p>
+      </div>
+    </div>
+  <% else %>
+    <%# The same board the test drives use: one column per thread, the row
+        scrolling sideways and each column scrolling on its own, so two
+        conversations can be read in step rather than one pushing the other off
+        the screen. min-h-0 on both axes is what lets a flex child scroll
+        instead of growing its parent.
+
+        Runs share one row rather than getting a row each. A student who
+        restarted asked some of the same people some of the same things, and
+        putting run three's Lena next to run one's Lena is the comparison an
+        author came for — which only works if they are on the same axis. %>
+    <div class="flex min-h-0 flex-1 gap-4 overflow-x-auto p-4 lg:p-6">
+      <% @report.runs.each do |run| %>
+        <% if run.transcripts.empty? %>
+          <section class="flex min-h-0 w-[360px] shrink-0 flex-col justify-center rounded-lg border border-dashed border-line p-6 text-center">
+            <span class="kick text-xs text-mute"><%= t("author.student.run", number: run.run_number) %></span>
+            <p class="mt-2 text-sm text-faint"><%= t("author.student.run_empty") %></p>
+          </section>
+        <% end %>
+
+        <% run.transcripts.each do |transcript| %>
+          <section class="flex min-h-0 w-[360px] shrink-0 flex-col rounded-lg border border-line bg-surface">
+            <header class="flex shrink-0 flex-col gap-1 border-b border-line px-4 py-3">
+              <div class="flex items-baseline justify-between gap-2">
+                <span class="truncate font-head text-base font-semibold"><%= transcript.contact.full_name %></span>
+                <%# Only worth naming which run this is when there is more than
+                    one; a single-run student would just see "Run 1" seven
+                    times. %>
+                <% if @report.runs.size > 1 %>
+                  <span class="kick shrink-0 text-xs text-accent"><%= t("author.student.run", number: run.run_number) %></span>
+                <% end %>
+              </div>
+              <span class="truncate text-xs text-mute"><%= transcript.contact.role_title %></span>
+              <span class="text-xs text-faint">
+                <%= t("author.student.asked", count: transcript.messages.count { |message| !message.from_contact? }) %>
+              </span>
+            </header>
+
+            <div class="scroll-y flex min-h-0 flex-1 flex-col gap-6 p-4">
+              <%# The student's own transcript markup, read back by somebody
+                  who is not the student: asker_name keeps their words under
+                  their name rather than the author's, and interactive: false
+                  drops the one control that only they can use. %>
+              <%= render partial: "threads/message", collection: transcript.messages, as: :message,
+                    locals: {asker_name: @student.full_name, interactive: false} %>
+            </div>
+          </section>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
